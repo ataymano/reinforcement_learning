@@ -1,6 +1,6 @@
 #pragma once
-#include "utility\data_buffer.h"
-#include "flatbuffers\flatbuffers.h"
+#include "utility/data_buffer.h"
+#include "flatbuffers/flatbuffers.h"
 
 namespace reinforcement_learning {
   class flatbuffer_allocator : public flatbuffers::Allocator {

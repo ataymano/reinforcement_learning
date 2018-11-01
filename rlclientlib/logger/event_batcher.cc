@@ -11,29 +11,24 @@ namespace reinforcement_learning {
 
     void event_batcher::batch_serialize(data_buffer& oss, data_buffer& swap, size_t& remaining, event_queue<ranking_event>& queue, size_t _send_high_water_mark)
     {
-      batch_serialize_internal<ranking_event, RankingEvent, VW::Events::RankingEventBatchBuilder>(oss, swap, remaining, queue, _send_high_water_mark, _batch_size);
+      batch_serialize_internal<ranking_event, RankingEvent, VW::Events::RankingEventBatchBuilder>(oss, swap, remaining, queue, _send_high_water_mark);
     }
     void event_batcher::batch_serialize(data_buffer& oss, data_buffer& swap, size_t& remaining, event_queue<outcome_event>& queue, size_t _send_high_water_mark)
     {
-      batch_serialize_internal<outcome_event, OutcomeEvent, VW::Events::OutcomeEventBatchBuilder>(oss, swap, remaining, queue, _send_high_water_mark, _batch_size);
+      batch_serialize_internal<outcome_event, OutcomeEvent, VW::Events::OutcomeEventBatchBuilder>(oss, swap, remaining, queue, _send_high_water_mark);
     }
 
     template<typename TEvent, typename TResultObject, typename TResultObjectBuilder>
-    void event_batcher::batch_serialize_internal(data_buffer& oss, data_buffer& swap, size_t& remaining, event_queue<TEvent>& queue, size_t _send_high_water_mark, size_t batch_size)
+    void event_batcher::batch_serialize_internal(data_buffer& oss, data_buffer& swap, size_t& remaining, event_queue<TEvent>& queue, size_t _send_high_water_mark)
     {
-      if (_batch_size <= 0) {
-        throw("event_batcher::batch_serialize batch_size is 0 - message is too large.");
-      }
-
       swap.reset();
 
       std::vector<flatbuffers::Offset<TResultObject>> events_offset;
 
       flatbuffer_allocator allocator(swap);
-      flatbuffers::FlatBufferBuilder builder(_send_high_water_mark, &allocator);
+      flatbuffers::FlatBufferBuilder builder(_send_high_water_mark);
       TEvent evt;
-      for (int i = 0; remaining > 0 && oss.size() < _send_high_water_mark; i++) {
-        if (i == batch_size) break;
+      for (int i = 0; remaining > 0 && builder.GetSize() < _send_high_water_mark; i++) {
         queue.pop(&evt);
         events_offset.push_back(serialize_eventhub_message(evt, builder));
         --remaining;
@@ -44,14 +39,7 @@ namespace reinforcement_learning {
       auto orc = ranking_event_batch_builder.Finish();
       builder.Finish(orc);
 
-      size_t size = builder.GetSize();
-      if (size > _send_high_water_mark) {
-        oss.reset();
-        batch_serialize_internal<TEvent, TResultObject, TResultObjectBuilder>(oss, swap, remaining, queue, _send_high_water_mark, batch_size / 2);
-        return;
-      }
-
-      oss.append(builder.GetBufferPointer(), size);
+      oss.append(builder.GetBufferPointer(), builder.GetSize());
     }
 
     flatbuffers::Offset<RankingEvent> event_batcher::serialize_eventhub_message(ranking_event& evt, flatbuffers::FlatBufferBuilder& builder) {

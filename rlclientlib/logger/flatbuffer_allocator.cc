@@ -6,7 +6,7 @@ namespace reinforcement_learning {
   {
   }
 
-  uint8_t* flatbuffer_allocator::allocate(size_t size) {
+  uint8_t* flatbuffer_allocator::allocate(size_t size)  {
     _buffer.resize(size);
     return _buffer.buffer().data();
   }

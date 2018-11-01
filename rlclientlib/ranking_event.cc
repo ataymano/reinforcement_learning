@@ -173,7 +173,7 @@ namespace reinforcement_learning {
 
   std::string outcome_event::str() {
     u::data_buffer oss;
-    std::string deferred_action = _deferred_action ? "true" : false;
+    std::string deferred_action = _deferred_action ? "true" : "false";
     oss << R"({"EventId":")" << _event_id << R"(","v":)" << _outcome << R"(","DeferredAction":)" << deferred_action << R"(})";
     return oss.str();
   }

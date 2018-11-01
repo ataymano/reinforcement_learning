@@ -15,9 +15,8 @@ namespace reinforcement_learning {
       void batch_serialize(data_buffer& oss, data_buffer& swap, size_t& remaining, event_queue<TEvent>& queue, size_t _send_high_water_mark);
 
     private:
-      size_t _batch_size = 400;
       template<typename TEvent, typename TResultObject, typename TResultObjectBuilder>
-      void batch_serialize_internal(data_buffer& oss, data_buffer& swap, size_t& remaining, event_queue<TEvent>& queue, size_t _send_high_water_mark, size_t batch_size);
+      void batch_serialize_internal(data_buffer& oss, data_buffer& swap, size_t& remaining, event_queue<TEvent>& queue, size_t _send_high_water_mark);
       flatbuffers::Offset<RankingEvent> serialize_eventhub_message(ranking_event& evt, flatbuffers::FlatBufferBuilder& builder);
       flatbuffers::Offset<OutcomeEvent> serialize_eventhub_message(outcome_event& evt, flatbuffers::FlatBufferBuilder& builder);
     };
