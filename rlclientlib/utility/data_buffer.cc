@@ -24,12 +24,12 @@ namespace reinforcement_learning {
       return _buffer;
     }
 
-    void data_buffer::reserve(size_t size){
-      _buffer.reserve(size);
+    void data_buffer::resize(size_t size) {
+      _buffer.resize(size);
     }
 
-    uint8_t* data_buffer::data() {
-      return _buffer.data();
+    void data_buffer::reserve(size_t size){
+      _buffer.reserve(size);
     }
 
     std::string data_buffer::str() const {

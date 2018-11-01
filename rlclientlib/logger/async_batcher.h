@@ -58,6 +58,7 @@ namespace reinforcement_learning {
     event_queue<TEvent> _queue;       // A queue to accumulate batch of events.
     utility::event_batcher _event_batcher;
     utility::data_buffer _buffer;           // Re-used buffer to prevent re-allocation during sends.
+    utility::data_buffer _swap_buffer;      // A buffer to prevent re-allocation during flatbuffer buildings.
     size_t _send_high_water_mark;
     size_t _queue_max_size;
     error_callback_fn* _perror_cb;
@@ -109,7 +110,7 @@ namespace reinforcement_learning {
   size_t async_batcher<TEvent>::fill_buffer(size_t remaining)
   {
     _buffer.reset();
-    _event_batcher.batch_serialize(_buffer, remaining, _queue, _send_high_water_mark);
+    _event_batcher.batch_serialize(_buffer, _swap_buffer, remaining, _queue, _send_high_water_mark);
     if (BLOCK == _queue_mode) {
       _cv.notify_one();
     }

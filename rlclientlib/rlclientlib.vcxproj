@@ -181,6 +181,7 @@
     <ClInclude Include="azure_factories.h" />
     <ClInclude Include="console_tracer.h" />
     <ClInclude Include="logger\event_logger.h" />
+    <ClInclude Include="logger\flatbuffer_allocator.h" />
     <ClInclude Include="moving_queue.h" />
     <ClInclude Include="utility\context_helper.h" />
     <ClInclude Include="utility\data_buffer.h" />
@@ -192,6 +193,7 @@
     <ClCompile Include="console_tracer.cc" />
     <ClCompile Include="logger\event_batcher.cc" />
     <ClCompile Include="logger\event_logger.cc" />
+    <ClCompile Include="logger\flatbuffer_allocator.cc" />
     <ClCompile Include="trace_logger.cc" />
     <ClCompile Include="utility\data_buffer.cc" />
     <ClCompile Include="utility\http_helper.h" />

@@ -8,22 +8,22 @@ namespace reinforcement_learning {
     class event_batcher {
     public:
       event_batcher();
-      void batch_serialize(data_buffer& oss, size_t& remaining, event_queue<ranking_event>& queue, size_t _send_high_water_mark);
-      void batch_serialize(data_buffer& oss, size_t& remaining, event_queue<outcome_event>& queue, size_t _send_high_water_mark);
+      void batch_serialize(data_buffer& oss, data_buffer& swap, size_t& remaining, event_queue<ranking_event>& queue, size_t _send_high_water_mark);
+      void batch_serialize(data_buffer& oss, data_buffer& swap, size_t& remaining, event_queue<outcome_event>& queue, size_t _send_high_water_mark);
 
       template<typename TEvent>
-      void batch_serialize(data_buffer& oss, size_t& remaining, event_queue<TEvent>& queue, size_t _send_high_water_mark);
+      void batch_serialize(data_buffer& oss, data_buffer& swap, size_t& remaining, event_queue<TEvent>& queue, size_t _send_high_water_mark);
 
     private:
       size_t _batch_size = 400;
       template<typename TEvent, typename TResultObject, typename TResultObjectBuilder>
-      void batch_serialize_internal(data_buffer& oss, size_t& remaining, event_queue<TEvent>& queue, size_t _send_high_water_mark, size_t batch_size);
+      void batch_serialize_internal(data_buffer& oss, data_buffer& swap, size_t& remaining, event_queue<TEvent>& queue, size_t _send_high_water_mark, size_t batch_size);
       flatbuffers::Offset<RankingEvent> serialize_eventhub_message(ranking_event& evt, flatbuffers::FlatBufferBuilder& builder);
       flatbuffers::Offset<OutcomeEvent> serialize_eventhub_message(outcome_event& evt, flatbuffers::FlatBufferBuilder& builder);
     };
 
     template<typename TEvent>
-    void event_batcher::batch_serialize(data_buffer& oss, size_t& remaining, event_queue<TEvent>& queue, size_t _send_high_water_mark)
+    void event_batcher::batch_serialize(data_buffer& oss, data_buffer& swap, size_t& remaining, event_queue<TEvent>& queue, size_t _send_high_water_mark)
     {
       // This is used by unit_test
       TEvent evt;

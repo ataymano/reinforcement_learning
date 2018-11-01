@@ -28,6 +28,7 @@
     <ClCompile Include="async_batcher.cc" />
     <ClCompile Include="logger\event_batcher.cc" />
     <ClCompile Include="azure_factories.cc" />
+    <ClCompile Include="logger\flatbuffer_allocator.cc" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\api_status.h" />
@@ -69,6 +70,7 @@
     <ClInclude Include="console_tracer.h" />
     <ClInclude Include="generated\OutcomeEvent_generated.h" />
     <ClInclude Include="azure_factories.h" />
+    <ClInclude Include="logger\flatbuffer_allocator.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
