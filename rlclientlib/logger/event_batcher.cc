@@ -2,6 +2,7 @@
 
 #include "generated/RankingEvent_generated.h"
 #include "generated/OutcomeEvent_generated.h"
+#include "flatbuffer_allocator.h"
 
 namespace reinforcement_learning {
   namespace utility {

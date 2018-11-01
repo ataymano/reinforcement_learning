@@ -1,9 +1,9 @@
 {
-	"ApplicationID": "chzha-flatbuffer-merge4",
-	"EventHubInteractionConnectionString": "Endpoint=sb://ingest-5qobhr2h7dl7e.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=3qJGY+/Bxot3AVOcMOo6zzmst1PyZOhJ2wCq4du/qAc=;EntityPath=interaction",
-	"EventHubObservationConnectionString": "Endpoint=sb://ingest-5qobhr2h7dl7e.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=3qJGY+/Bxot3AVOcMOo6zzmst1PyZOhJ2wCq4du/qAc=;EntityPath=observation",
-	"IsExplorationEnabled": true,
-	"ModelBlobUri": "https://reefstorage1.blob.core.windows.net/chzha-flatbuffer-merge4/exported-models/current?sv=2017-07-29&sr=b&sig=7GfIv9Sx9G%2FvNJadF4sgcn1YefetH%2Frr8sv8nKG%2Fqs4%3D&st=2018-11-01T05%3A37%3A22Z&se=2028-11-01T05%3A38%3A22Z&sp=r",
-	"AppInsightsKey": "238763ed-b921-4ab2-bd20-38c0b4d4410d",
-	"InitialExplorationEpsilon": 1.0
+  "ApplicationID": "<appid>",
+  "EventHubInteractionConnectionString": "Endpoint=sb://<ingest>.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=<SAKey>;EntityPath=interaction",
+  "EventHubObservationConnectionString": "Endpoint=sb://<ingest>.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=<SAKey>;EntityPath=observation",
+  "IsExplorationEnabled": true,
+  "ModelBlobUri": "https://<storage>.blob.core.windows.net/mwt-models/current?sv=2017-07-29&sr=b&sig=<sig>&st=2018-06-26T09%3A00%3A55Z&se=2028-06-26T09%3A01%3A55Z&sp=r",
+  "AppInsightsKey": "<AppInsightsKey>",
+  "InitialExplorationEpsilon": 1.0
 }
