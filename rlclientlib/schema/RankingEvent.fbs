@@ -1,0 +1,17 @@
+﻿// EventHubInteraction Schema used by FlatBuffer
+
+namespace VW.Events;
+
+table RankingEvent {
+    version:short = 1;
+    event_id:string;
+    deferred_action:bool = false;
+    action_ids:[uint64];
+    context:[ubyte];          // context
+    probabilities:[float];
+    model_id:string;
+}
+
+table RankingEventBatch {
+    Events:[RankingEvent];
+}

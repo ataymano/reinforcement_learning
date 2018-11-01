@@ -3,50 +3,51 @@
 #include <iterator>
 #include <iostream>
 
-namespace reinforcement_learning { namespace utility {
-  data_buffer::data_buffer() = default;
+namespace reinforcement_learning {
+  namespace utility {
+    data_buffer::data_buffer() = default;
 
-  data_buffer::data_buffer(const translate_func& _translate) : translate(_translate) {}
+    void data_buffer::reset() { _buffer.clear(); }
 
-  void data_buffer::reset() { _buffer.clear(); }
+    size_t data_buffer::size() const {
+      return _buffer.size();
+    }
 
-  std::string data_buffer::str() const{
-    std::string retval(std::begin(_buffer), std::end(_buffer));
-    return retval;
+    void data_buffer::remove_last() { _buffer.pop_back(); }
+
+    void data_buffer::append(const unsigned char* data, size_t len) {
+      _buffer.reserve(_buffer.size() + len);
+      _buffer.insert(_buffer.end(), data, data + len);
+    }
+
+    std::vector<unsigned char> data_buffer::buffer() {
+      return _buffer;
+    }
+
+    void data_buffer::reserve(size_t size){
+      _buffer.reserve(size);
+    }
+
+    uint8_t* data_buffer::data() {
+      return _buffer.data();
+    }
+
+    std::string data_buffer::str() const {
+      return std::string(_buffer.begin(), _buffer.end());
+    }
+
+    data_buffer& data_buffer::operator<<(const std::string& cs) {
+      _buffer.reserve(_buffer.size() + cs.size());
+      _buffer.insert(_buffer.end(), cs.begin(), cs.end());
+      return *this;
+    }
+
+    data_buffer& data_buffer::operator<<(const char* data) { return operator<<(std::string(data)); }
+    data_buffer& data_buffer::operator<<(size_t rhs) { return operator<<(std::to_string(rhs)); }
+    data_buffer& data_buffer::operator<<(float rhs) { return operator<<(std::to_string(rhs)); }
+
+    buffer_factory::buffer_factory() = default;
+
+    data_buffer* buffer_factory::operator()() const { return new data_buffer(); }
   }
-
-  size_t data_buffer::size() const {
-    return _buffer.size();
-  }
-
-  void data_buffer::remove_last() { _buffer.pop_back(); }
-
-  buffer_factory::buffer_factory(const translate_func& _translate) : translate(_translate) {}
-
-  data_buffer* buffer_factory::operator()() const { return new data_buffer(translate); }
-
-  data_buffer& data_buffer::operator<<(const std::string& cs) {
-    const auto data_len = cs.length();
-    const auto buff_sz = _buffer.size();
-    // Ensure vector is big enough
-    if (_buffer.capacity() < buff_sz + data_len)
-      _buffer.reserve(buff_sz + data_len);
-    //workaround to be able to suppress '\n' on client side
-    for (auto c : cs)
-      _buffer.push_back(translate(c));
-    
-    return *this;
-  }
-
-  data_buffer& data_buffer::operator<<(const char* data) { return operator<<(std::string(data)); }
-
-  data_buffer& data_buffer::operator<<(size_t rhs) { return operator<<(std::to_string(rhs)); }
-
-  data_buffer& data_buffer::operator<<(float rhs) { return operator<<(std::to_string(rhs)); }
-
-  translate_func::translate_func() : empty(true) {}
-
-  translate_func::translate_func(char _src, char _dst) : empty(false), src(_src), dst(_dst) {}
-
-  char translate_func::operator()(char c) const { return empty || c != src ? c : dst; }
-}}
+}

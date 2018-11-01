@@ -70,7 +70,9 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -83,6 +85,12 @@
     <Link>
       <SubSystem>Windows</SubSystem>
     </Link>
+    <PreBuildEvent>
+      <Command>flatc.exe -o $(SolutionDir)..\reinforcement_learning\rlclientlib\generated\ --cpp $(SolutionDir)..\reinforcement_learning\rlclientlib\schema\OutcomeEvent.fbs $(SolutionDir)..\reinforcement_learning\rlclientlib\schema\RankingEvent.fbs</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Generate FlatBuffer</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -96,6 +104,12 @@
     <Link>
       <SubSystem>Windows</SubSystem>
     </Link>
+    <PreBuildEvent>
+      <Command>flatc.exe -o $(SolutionDir)..\reinforcement_learning\rlclientlib\generated\ --cpp $(SolutionDir)..\reinforcement_learning\rlclientlib\schema\OutcomeEvent.fbs $(SolutionDir)..\reinforcement_learning\rlclientlib\schema\RankingEvent.fbs</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Generate FlatBuffer</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -113,6 +127,12 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
+    <PreBuildEvent>
+      <Command>flatc.exe -o $(SolutionDir)..\reinforcement_learning\rlclientlib\generated\ --cpp $(SolutionDir)..\reinforcement_learning\rlclientlib\schema\OutcomeEvent.fbs $(SolutionDir)..\reinforcement_learning\rlclientlib\schema\RankingEvent.fbs</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Generate FlatBuffer</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -130,11 +150,18 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
+    <PreBuildEvent>
+      <Command>flatc.exe -o $(SolutionDir)..\reinforcement_learning\rlclientlib\generated\ --cpp $(SolutionDir)..\reinforcement_learning\rlclientlib\schema\OutcomeEvent.fbs $(SolutionDir)..\reinforcement_learning\rlclientlib\schema\RankingEvent.fbs</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Generate FlatBuffer</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="logger\event_batcher.h" />
     <ClInclude Include="..\include\api_status.h" />
     <ClInclude Include="..\include\configuration.h" />
     <ClInclude Include="..\include\live_model.h" />
@@ -149,6 +176,8 @@
     <ClInclude Include="..\include\model_mgmt.h" />
     <ClInclude Include="..\include\str_util.h" />
     <ClInclude Include="..\include\trace_logger.h" />
+    <ClInclude Include="generated\OutcomeEvent_generated.h" />
+    <ClInclude Include="generated\RankingEvent_generated.h" />
     <ClInclude Include="azure_factories.h" />
     <ClInclude Include="console_tracer.h" />
     <ClInclude Include="logger\event_logger.h" />
@@ -161,6 +190,7 @@
     <ClCompile Include="async_batcher.cc" />
     <ClCompile Include="azure_factories.cc" />
     <ClCompile Include="console_tracer.cc" />
+    <ClCompile Include="logger\event_batcher.cc" />
     <ClCompile Include="logger\event_logger.cc" />
     <ClCompile Include="trace_logger.cc" />
     <ClCompile Include="utility\data_buffer.cc" />
@@ -206,6 +236,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="schema\OutcomeEvent.fbs" />
+    <None Include="schema\RankingEvent.fbs" />
+    <None Include="schema\tools\Readme.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
@@ -217,5 +250,8 @@
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
     <Error Condition="!Exists('..\..\vowpalwabbit\packages\boost.1.63.0.0\build\native\boost.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\vowpalwabbit\packages\boost.1.63.0.0\build\native\boost.targets'))" />
+  </Target>
+  <Target Name="AfterClean">
+    <RemoveDir Directories="$(SolutionDir)reinforcement_learning\rlclientlib\generated" />
   </Target>
 </Project>

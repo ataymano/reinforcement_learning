@@ -74,6 +74,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -172,7 +173,6 @@
     <ClCompile Include="json_context_parse_test.cc" />
     <ClCompile Include="live_model_test.cc" />
     <ClCompile Include="eventhub_client_test.cc" />
-    <ClCompile Include="event_test.cc" />
     <ClCompile Include="http_server\http_server.cc" />
     <ClCompile Include="main.cc" />
     <ClCompile Include="mock_util.cc" />

@@ -4,6 +4,7 @@
 
 #include "event_queue.h"
 #include "ranking_event.h"
+#include "event_batcher.h"
 #include "sender.h"
 #include "api_status.h"
 #include "../error_callback_fn.h"
@@ -55,6 +56,7 @@ namespace reinforcement_learning {
     std::unique_ptr<i_sender> _sender;
 
     event_queue<TEvent> _queue;       // A queue to accumulate batch of events.
+    utility::event_batcher _event_batcher;
     utility::data_buffer _buffer;           // Re-used buffer to prevent re-allocation during sends.
     size_t _send_high_water_mark;
     size_t _queue_max_size;
@@ -106,20 +108,11 @@ namespace reinforcement_learning {
   template<typename TEvent>
   size_t async_batcher<TEvent>::fill_buffer(size_t remaining)
   {
-    TEvent evt;
     _buffer.reset();
-
-    while (remaining > 0 && _buffer.size() < _send_high_water_mark) {
-      _queue.pop(&evt);
-      if (BLOCK == _queue_mode) {
-        _cv.notify_one();
-      }
-      evt.serialize(_buffer);
-      _buffer << "\n";
-      --remaining;
+    _event_batcher.batch_serialize(_buffer, remaining, _queue, _send_high_water_mark);
+    if (BLOCK == _queue_mode) {
+      _cv.notify_one();
     }
-    _buffer.remove_last();
-
     return remaining;
   }
 
@@ -137,7 +130,7 @@ namespace reinforcement_learning {
     while (remaining > 0) {
       remaining = fill_buffer(remaining);
       api_status status;
-      if (_sender->send(_buffer.str(), &status) != error_code::success) {
+      if (_sender->send(_buffer.buffer(), &status) != error_code::success) {
         ERROR_CALLBACK(_perror_cb, status);
       }
     }
