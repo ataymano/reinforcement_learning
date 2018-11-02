@@ -1,12 +1,12 @@
 ﻿// EventHubInteraction Schema used by FlatBuffer
 
-namespace VW.Events;
+namespace reinforcement_learning.messages;
 
 table OutcomeEvent {
-    event_id:string;
+    event_id:string;                  // event ID
 	deferred_action:bool = false;
-	type:string;
-    value:[ubyte];
+	type:string;                      // type of byte data in value fields
+    value:[ubyte];                    // value
 }
 
 table OutcomeEventBatch {

@@ -4,8 +4,8 @@
 #include "generated/RankingEvent_generated.h"
 #include "generated/OutcomeEvent_generated.h"
 
-using VW::Events::RankingEvent;
-using VW::Events::OutcomeEvent;
+using reinforcement_learning::messages::RankingEvent;
+using reinforcement_learning::messages::OutcomeEvent;
 
 namespace reinforcement_learning {
   namespace utility { class data_buffer; }

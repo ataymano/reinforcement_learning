@@ -11,11 +11,11 @@ namespace reinforcement_learning {
 
     void event_batcher::batch_serialize(data_buffer& oss, data_buffer& swap, size_t& remaining, event_queue<ranking_event>& queue, size_t _send_high_water_mark)
     {
-      batch_serialize_internal<ranking_event, RankingEvent, VW::Events::RankingEventBatchBuilder>(oss, swap, remaining, queue, _send_high_water_mark);
+      batch_serialize_internal<ranking_event, RankingEvent, reinforcement_learning::messages::RankingEventBatchBuilder>(oss, swap, remaining, queue, _send_high_water_mark);
     }
     void event_batcher::batch_serialize(data_buffer& oss, data_buffer& swap, size_t& remaining, event_queue<outcome_event>& queue, size_t _send_high_water_mark)
     {
-      batch_serialize_internal<outcome_event, OutcomeEvent, VW::Events::OutcomeEventBatchBuilder>(oss, swap, remaining, queue, _send_high_water_mark);
+      batch_serialize_internal<outcome_event, OutcomeEvent, reinforcement_learning::messages::OutcomeEventBatchBuilder>(oss, swap, remaining, queue, _send_high_water_mark);
     }
 
     template<typename TEvent, typename TResultObject, typename TResultObjectBuilder>
@@ -52,7 +52,7 @@ namespace reinforcement_learning {
 
       auto model_id_offset = builder.CreateString(evt.get_model_id());
 
-      return VW::Events::CreateRankingEvent(builder, version, event_id_offset, evt.get_defered_action(), action_ids_vector_offset, context_offset, probabilities_vector_offset, model_id_offset);
+      return reinforcement_learning::messages::CreateRankingEvent(builder, version, event_id_offset, evt.get_defered_action(), action_ids_vector_offset, context_offset, probabilities_vector_offset, model_id_offset);
     }
 
     flatbuffers::Offset<OutcomeEvent> event_batcher::serialize_eventhub_message(outcome_event& evt, flatbuffers::FlatBufferBuilder& builder) {
@@ -62,7 +62,7 @@ namespace reinforcement_learning {
       outcome_vector.insert(outcome_vector.begin(), outcome.begin(), outcome.end());
       auto outcome_vector_offset = builder.CreateVector(outcome_vector);
       auto type_offset = builder.CreateString("string");
-      return VW::Events::CreateOutcomeEvent(builder, event_id_offset, evt.get_deferred_action(), type_offset, outcome_vector_offset);
+      return reinforcement_learning::messages::CreateOutcomeEvent(builder, event_id_offset, evt.get_deferred_action(), type_offset, outcome_vector_offset);
     }
   }
 }
