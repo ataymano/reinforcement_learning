@@ -36,12 +36,19 @@ BOOST_AUTO_TEST_CASE(send_something)
   BOOST_CHECK(http_server.on_initialize(U("http://localhost:8080")));
 
   //create a client
-  eventhub_client eh("localhost:8080", "", "", "", 1, 1, nullptr, nullptr, true);
+  eventhub_client eh("localhost:8080", "", "", "", 1, 8, nullptr, nullptr, true);
 
   api_status ret;
+
+  std::string message1Str("message 1");
+  std::vector<unsigned char> message1(message1Str.begin(), message1Str.end());
+
+  std::string message2Str("message 2");
+  std::vector<unsigned char> message2(message2Str.begin(), message2Str.end());
+
   //send events
-  BOOST_CHECK_EQUAL(eh.send("message 1", &ret), error_code::success);
-  BOOST_CHECK_EQUAL(eh.send("message 2", &ret), error_code::success);
+  BOOST_CHECK_EQUAL(eh.send(std::move(message1), &ret), error_code::success);
+  BOOST_CHECK_EQUAL(eh.send(std::move(message2), &ret), error_code::success);
 }
 
 BOOST_AUTO_TEST_CASE(retry_http_send_success)
@@ -71,7 +78,10 @@ BOOST_AUTO_TEST_CASE(retry_http_send_success)
     eventhub_client eh("localhost:8080", "", "", "", 1, 8 /* retries */, nullptr, &error_callback, true);
 
     api_status ret;
-    BOOST_CHECK_EQUAL(eh.send("message 1", &ret), error_code::success);
+
+    std::string message1Str("message 1");
+    std::vector<unsigned char> message1(message1Str.begin(), message1Str.end());
+    BOOST_CHECK_EQUAL(eh.send(std::move(message1), &ret), error_code::success);
   }
 
   // Although it was allowed to retry 8 times, it should stop after succeeding at 4.
@@ -101,7 +111,9 @@ BOOST_AUTO_TEST_CASE(retry_http_send_fail)
     eventhub_client eh("localhost:8080", "", "", "", 1, MAX_RETRIES, nullptr, &error_callback, true);
 
     api_status ret;
-    BOOST_CHECK_EQUAL(eh.send("message 1", &ret), error_code::success);
+    std::string message1Str("message 1");
+    std::vector<unsigned char> message1(message1Str.begin(), message1Str.end());
+    BOOST_CHECK_EQUAL(eh.send(std::move(message1), &ret), error_code::success);
   }
 
   BOOST_CHECK_EQUAL(tries, MAX_RETRIES + 1);
@@ -123,7 +135,8 @@ BOOST_AUTO_TEST_CASE(http_in_order_after_retry)
     // Succeed every 4th attempt.
     if (tries >= 4) {
       // extract_string can only be called once on an http_request but we only do it once. Using const cast to avoid having to read out the stream.
-      received_messages.push_back(const_cast<http_request&>(message).extract_utf8string().get());
+      std::vector<unsigned char> data = const_cast<http_request&>(message).extract_vector().get();
+      received_messages.push_back(std::string(data.begin(),data.end()));
       message.reply(status_codes::Created);
       tries = 0;
     }
@@ -141,11 +154,25 @@ BOOST_AUTO_TEST_CASE(http_in_order_after_retry)
     eventhub_client eh("localhost:8080", "", "", "", 1, MAX_RETRIES, nullptr, &error_callback, true);
 
     api_status ret;
-    BOOST_CHECK_EQUAL(eh.send("message 1", &ret), error_code::success);
-    BOOST_CHECK_EQUAL(eh.send("message 2", &ret), error_code::success);
-    BOOST_CHECK_EQUAL(eh.send("message 3", &ret), error_code::success);
-    BOOST_CHECK_EQUAL(eh.send("message 4", &ret), error_code::success);
-    BOOST_CHECK_EQUAL(eh.send("message 5", &ret), error_code::success);
+    std::string message1Str("message 1");
+    std::vector<unsigned char> message1(message1Str.begin(), message1Str.end());
+    BOOST_CHECK_EQUAL(eh.send(std::move(message1), &ret), error_code::success);
+
+    std::string message2Str("message 2");
+    std::vector<unsigned char> message2(message2Str.begin(), message2Str.end());
+    BOOST_CHECK_EQUAL(eh.send(std::move(message2), &ret), error_code::success);
+
+    std::string message3Str("message 3");
+    std::vector<unsigned char> message3(message3Str.begin(), message3Str.end());
+    BOOST_CHECK_EQUAL(eh.send(std::move(message3), &ret), error_code::success);
+
+    std::string message4Str("message 4");
+    std::vector<unsigned char> message4(message4Str.begin(), message4Str.end());
+    BOOST_CHECK_EQUAL(eh.send(std::move(message4), &ret), error_code::success);
+
+    std::string message5Str("message 5");
+    std::vector<unsigned char> message5(message5Str.begin(), message5Str.end());
+    BOOST_CHECK_EQUAL(eh.send(std::move(message5), &ret), error_code::success);
   }
 
   BOOST_CHECK_EQUAL(received_messages[0], "message 1");

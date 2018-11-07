@@ -31,7 +31,7 @@ namespace reinforcement_learning {
     web::http::client::http_client* client,
     const std::string& host,
     const std::string& auth,
-    std::string&& post_data,
+    std::vector<unsigned char>&& post_data,
     size_t max_retries,
     error_callback_fn* error_callback,
     i_trace* trace)
@@ -50,7 +50,7 @@ namespace reinforcement_learning {
     http_request request(methods::POST);
     request.headers().add(_XPLATSTR("Authorization"), _auth.c_str());
     request.headers().add(_XPLATSTR("Host"), _host.c_str());
-    request.set_body(_post_data.c_str());
+    request.set_body(_post_data);
 
     return _client->request(request).then([this, try_count](pplx::task<http_response> response) {
       web::http::status_code code = status_codes::InternalError;
@@ -94,7 +94,7 @@ namespace reinforcement_learning {
     return error_code::success;
   }
 
-  std::string eventhub_client::http_request_task::post_data() const {
+  std::vector<unsigned char> eventhub_client::http_request_task::post_data() const {
     return _post_data;
   }
 
@@ -122,7 +122,7 @@ namespace reinforcement_learning {
     return error_code::success;
   }
 
-  int eventhub_client::v_send(std::string&& post_data, api_status* status) {
+  int eventhub_client::v_send(std::vector<unsigned char>&& post_data, api_status* status) {
     RETURN_IF_FAIL(check_authorization_validity_generate_if_needed(status));
 
     std::string auth_str;
@@ -142,7 +142,7 @@ namespace reinforcement_learning {
       _tasks.push(std::move(request_task));
     }
     catch (const std::exception& e) {
-      RETURN_ERROR_LS(_trace, status, eventhub_http_generic) << e.what() << ", post_data: " << post_data;
+      RETURN_ERROR_LS(_trace, status, eventhub_http_generic) << e.what();
     }
     return error_code::success;
   }

@@ -25,7 +25,10 @@
     <ClCompile Include="utility\watchdog.cc" />
     <ClCompile Include="console_tracer.cc" />
     <ClCompile Include="trace_logger.cc" />
+    <ClCompile Include="async_batcher.cc" />
+    <ClCompile Include="logger\event_batcher.cc" />
     <ClCompile Include="azure_factories.cc" />
+    <ClCompile Include="logger\flatbuffer_allocator.cc" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\api_status.h" />
@@ -59,13 +62,21 @@
     <ClInclude Include="..\include\sender.h" />
     <ClInclude Include="..\include\object_factory.h" />
     <ClInclude Include="utility\watchdog.h" />
+    <ClInclude Include="generated\RankingEvent_generated.h" />
+    <ClInclude Include="logger\event_batcher.h" />
+    <ClInclude Include="generated\RankingEvent_generated.h" />
     <ClInclude Include="moving_queue.h" />
     <ClInclude Include="..\include\trace_logger.h" />
     <ClInclude Include="console_tracer.h" />
+    <ClInclude Include="generated\OutcomeEvent_generated.h" />
     <ClInclude Include="azure_factories.h" />
+    <ClInclude Include="logger\flatbuffer_allocator.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="schema\tools\Readme.md" />
+    <None Include="schema\OutcomeEvent.fbs" />
+    <None Include="schema\RankingEvent.fbs" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />

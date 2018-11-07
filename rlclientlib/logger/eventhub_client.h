@@ -9,6 +9,7 @@
 #include <pplx/pplxtasks.h>
 
 #include <queue>
+#include <vector>
 #include <chrono>
 #include <memory>
 
@@ -22,11 +23,11 @@ namespace reinforcement_learning {
     virtual int init(api_status* status) override;
 
     eventhub_client(const std::string& host, const std::string& key_name,
-                    const std::string& key, const std::string& name,
-                    size_t tasks_count, size_t MAX_RETRIES, i_trace* trace, error_callback_fn* _error_cb, bool local_test = false);
+      const std::string& key, const std::string& name,
+      size_t tasks_count, size_t MAX_RETRIES, i_trace* trace, error_callback_fn* _error_cb, bool local_test = false);
     ~eventhub_client();
   protected:
-    virtual int v_send(std::string&& data, api_status* status) override;
+    virtual int v_send(std::vector<unsigned char>&& data, api_status* status) override;
 
   private:
     class http_request_task {
@@ -36,7 +37,7 @@ namespace reinforcement_learning {
         web::http::client::http_client* client,
         const std::string& host,
         const std::string& auth,
-        std::string&& post_data,
+        std::vector<unsigned char>&& data,
         size_t max_retries = 1, // If MAX_RETRIES is set to 1, only the initial request will be attempted.
         error_callback_fn* error_callback = nullptr,
         i_trace* trace = nullptr);
@@ -48,7 +49,7 @@ namespace reinforcement_learning {
       http_request_task(const http_request_task&) = delete;
       http_request_task& operator=(const http_request_task&) = delete;
 
-      std::string post_data() const;
+      std::vector<unsigned char> post_data() const;
 
       // Return error_code
       int join();
@@ -58,7 +59,7 @@ namespace reinforcement_learning {
       web::http::client::http_client* _client;
       std::string _host;
       std::string _auth;
-      std::string _post_data;
+      std::vector<unsigned char> _post_data;
 
       pplx::task<web::http::status_code> _task;
 

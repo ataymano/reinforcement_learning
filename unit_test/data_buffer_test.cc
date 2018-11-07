@@ -13,7 +13,7 @@ using namespace std;
 BOOST_AUTO_TEST_CASE(new_data_buffer_is_empty) {
   data_buffer buffer;
 
-  BOOST_CHECK_EQUAL(buffer.str(), "");
+  BOOST_CHECK_EQUAL(buffer.size(), 0);
 }
 
 BOOST_AUTO_TEST_CASE(single_output_to_data_buffer) {
@@ -36,12 +36,13 @@ BOOST_AUTO_TEST_CASE(multiple_outputs_to_data_buffer) {
 }
 
 BOOST_AUTO_TEST_CASE(remove_last_from_nonempty_data_buffer) {
-  data_buffer buffer;
+    data_buffer buffer;
+    
+    std::string test("test");
+    buffer << test << "1";
+    buffer.remove_last();
 
-  buffer << "test1";
-  buffer.remove_last();
-
-  BOOST_CHECK_EQUAL(buffer.str(), "test");
+    BOOST_CHECK_EQUAL(buffer.str(), test);
 }
 
 BOOST_AUTO_TEST_CASE(empty_data_buffer_reset) {
@@ -49,23 +50,15 @@ BOOST_AUTO_TEST_CASE(empty_data_buffer_reset) {
 
   buffer.reset();
 
-  BOOST_CHECK_EQUAL(buffer.str(), "");
+  BOOST_CHECK_EQUAL(buffer.size(), 0);
 }
 
 BOOST_AUTO_TEST_CASE(nonempty_data_buffer_reset) {
   data_buffer buffer;
 
   buffer << "test";
+
   buffer.reset();
 
-  BOOST_CHECK_EQUAL(buffer.str(), "");
+  BOOST_CHECK_EQUAL(buffer.size(), 0);
 }
-
-BOOST_AUTO_TEST_CASE(translation_data_buffer_reset) {
-  data_buffer buffer(translate_func('s', 'n'));
-
-  buffer << "test";
-
-  BOOST_CHECK_EQUAL(buffer.str(), "tent");
-}
-
