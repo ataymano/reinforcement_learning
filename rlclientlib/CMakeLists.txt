@@ -1,3 +1,8 @@
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+find_package(FlatBuffers REQUIRED)
+set(RL_FLAT_BUFFER_FILES "${CMAKE_CURRENT_SOURCE_DIR}/schema/OutcomeEvent.fbs" "${CMAKE_CURRENT_SOURCE_DIR}/schema/RankingEvent.fbs" )
+build_flatbuffers("${RL_FLAT_BUFFER_FILES}" "" fbgenerator "" "${CMAKE_CURRENT_SOURCE_DIR}/generated" "" "")
+
 add_library(rlclientlib
   api_status.cc
   azure_factories.cc
@@ -9,6 +14,8 @@ add_library(rlclientlib
   async_batcher.cc
   logger/event_logger.cc
   logger/eventhub_client.cc
+  logger/event_batcher.cc
+  logger/flatbuffer_allocator.cc
   model_mgmt/data_callback_fn.cc
   model_mgmt/model_downloader.cc
   model_mgmt/model_mgmt.cc
@@ -26,8 +33,9 @@ add_library(rlclientlib
   vw_model/vw_model.cc
 )
 
+add_dependencies(rlclientlib fbgenerator)
 set_target_properties(rlclientlib PROPERTIES POSITION_INDEPENDENT_CODE ON)
-target_include_directories(rlclientlib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../include PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(rlclientlib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../include PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${FLATBUFFERS_INCLUDE_DIRS})
 target_link_libraries(rlclientlib PUBLIC Boost::system Boost::program_options vw OpenSSL::SSL OpenSSL::Crypto cpprestsdk::cpprest)
 
 if(TURN_OFF_DEVIRTUALIZE)
