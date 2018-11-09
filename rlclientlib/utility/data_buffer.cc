@@ -2,23 +2,47 @@
 #include <string>
 #include <iterator>
 #include <iostream>
+#include <stdexcept>
 
 namespace reinforcement_learning {
   namespace utility {
     data_buffer::data_buffer() = default;
 
-    void data_buffer::reset() { _buffer.clear(); }
+    void data_buffer::reset() {
+      _buffer.clear();
+    }
 
     size_t data_buffer::size() const {
+      return _buffer.size() - _offset;
+    }
+
+    size_t data_buffer::capacity() const {
       return _buffer.size();
     }
 
     void data_buffer::remove_last() { _buffer.pop_back(); }
 
+    size_t data_buffer::offset() const {
+      return _offset;
+    }
+
+    void data_buffer::set_offset(size_t offset){
+      if(offset > _buffer.size()) {
+        throw std::out_of_range("offset is greater than buffer size");
+      }
+
+      _offset = offset;
+    }
+
     void data_buffer::append(const unsigned char* data, size_t len) {
       _buffer.reserve(_buffer.size() + len);
       _buffer.insert(_buffer.end(), data, data + len);
     }
+
+    unsigned char* data_buffer::data() const {
+      return const_cast<unsigned char*>(_buffer.data()) + _offset;
+    }
+
 
     std::vector<unsigned char> data_buffer::buffer() {
       return _buffer;
@@ -48,6 +72,8 @@ namespace reinforcement_learning {
 
     buffer_factory::buffer_factory() = default;
 
-    data_buffer* buffer_factory::operator()() const { return new data_buffer(); }
+    data_buffer* buffer_factory::operator()() const {
+      return new data_buffer();
+    }
   }
 }
