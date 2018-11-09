@@ -147,6 +147,13 @@ namespace reinforcement_learning {
     return error_code::success;
   }
 
+  int eventhub_client::v_send(unsigned char* post_data, size_t size, api_status* status) {
+    // Not implemented.
+    return error_code::success;
+  }
+
+
+
   eventhub_client::eventhub_client(const std::string& host, const std::string& key_name,
                                    const std::string& key, const std::string& name,
                                    size_t max_tasks_count, size_t max_retries,  i_trace* trace,

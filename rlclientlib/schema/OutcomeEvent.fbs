@@ -2,13 +2,26 @@
 
 namespace reinforcement_learning.messages;
 
+table OutcomeEventString {
+    event_id:string;
+    value:string;
+}
+
+table OutcomeEventNumeric {
+    event_id:string;
+    value:float;
+}
+
+table OutcomeEventTaken {
+    event_id:string;
+}
+
+union OutcomeEventAny { OutcomeEventString, OutcomeEventNumeric, OutcomeEventTaken }
+
 table OutcomeEvent {
-    event_id:string;                  // event ID
-	deferred_action:bool = false;
-	type:string;                      // type of byte data in value fields
-    value:[ubyte];                    // value
+    event:OutcomeEventAny;
 }
 
 table OutcomeEventBatch {
-    Events:[OutcomeEvent];
+    events:[OutcomeEvent];
 }

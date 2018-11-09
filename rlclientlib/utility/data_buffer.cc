@@ -27,12 +27,12 @@ namespace reinforcement_learning {
       return _begin_offset;
     }
 
-    int data_buffer::set_begin_begin_offset(size_t begin_begin_offset){
-      if(begin_begin_offset > _buffer.size()) {
+    int data_buffer::set_begin_offset(size_t begin_offset){
+      if(begin_offset > _buffer.size()) {
         return error_code::invalid_argument;
       }
 
-      _begin_offset = begin_begin_offset;
+      _begin_offset = begin_offset;
     }
 
     void data_buffer::append(const unsigned char* data, size_t len) {
@@ -43,7 +43,6 @@ namespace reinforcement_learning {
     unsigned char* data_buffer::data() const {
       return const_cast<unsigned char*>(_buffer.data()) + _begin_offset;
     }
-
 
     std::vector<unsigned char> data_buffer::buffer() {
       return _buffer;

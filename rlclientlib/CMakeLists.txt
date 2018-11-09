@@ -11,10 +11,9 @@ add_library(rlclientlib
   factory_resolver.cc
   live_model_impl.cc
   live_model.cc
-  async_batcher.cc
+  logger/async_batcher.cc
   logger/event_logger.cc
   logger/eventhub_client.cc
-  logger/event_batcher.cc
   logger/flatbuffer_allocator.cc
   model_mgmt/data_callback_fn.cc
   model_mgmt/model_downloader.cc

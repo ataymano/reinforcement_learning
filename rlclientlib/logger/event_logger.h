@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stddef.h>
+
 #include "sender.h"
 #include "utility/object_pool.h"
 
@@ -12,6 +14,8 @@
 #include "utility/watchdog.h"
 #include "ranking_response.h"
 #include "ranking_event.h"
+
+#include "serialization/fb_serializer.h"
 
 namespace reinforcement_learning {
   // This class wraps logging event to event_hub in a generic way that live_model can consume.
@@ -37,7 +41,7 @@ namespace reinforcement_learning {
     bool _initialized = false;
 
     // Handle batching for the data sent to the eventhub client
-    async_batcher<TEvent> _batcher;
+    async_batcher<TEvent, fb_collection_serializer> _batcher;
 
     utility::object_pool<utility::data_buffer, utility::buffer_factory> _buffer_pool;
   };
