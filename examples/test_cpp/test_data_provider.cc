@@ -3,7 +3,11 @@
 #include "utility/data_buffer.h"
 #include "ranking_event.h"
 
+#include "serialization/json_serializer.h"
+
 #include <sstream>
+
+namespace rl = reinforcement_learning;
 
 test_data_provider::test_data_provider(const std::string& experiment_name, size_t threads, size_t examples, size_t features, size_t actions, bool _is_float_outcome)
   : event_ids(threads, std::vector<std::string>(examples))
@@ -91,6 +95,8 @@ bool test_data_provider::is_rewarded(size_t thread_id, size_t example_id) const 
 }
 
 void test_data_provider::log(size_t thread_id, size_t example_id, const reinforcement_learning::ranking_response& response, std::ostream& logger) const {
+  rl::utility::data_buffer buffer;
+
   size_t action_id;
   response.get_chosen_action_id(action_id);
   float prob = 0;
@@ -102,17 +108,23 @@ void test_data_provider::log(size_t thread_id, size_t example_id, const reinforc
 
   logger << R"({"_label_cost":)" << -get_outcome(thread_id, example_id) << R"(,"_label_probability":)" << prob << R"(,"_label_Action":)" << (action_id + 1) << R"(,"_labelIndex":)" << action_id << ",";
 
+
+
   if (is_rewarded(thread_id, example_id)) {
     reinforcement_learning::outcome_event outcome_evt;
     if (is_float_outcome)
       outcome_evt = reinforcement_learning::outcome_event::report_outcome(get_event_id(thread_id, example_id), get_outcome(thread_id, example_id));
     else
       outcome_evt = reinforcement_learning::outcome_event::report_outcome(get_event_id(thread_id, example_id), get_outcome_json(thread_id, example_id));
-    logger << R"("o":[)" << outcome_evt.str() << "],";
+
+    rl::json_event_serializer<rl::outcome_event>::serialize(outcome_evt, buffer);
+
+    logger << R"("o":[)" << std::string(reinterpret_cast<char*>(buffer.data()), buffer.size()) << "],";
   }
 
   auto ranking_evt = reinforcement_learning::ranking_event::choose_rank(get_event_id(thread_id, example_id), get_context(thread_id, example_id), reinforcement_learning::action_flags::DEFAULT, response);
-  const std::string buffer_str = ranking_evt.str();
+  rl::json_event_serializer<rl::ranking_event>::serialize(ranking_evt, buffer);
+  const std::string buffer_str(reinterpret_cast<char*>(buffer.data()), buffer.size());
   logger << buffer_str.substr(1, buffer_str.length() - 1) << std::endl;
 }
 

@@ -23,6 +23,7 @@ namespace reinforcement_learning {
     virtual ~event();
 
     virtual bool try_drop(float pass_prob, int drop_pass);
+    float get_pass_prob() const;
 
   protected:
     float prg(int drop_pass) const;
@@ -41,7 +42,6 @@ namespace reinforcement_learning {
     ranking_event(ranking_event&& other);
     ranking_event& operator=(ranking_event&& other);
 
-    std::string str();
     std::vector<unsigned char> get_context();
     std::vector<uint64_t> get_action_ids();
     std::vector<float> get_probabilities();
@@ -65,14 +65,19 @@ namespace reinforcement_learning {
   //serializable outcome event
   class outcome_event : public event {
   public:
-    outcome_event();
-
+    outcome_event() = default;
     outcome_event(outcome_event&& other);
     outcome_event& operator=(outcome_event&& other);
 
-    std::string str();
-    std::string get_outcome();
-    bool get_deferred_action();
+    std::string get_outcome() const;
+    float get_numeric_outcome() const;
+    bool get_deferred_action() const;
+
+    static const unsigned int outcome_type_unset = 0;
+    static const unsigned int outcome_type_string = 1;
+    static const unsigned int outcome_type_numeric = 2;
+    static const unsigned int outcome_type_action_taken = 3;
+    unsigned int get_outcome_type() const { return outcome_type; }
 
   public:
     static outcome_event report_action_taken(const char* event_id, float pass_prob = 1);
@@ -86,6 +91,8 @@ namespace reinforcement_learning {
 
   private:
     std::string _outcome;
+    float _float_outcome;
     bool _deferred_action;
+    unsigned int outcome_type = 0;
   };
 }

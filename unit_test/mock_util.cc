@@ -1,5 +1,9 @@
 #define BOOST_TEST_DYN_LINK
 
+#include <vector>
+
+#include "api_status.h"
+
 #include "mock_util.h"
 
 #include "constants.h"
@@ -18,7 +22,8 @@ std::unique_ptr<fakeit::Mock<r::i_sender>> get_mock_sender() {
     new fakeit::Mock<r::i_sender>());
 
   When(Method((*mock), init)).AlwaysReturn(r::error_code::success);
-  When(Method((*mock), send)).AlwaysReturn(r::error_code::success);
+  When(OverloadedMethod((*mock), send, int(std::vector<unsigned char>&&, r::api_status*))).AlwaysReturn(r::error_code::success);
+  When(OverloadedMethod((*mock), send, int(unsigned char*, size_t, r::api_status*))).AlwaysReturn(r::error_code::success);
   Fake(Dtor((*mock)));
 
   return mock;
@@ -29,8 +34,18 @@ std::unique_ptr<fakeit::Mock<r::i_sender>> get_mock_sender(std::vector<std::vect
     new fakeit::Mock<r::i_sender>());
 
   When(Method((*mock), init)).AlwaysReturn(r::error_code::success);
-  When(Method((*mock), send)).AlwaysDo(
+  When(OverloadedMethod((*mock), send, int(std::vector<unsigned char>&&, r::api_status*))).AlwaysDo(
     [&recorded_messages](std::vector<unsigned char> &message, reinforcement_learning::api_status* status) {
+    recorded_messages.push_back(message);
+    return r::error_code::success;
+  });
+
+  When(OverloadedMethod((*mock), send, int(unsigned char*, size_t, r::api_status*))).AlwaysDo(
+    [&recorded_messages](unsigned char* data, size_t size, r::api_status*) {
+    std::vector<unsigned char> message;
+    for (int i = 0; i < size; i++) {
+      message.push_back(*(data + i));
+    }
     recorded_messages.push_back(message);
     return r::error_code::success;
   });

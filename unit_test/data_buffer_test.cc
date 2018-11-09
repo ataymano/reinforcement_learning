@@ -35,16 +35,6 @@ BOOST_AUTO_TEST_CASE(multiple_outputs_to_data_buffer) {
   BOOST_CHECK_EQUAL(buffer.str(), "test2test");
 }
 
-BOOST_AUTO_TEST_CASE(remove_last_from_nonempty_data_buffer) {
-    data_buffer buffer;
-    
-    std::string test("test");
-    buffer << test << "1";
-    buffer.remove_last();
-
-    BOOST_CHECK_EQUAL(buffer.str(), test);
-}
-
 BOOST_AUTO_TEST_CASE(empty_data_buffer_reset) {
   data_buffer buffer;
 
@@ -62,3 +52,6 @@ BOOST_AUTO_TEST_CASE(nonempty_data_buffer_reset) {
 
   BOOST_CHECK_EQUAL(buffer.size(), 0);
 }
+
+BOOST_AUTO_TEST_CASE(data_buffer_set_offset) {}
+BOOST_AUTO_TEST_CASE(data_buffer_set_offset_too_large) {}

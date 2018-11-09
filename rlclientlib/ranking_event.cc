@@ -41,6 +41,10 @@ namespace reinforcement_learning {
     return prg(drop_pass) > pass_prob;
   }
 
+  float event::get_pass_prob() const {
+    return _pass_prob;
+  }
+
   float event::prg(int drop_pass) const {
     const auto seed_str = _event_id + std::to_string(drop_pass);
     const auto seed = uniform_hash(seed_str.c_str(), seed_str.length(), 0);
@@ -110,40 +114,6 @@ namespace reinforcement_learning {
     return ranking_event(event_id, flags & action_flags::DEFERRED, pass_prob, context, resp);
   }
 
-  std::string ranking_event::str() {
-    u::data_buffer oss;
-
-    oss << R"({"Version":"1","EventId":")" << _event_id << R"(")";
-
-    if (_deferred_action) {
-      oss << R"(,"DeferredAction":true)";
-    }
-
-    //add action ids
-    oss << R"(,"a":[)";
-    for (auto id : _action_ids_vector) {
-      oss << id + 1 << ",";
-    }
-    //remove trailing ,
-    oss.remove_last();
-
-    //add probabilities
-    oss << R"(],"c":)" << std::string(_context.begin(), _context.end()) << R"(,"p":[)";
-    for (auto prob : _probilities_vector) {
-      oss << prob << ",";
-    }
-    //remove trailing ,
-    oss.remove_last();
-
-    //add model id
-    oss << R"(],"VWState":{"m":")" << _model_id << R"("})";
-
-    return oss.str();
-  }
-
-  outcome_event::outcome_event()
-  { }
-
   outcome_event::outcome_event(const char* event_id, float pass_prob, const char* outcome, bool deferred_action)
     : event(event_id, pass_prob)
     , _outcome(outcome)
@@ -171,30 +141,33 @@ namespace reinforcement_learning {
     return *this;
   }
 
-  std::string outcome_event::str() {
-    u::data_buffer oss;
-    std::string deferred_action = _deferred_action ? "true" : "false";
-    oss << R"({"EventId":")" << _event_id << R"(","v":)" << _outcome << R"(","DeferredAction":)" << deferred_action << R"(})";
-    return oss.str();
-  }
-
   outcome_event outcome_event::report_outcome(const char* event_id, const char* outcome, float pass_prob) {
-    return outcome_event(event_id, pass_prob, outcome, true);
+    outcome_event evt(event_id, pass_prob, outcome, true);
+    evt.outcome_type = outcome_type_string;
+    return evt;
   }
 
   outcome_event outcome_event::report_outcome(const char* event_id, float outcome, float pass_prob) {
-    return outcome_event(event_id, pass_prob, outcome, true);
+    outcome_event evt(event_id, pass_prob, outcome, true);
+    evt.outcome_type = outcome_type_numeric;
+    return evt;
   }
 
   outcome_event outcome_event::report_action_taken(const char* event_id, float pass_prob) {
-    return outcome_event(event_id, pass_prob, "", false);
+    outcome_event evt(event_id, pass_prob, "", false);
+    evt.outcome_type = outcome_type_action_taken;
+    return evt;
   }
 
-  std::string outcome_event::get_outcome() {
+  std::string outcome_event::get_outcome() const {
     return _outcome;
   }
 
-  bool outcome_event::get_deferred_action() {
+  float outcome_event::get_numeric_outcome() const {
+    return _float_outcome;
+  }
+
+  bool outcome_event::get_deferred_action() const {
     return _deferred_action;
   }
 }

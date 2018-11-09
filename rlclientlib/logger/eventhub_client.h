@@ -28,6 +28,7 @@ namespace reinforcement_learning {
     ~eventhub_client();
   protected:
     virtual int v_send(std::vector<unsigned char>&& data, api_status* status) override;
+    virtual int v_send(unsigned char* data, size_t size, api_status* status) override;
 
   private:
     class http_request_task {

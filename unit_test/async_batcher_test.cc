@@ -6,9 +6,14 @@
 #include <boost/test/unit_test.hpp>
 #include <string>
 #include <vector>
-#include "logger/async_batcher.h"
+
+
 #include "utility/data_buffer.h"
 #include "err_constants.h"
+
+#include "serialization/json_serializer.h"
+#include "logger/async_batcher.h"
+
 
 using namespace reinforcement_learning;
 
@@ -24,6 +29,15 @@ public:
 
   virtual int v_send(std::vector<unsigned char>&& data, api_status* status = nullptr) override {
     items.push_back(data);
+    return error_code::success;
+  };
+
+  virtual int v_send(unsigned char* data, size_t size, api_status* status = nullptr) override {
+    std::vector<unsigned char> message;
+    for (int i = 0; i < size; i++) {
+      message.push_back(*(data + i));
+    }
+    items.push_back(message);
     return error_code::success;
   };
 };
@@ -66,6 +80,26 @@ public:
   }
 };
 
+namespace reinforcement_learning {
+  template<>
+  struct json_event_serializer<test_droppable_event> {
+    using buffer_t = utility::data_buffer;
+    static void serialize(test_droppable_event& evt, buffer_t& buffer) {
+      buffer << evt.get_event_id();
+    }
+  };
+
+
+  template<>
+  struct json_event_serializer<test_undroppable_event> {
+    using buffer_t = utility::data_buffer;
+    static void serialize(test_undroppable_event& evt, buffer_t& buffer) {
+      buffer << evt.get_event_id();
+    }
+  };
+}
+
+
 void expect_no_error(const api_status& s, void* cntxt)
 {
   BOOST_ASSERT(s.get_error_code() == error_code::success);
@@ -78,15 +112,15 @@ BOOST_AUTO_TEST_CASE(flush_timeout)
   std::vector<std::vector<unsigned char>> items;
   auto s = new sender(items);
 
-  size_t timeout_ms = 100;//set a short timeout
+  size_t timeout_ms = 100; //set a short timeout
   error_callback_fn error_fn(expect_no_error, nullptr);
   utility::watchdog watchdog(nullptr);
   async_batcher<test_undroppable_event> batcher(s, watchdog, &error_fn, 262143, timeout_ms, 8192);
   batcher.init(nullptr);
 
   // Allow periodic_background_proc inside async_batcher to start waiting
-  // on a timer before sending any events to it.   Else we risk not 
-  // triggering the batch mechanism and might get triggered by initial 
+  // on a timer before sending any events to it. Else we risk not
+  // triggering the batch mechanism and might get triggered by initial
   // pass in do..while loop
   std::this_thread::sleep_for(std::chrono::milliseconds(20));
 
@@ -96,11 +130,8 @@ BOOST_AUTO_TEST_CASE(flush_timeout)
   batcher.append(test_undroppable_event(foo));
   batcher.append(test_undroppable_event(bar));
 
-  //wait until the timeout triggers
-  std::this_thread::sleep_for(std::chrono::milliseconds(timeout_ms));
-
   //check the batch was sent
-  std::string expected = foo + bar;
+  std::string expected = foo + "\n" + bar;
   BOOST_REQUIRE_EQUAL(items.size(), 1);
   std::string result;
   for (auto item : items) {
@@ -114,33 +145,33 @@ BOOST_AUTO_TEST_CASE(flush_batches)
 {
   std::vector<std::vector<unsigned char>> items;
   auto s = new sender(items);
-  size_t send_high_water_mark = 10;//bytes	
+  size_t send_high_water_mark = 10;//bytes
   error_callback_fn error_fn(expect_no_error, nullptr);
   utility::watchdog watchdog(nullptr);
   async_batcher<test_undroppable_event>* batcher = new async_batcher<test_undroppable_event>(s, watchdog, &error_fn, send_high_water_mark, 100000);
   batcher->init(nullptr);
 
   // Allow periodic_background_proc inside async_batcher to start waiting
-  // on a timer before sending any events to it.   Else we risk not 
-  // triggering the batch mechanism and might get triggered by initial 
+  // on a timer before sending any events to it.   Else we risk not
+  // triggering the batch mechanism and might get triggered by initial
   // pass in do..while loop
   std::this_thread::sleep_for(std::chrono::milliseconds(20));
 
-  //add 2 items in the current batch	
+  //add 2 items in the current batch
   std::string foo("foo");
   std::string bar("bar-yyy");
-  batcher->append(test_undroppable_event(foo));   //3 bytes	
-  batcher->append(test_undroppable_event(bar));   //7 bytes	
+  batcher->append(test_undroppable_event(foo));   //3 bytes
+  batcher->append(test_undroppable_event(bar));   //7 bytes
 
-  //'send_high_water_mark' will be triggered by previous 2 items.	
-  //next item will be added in a new batch	
+  //'send_high_water_mark' will be triggered by previous 2 items.
+  //next item will be added in a new batch
   std::string hello("hello");
   batcher->append(test_undroppable_event(hello));
 
   std::string expected_batch_0 = foo + bar;
   std::string expected_batch_1 = hello;
 
-  delete batcher;//flush force	
+  delete batcher;//flush force
 
   BOOST_REQUIRE_EQUAL(items.size(), 2);
   std::string batch_0(items[0].begin(), items[0].end());
