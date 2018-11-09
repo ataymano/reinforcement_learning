@@ -21,7 +21,7 @@ namespace reinforcement_learning { namespace utility {
 
     // Offset from beginning of buffer.
     size_t offset() const;
-    int set_offset(size_t offset);
+    int set_begin_offset(size_t offset);
 
     void append(const unsigned char* data, size_t len);
 
@@ -41,7 +41,7 @@ namespace reinforcement_learning { namespace utility {
 
   private:
     std::vector<unsigned char> _buffer;
-    size_t _offset = 0;
+    size_t _begin_offset = 0;
   };
 
   class buffer_factory {

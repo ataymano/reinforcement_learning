@@ -14,7 +14,7 @@ namespace reinforcement_learning {
     }
 
     size_t data_buffer::size() const {
-      return _buffer.size() - _offset;
+      return _buffer.size() - _begin_offset;
     }
 
     size_t data_buffer::capacity() const {
@@ -24,15 +24,15 @@ namespace reinforcement_learning {
     void data_buffer::remove_last() { _buffer.pop_back(); }
 
     size_t data_buffer::offset() const {
-      return _offset;
+      return _begin_offset;
     }
 
-    int data_buffer::set_offset(size_t offset){
-      if(offset > _buffer.size()) {
+    int data_buffer::set_begin_begin_offset(size_t begin_begin_offset){
+      if(begin_begin_offset > _buffer.size()) {
         return error_code::invalid_argument;
       }
 
-      _offset = offset;
+      _begin_offset = begin_begin_offset;
     }
 
     void data_buffer::append(const unsigned char* data, size_t len) {
@@ -41,7 +41,7 @@ namespace reinforcement_learning {
     }
 
     unsigned char* data_buffer::data() const {
-      return const_cast<unsigned char*>(_buffer.data()) + _offset;
+      return const_cast<unsigned char*>(_buffer.data()) + _begin_offset;
     }
 
 
