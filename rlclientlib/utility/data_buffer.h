@@ -21,7 +21,7 @@ namespace reinforcement_learning { namespace utility {
 
     // Offset from beginning of buffer.
     size_t offset() const;
-    void set_offset(size_t offset);
+    int set_offset(size_t offset);
 
     void append(const unsigned char* data, size_t len);
 

@@ -2,7 +2,8 @@
 #include <string>
 #include <iterator>
 #include <iostream>
-#include <stdexcept>
+
+#include "err_constants.h"
 
 namespace reinforcement_learning {
   namespace utility {
@@ -26,9 +27,9 @@ namespace reinforcement_learning {
       return _offset;
     }
 
-    void data_buffer::set_offset(size_t offset){
+    int data_buffer::set_offset(size_t offset){
       if(offset > _buffer.size()) {
-        throw std::out_of_range("offset is greater than buffer size");
+        return error_code::invalid_argument;
       }
 
       _offset = offset;
