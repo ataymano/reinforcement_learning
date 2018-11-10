@@ -27,7 +27,7 @@ namespace reinforcement_learning {
       return _begin_offset;
     }
 
-    int data_buffer::set_begin_begin_offset(size_t begin_begin_offset){
+    int data_buffer::set_begin_offset(size_t begin_begin_offset){
       if(begin_begin_offset > _buffer.size()) {
         return error_code::invalid_argument;
       }

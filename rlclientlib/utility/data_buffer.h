@@ -39,6 +39,8 @@ namespace reinforcement_learning { namespace utility {
     data_buffer& operator<<(size_t rhs);
     data_buffer& operator<<(float rhs);
 
+    unsigned char* get_preamble(uint32_t byte_size);
+
   private:
     std::vector<unsigned char> _buffer;
     size_t _begin_offset = 0;
