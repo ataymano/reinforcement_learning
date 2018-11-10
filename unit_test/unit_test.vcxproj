@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -169,7 +169,9 @@
     <ClCompile Include="err_callback_test.cc" />
     <ClCompile Include="explore_test.cc" />
     <ClCompile Include="factory_test.cc" />
+    <ClCompile Include="fb_serializer_test.cc" />
     <ClCompile Include="json_context_parse_test.cc" />
+    <ClCompile Include="json_serializer_test.cc" />
     <ClCompile Include="live_model_test.cc" />
     <ClCompile Include="eventhub_client_test.cc" />
     <ClCompile Include="http_server\http_server.cc" />

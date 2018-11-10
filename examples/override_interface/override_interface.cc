@@ -32,9 +32,17 @@ public:
   }
 
 protected:
-  virtual int v_send(std::vector<unsigned char>&& data, r::api_status* status) override { 
+  virtual int v_send(std::vector<unsigned char>&& data, r::api_status* status) override {
     std::lock_guard<std::mutex> lock(_mutex);
-    _stream.write(reinterpret_cast<const char *>(data.data()), data.size());
+    _stream.write(reinterpret_cast<const char*>(data.data()), data.size());
+    _stream << std::endl;
+    return err::success;
+  }
+
+  virtual int v_send(unsigned char* data, size_t size, r::api_status* status) override {
+    std::lock_guard<std::mutex> lock(_mutex);
+    // Potentially unsafe and bad?
+    _stream.write(reinterpret_cast<const char*>(data), size);
     _stream << std::endl;
     return err::success;
   }
