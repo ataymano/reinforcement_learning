@@ -117,13 +117,13 @@ void test_data_provider::log(size_t thread_id, size_t example_id, const reinforc
     else
       outcome_evt = reinforcement_learning::outcome_event::report_outcome(get_event_id(thread_id, example_id), get_outcome_json(thread_id, example_id));
 
-    rl::json_event_serializer<rl::outcome_event>::serialize(outcome_evt, buffer);
+    rl::logger::json_event_serializer<rl::outcome_event>::serialize(outcome_evt, buffer, nullptr);
 
     logger << R"("o":[)" << std::string(reinterpret_cast<char*>(buffer.body()), buffer.body_size()) << "],";
   }
 
   auto ranking_evt = reinforcement_learning::ranking_event::choose_rank(get_event_id(thread_id, example_id), get_context(thread_id, example_id), reinforcement_learning::action_flags::DEFAULT, response);
-  rl::json_event_serializer<rl::ranking_event>::serialize(ranking_evt, buffer);
+  rl::logger::json_event_serializer<rl::ranking_event>::serialize(ranking_evt, buffer, nullptr);
   const std::string buffer_str(reinterpret_cast<char*>(buffer.body()), buffer.body_size());
   logger << buffer_str.substr(1, buffer_str.length() - 1) << std::endl;
 }
