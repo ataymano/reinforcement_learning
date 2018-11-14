@@ -28,6 +28,9 @@
     <ClCompile Include="azure_factories.cc" />
     <ClCompile Include="logger\flatbuffer_allocator.cc" />
     <ClCompile Include="logger\async_batcher.cc" />
+    <ClCompile Include="logger\preamble_sender.cc" />
+    <ClCompile Include="logger\endian.cc" />
+    <ClCompile Include="logger\preamble.cc" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\api_status.h" />
@@ -72,6 +75,11 @@
     <ClInclude Include="serialization\fb_serializer.h" />
     <ClInclude Include="serialization\json_serializer.h" />
     <ClInclude Include="serialization\json_event_serializer.h" />
+    <ClInclude Include="logger\message_sender.h" />
+    <ClInclude Include="logger\preamble_sender.h" />
+    <ClInclude Include="logger\message_type.h" />
+    <ClInclude Include="logger\endian.h" />
+    <ClInclude Include="logger\preamble.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

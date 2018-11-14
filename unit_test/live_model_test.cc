@@ -194,6 +194,9 @@ BOOST_AUTO_TEST_CASE(typesafe_err_callback) {
     BOOST_CHECK_EQUAL(the_server._err_count, 0);
     // request ranking
     BOOST_CHECK_EQUAL(ds.choose_rank(event_id, JSON_CONTEXT, response), r::error_code::success);
+
+    // Wait for background model retrieval to fail
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 
   BOOST_CHECK_GT(the_server._err_count, 0);

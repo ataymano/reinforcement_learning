@@ -179,8 +179,13 @@
     <ClInclude Include="generated\RankingEvent_generated.h" />
     <ClInclude Include="azure_factories.h" />
     <ClInclude Include="console_tracer.h" />
+    <ClInclude Include="logger\endian.h" />
     <ClInclude Include="logger\event_logger.h" />
     <ClInclude Include="logger\flatbuffer_allocator.h" />
+    <ClInclude Include="logger\message_sender.h" />
+    <ClInclude Include="logger\message_type.h" />
+    <ClInclude Include="logger\preamble.h" />
+    <ClInclude Include="logger\preamble_sender.h" />
     <ClInclude Include="moving_queue.h" />
     <ClInclude Include="serialization\fb_serializer.h" />
     <ClInclude Include="serialization\json_event_serializer.h" />
@@ -193,8 +198,11 @@
     <ClCompile Include="azure_factories.cc" />
     <ClCompile Include="console_tracer.cc" />
     <ClCompile Include="logger\async_batcher.cc" />
+    <ClCompile Include="logger\endian.cc" />
     <ClCompile Include="logger\event_logger.cc" />
     <ClCompile Include="logger\flatbuffer_allocator.cc" />
+    <ClCompile Include="logger\preamble.cc" />
+    <ClCompile Include="logger\preamble_sender.cc" />
     <ClCompile Include="trace_logger.cc" />
     <ClCompile Include="utility\data_buffer.cc" />
     <ClCompile Include="utility\http_helper.h" />

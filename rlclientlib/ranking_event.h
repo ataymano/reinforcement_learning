@@ -1,11 +1,6 @@
 #pragma once
 #include <string>
 #include "ranking_response.h"
-#include "generated/RankingEvent_generated.h"
-#include "generated/OutcomeEvent_generated.h"
-
-using reinforcement_learning::messages::RankingEvent;
-using reinforcement_learning::messages::OutcomeEvent;
 
 namespace reinforcement_learning {
   namespace utility { class data_buffer; }
@@ -39,8 +34,8 @@ namespace reinforcement_learning {
   class ranking_event : public event {
   public:
     ranking_event();
-    ranking_event(ranking_event&& other);
-    ranking_event& operator=(ranking_event&& other);
+    ranking_event(ranking_event&& other) = default;
+    ranking_event& operator=(ranking_event&& other) = default;
 
     std::vector<unsigned char> get_context();
     std::vector<uint64_t> get_action_ids();
@@ -66,8 +61,8 @@ namespace reinforcement_learning {
   class outcome_event : public event {
   public:
     outcome_event() = default;
-    outcome_event(outcome_event&& other);
-    outcome_event& operator=(outcome_event&& other);
+    outcome_event(outcome_event&& other) = default;
+    outcome_event& operator=(outcome_event&& other) = default;
 
     std::string get_outcome() const;
     float get_numeric_outcome() const;

@@ -95,9 +95,6 @@
     <ClCompile Include="moving_queue_test.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="serializer.cc">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="preamble_test.cc">
       <Filter>Source Files</Filter>
     </ClCompile>

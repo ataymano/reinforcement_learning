@@ -4,46 +4,57 @@
 
 namespace reinforcement_learning { namespace utility {
 
+  /*
+   * Data buffer used for serialized messages.  Data buffer
+   * consists of 2 parts.  1) preamble 2) body
+   */
   class data_buffer {
   public:
-    data_buffer();
-    void reset();
+    explicit data_buffer(size_t body_size = 1024, size_t preamble_size = 8);
+
+    // Get a pointer to beginning of preamble
+    int preamble(uint32_t preamble_size, unsigned char*& p_preamble);
+
+    // Get preamble size
+    size_t preamble_size() const;
 
     // Return pointer to beginning of buffer, starting at offset from the real beginning.
-    unsigned char* data() const;
-    std::vector<unsigned char> buffer();
+    unsigned char* body();
 
-    // Size is capacity less the amount preceding begin.
-    size_t size() const;
+    // Body size does not include the preamble.
+    size_t body_size() const;
 
-    // Size is the total buffer size. (Note: this is not necessarily equal to std::vector capacity)
-    size_t capacity() const;
+    //// Size is the total buffer size. (Note: this is not necessarily equal to std::vector capacity)
+    size_t body_capacity() const;
 
-    // Offset from beginning of buffer.
-    size_t offset() const;
-    int set_begin_offset(size_t offset);
+    // Offset from beginning of buffer where the body starts
+    size_t get_body_offset() const;
 
-    void append(const unsigned char* data, size_t len);
-
-    std::string str() const;
+    // Offset from beginning of buffer where the body starts
+    int set_body_offset(size_t begin_offset);
+    
+    // Remove the last byte
     void remove_last();
 
-    // Will reserve entire buffer, ignoring offset.
-    void reserve(size_t size);
-
-    // Will resize entire buffer, ignoring offset. Undefined behavior will occur if the buffer is resized to less than the offset.
+    // Will resize entire buffer
     void resize(size_t size);
+
+    // Clear the contents of the buffer
+    void reset();
+
+    // Get the beginning of the raw buffer
+    unsigned char* raw_begin();
 
     data_buffer& operator<<(const std::string& cs);
     data_buffer& operator<<(const char*);
     data_buffer& operator<<(size_t rhs);
     data_buffer& operator<<(float rhs);
 
-    unsigned char* get_preamble(uint32_t byte_size);
-
   private:
     std::vector<unsigned char> _buffer;
-    size_t _begin_offset = 0;
+    size_t _body_begin_offset = 0;
+    size_t _preamble_size = 0;
+    size_t _body_write_pos = 0;
   };
 
   class buffer_factory {

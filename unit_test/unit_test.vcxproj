@@ -184,7 +184,6 @@
     <ClCompile Include="preamble_test.cc" />
     <ClCompile Include="ranking_response_test.cc" />
     <ClCompile Include="safe_vw_test.cc" />
-    <ClCompile Include="serializer.cc" />
     <ClCompile Include="sleeper_test.cc" />
     <ClCompile Include="status_builder_test.cc" />
     <ClCompile Include="str_util_test.cc" />

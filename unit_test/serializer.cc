@@ -24,13 +24,12 @@ struct FBSerial<ranking_event> {
 
   static void serialize(ranking_event& evt, OffsetVector& offsets, flatbuffers::FlatBufferBuilder& builder)
   {
-    const short version = 1;
     const auto event_id_offset = builder.CreateString(evt.get_event_id());
     const auto action_ids_vector_offset = builder.CreateVector(evt.get_action_ids());
     const auto probabilities_vector_offset = builder.CreateVector(evt.get_probabilities());
     const auto context_offset = builder.CreateVector(evt.get_context());
     const auto model_id_offset = builder.CreateString(evt.get_model_id());
-    const auto offset = reinforcement_learning::messages::CreateRankingEvent(builder, version, event_id_offset, evt.get_defered_action(), action_ids_vector_offset, context_offset, probabilities_vector_offset, model_id_offset);
+    const auto offset = messages::CreateRankingEvent(builder, event_id_offset, evt.get_defered_action(), action_ids_vector_offset, context_offset, probabilities_vector_offset, model_id_offset);
     offsets.push_back(offset);
   }
 };

@@ -2,7 +2,7 @@
 #include "ranking_event.h"
 #include "err_constants.h"
 
-namespace reinforcement_learning
+namespace reinforcement_learning { namespace logger
 {
   namespace u = utility;
 
@@ -13,4 +13,4 @@ namespace reinforcement_learning
   int observation_logger::report_action_taken(const char* event_id, api_status* status) {
     return append(std::move(outcome_event::report_action_taken(event_id)), status);
   }
-}
+}}

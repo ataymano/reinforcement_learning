@@ -13,6 +13,7 @@
 
 #include "serialization/fb_serializer.h"
 #include "serialization/json_serializer.h"
+#include "message_sender.h"
 
 namespace reinforcement_learning {
   //this enum sets the behavior of the queue managed by the async_batcher
@@ -23,10 +24,10 @@ namespace reinforcement_learning {
 
   //convert a string to an enum value
   queue_mode_enum to_queue_mode_enum(const char* queue_mode);
+  class error_callback_fn;
 };
 
-namespace reinforcement_learning {
-  class error_callback_fn;
+namespace reinforcement_learning { namespace logger {
 
   // This class takes uses a queue and a background thread to accumulate events, and send them by batch asynchronously.
   // A batch is shipped with TSender::send(data)
@@ -41,11 +42,11 @@ namespace reinforcement_learning {
     int run_iteration(api_status* status);
 
   private:
-    size_t fill_buffer(size_t remaining);
+    int fill_buffer(size_t& remaining, api_status* status);
     void flush(); //flush all batches
 
   public:
-    async_batcher(i_sender* sender,
+    async_batcher(i_message_sender* sender,
                   utility::watchdog& watchdog,
                   error_callback_fn* perror_cb = nullptr,
                   size_t send_high_water_mark = (1024 * 1024 * 4),
@@ -55,7 +56,7 @@ namespace reinforcement_learning {
     ~async_batcher();
 
   private:
-    std::unique_ptr<i_sender> _sender;
+    std::unique_ptr<i_message_sender> _sender;
 
     event_queue<TEvent> _queue;       // A queue to accumulate batch of events.
     utility::data_buffer _buffer;           // Re-used buffer to prevent re-allocation during sends.
@@ -110,7 +111,7 @@ namespace reinforcement_learning {
   }
 
   template<typename TEvent, template<typename> typename TSerializer>
-  size_t async_batcher<TEvent, TSerializer>::fill_buffer(size_t remaining)
+  int async_batcher<TEvent, TSerializer>::fill_buffer(size_t& remaining, api_status* status)
   {
     TEvent evt;
     _collection_serializer.reset();
@@ -120,11 +121,11 @@ namespace reinforcement_learning {
       if (BLOCK == _queue_mode) {
         _cv.notify_one();
       }
-      _collection_serializer.add(evt);
+      RETURN_IF_FAIL(_collection_serializer.add(evt, status));
       --remaining;
     }
 
-    return remaining;
+    return error_code::success;
   }
 
   template<typename TEvent, template<typename> typename TSerializer>
@@ -139,17 +140,24 @@ namespace reinforcement_learning {
     auto remaining = queue_size;
     // Handle batching
     while (remaining > 0) {
-      remaining = fill_buffer(remaining);
-      _collection_serializer.finalize();
       api_status status;
-      if (_sender->send(_buffer.data(), _buffer.size(), &status) != error_code::success) {
+
+      if (fill_buffer(remaining, &status) != error_code::success) {
+        ERROR_CALLBACK(_perror_cb, status);
+      }
+
+      _collection_serializer.finalize();
+
+      if (_sender->send(TSerializer<TEvent>::message_id(), _buffer) != error_code::success) {
         ERROR_CALLBACK(_perror_cb, status);
       }
     }
   }
 
   template<typename TEvent, template<typename> typename TSerializer>
-  async_batcher<TEvent, TSerializer>::async_batcher(i_sender* sender, utility::watchdog& watchdog, error_callback_fn* perror_cb, const size_t send_high_water_mark,
+  async_batcher<TEvent, TSerializer>::async_batcher(
+    i_message_sender* sender, utility::watchdog& watchdog, 
+    error_callback_fn* perror_cb, const size_t send_high_water_mark,
     const size_t batch_timeout_ms, const size_t queue_max_size, queue_mode_enum queue_mode)
     : _sender(sender),
     _send_high_water_mark(send_high_water_mark),
@@ -169,4 +177,4 @@ namespace reinforcement_learning {
       flush();
     }
   }
-}
+}}

@@ -1,6 +1,6 @@
 ﻿// EventHubInteraction Schema used by FlatBuffer
 
-namespace reinforcement_learning.messages;
+namespace reinforcement_learning.messages.FB;
 
 table RankingEvent {
     event_id:string;          // event IDs

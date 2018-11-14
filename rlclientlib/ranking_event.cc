@@ -68,27 +68,6 @@ namespace reinforcement_learning {
     copy(context_str.begin(), context_str.end(), std::back_inserter(_context));
   }
 
-  ranking_event::ranking_event(ranking_event&& other)
-    : event(std::move(other))
-    , _deferred_action(other._deferred_action)
-    , _context(std::move(other._context))
-    , _action_ids_vector(std::move(other._action_ids_vector))
-    , _probilities_vector(std::move(other._probilities_vector))
-    , _model_id(std::move(other._model_id))
-  { }
-
-  ranking_event& ranking_event::operator=(ranking_event&& other) {
-    if (&other != this) {
-      event::operator=(std::move(other));
-      _deferred_action = std::move(other._deferred_action);
-      _context = std::move(other._context);
-      _action_ids_vector = std::move(other._action_ids_vector);
-      _probilities_vector = std::move(other._probilities_vector);
-      _model_id = std::move(other._model_id);
-    }
-    return *this;
-  }
-
   std::vector<unsigned char> ranking_event::get_context() {
     return _context;
   }
@@ -126,19 +105,6 @@ namespace reinforcement_learning {
     , _deferred_action(deferred_action)
   {
     _outcome = std::to_string(outcome);
-  }
-
-  outcome_event::outcome_event(outcome_event&& other)
-    : event(std::move(other))
-    , _outcome(std::move(other._outcome))
-  { }
-
-  outcome_event& outcome_event::operator=(outcome_event&& other) {
-    if (&other != this) {
-      event::operator=(std::move(other));
-      _outcome = std::move(other._outcome);
-    }
-    return *this;
   }
 
   outcome_event outcome_event::report_outcome(const char* event_id, const char* outcome, float pass_prob) {

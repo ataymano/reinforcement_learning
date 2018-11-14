@@ -30,11 +30,15 @@ void http_server::handle_get(const http_request& message) {
     return;
   }
 
-  http_response resp;
-  resp.set_status_code(status_codes::OK);
-  resp.headers().add(U("Last-Modified"), datetime::utc_now().to_string());
-  resp.set_body(U("Http GET response"));
-  message.reply(resp).get();
+  if (_post_err)
+    message.reply(status_codes::InternalError);
+  else {
+    http_response resp;
+    resp.set_status_code(status_codes::OK);
+    resp.headers().add(U("Last-Modified"), datetime::utc_now().to_string());
+    resp.set_body(U("Http GET response"));
+    message.reply(resp).get();
+  }
 }
 
 void http_server::handle_post(const http_request& message) {

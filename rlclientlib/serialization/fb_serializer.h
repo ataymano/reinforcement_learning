@@ -1,16 +1,15 @@
 #pragma once
 
 #include <vector>
-
 #include <flatbuffers/flatbuffers.h>
-
 #include "logger/flatbuffer_allocator.h"
 #include "generated/OutcomeEvent_generated.h"
 #include "generated/RankingEvent_generated.h"
+#include "logger/message_type.h"
 
-#include <iostream>
+using namespace reinforcement_learning::messages::FB;
 
-namespace reinforcement_learning {
+namespace reinforcement_learning { namespace logger {
 
   template<typename T>
   struct fb_event_serializer;
@@ -19,62 +18,62 @@ namespace reinforcement_learning {
   struct fb_event_serializer<ranking_event> {
     using fb_event_t = RankingEvent;
     using offset_vector_t = typename std::vector<flatbuffers::Offset<fb_event_t>>;
-    using batch_buider_t = messages::RankingEventBatchBuilder;
+    using batch_builder_t = RankingEventBatchBuilder;
 
-    static flatbuffers::Offset<fb_event_t> serialize(ranking_event& evt, flatbuffers::FlatBufferBuilder& builder) {
+    static int serialize(ranking_event& evt, flatbuffers::FlatBufferBuilder& builder, flatbuffers::Offset<fb_event_t>& ret_val, api_status* status) {
       const auto event_id_offset = builder.CreateString(evt.get_event_id());
       const auto action_ids_vector_offset = builder.CreateVector(evt.get_action_ids());
       const auto probabilities_vector_offset = builder.CreateVector(evt.get_probabilities());
       const auto context_offset = builder.CreateVector(evt.get_context());
       const auto model_id_offset = builder.CreateString(evt.get_model_id());
-      return messages::CreateRankingEvent(builder,
+      ret_val = CreateRankingEvent(builder,
         event_id_offset,
         evt.get_defered_action(),
         action_ids_vector_offset,
         context_offset,
         probabilities_vector_offset,
         model_id_offset);
+      return error_code::success;
     }
   };
 
   template<>
   struct fb_event_serializer<outcome_event> {
-    using fb_event_t = OutcomeEvent;
+    using fb_event_t = OutcomeEventHolder;
     using offset_vector_t = std::vector<flatbuffers::Offset<fb_event_t>>;
-    using batch_buider_t = messages::OutcomeEventBatchBuilder;
+    using batch_builder_t = OutcomeEventBatchBuilder;
 
-    static flatbuffers::Offset<fb_event_t> serialize(outcome_event& evt, flatbuffers::FlatBufferBuilder& builder)
+    static int serialize(outcome_event& evt, flatbuffers::FlatBufferBuilder& builder, flatbuffers::Offset<fb_event_t>& retval, api_status* status)
     {
-      auto event_id_offset = builder.CreateString(evt.get_event_id());
-
-      flatbuffers::Offset<void> any_event;
-      messages::OutcomeEventAny type = messages::OutcomeEventAny_NONE;
+      const auto event_id = builder.CreateString(evt.get_event_id());
       switch(evt.get_outcome_type())
       {
         case outcome_event::outcome_type_string:
         {
-          type = messages::OutcomeEventAny_OutcomeEventString;
-          auto outcome_offset = builder.CreateString(evt.get_outcome());
-          any_event = messages::CreateOutcomeEventString(builder, event_id_offset, outcome_offset).Union();
+          const auto outcome_str = builder.CreateString(evt.get_outcome());
+          const auto str_event = CreateStringEvent(builder, event_id, outcome_str).Union();
+          retval = CreateOutcomeEventHolder(builder, OutcomeEvent_StringEvent, str_event);
           break;
         }
         case outcome_event::outcome_type_numeric:
         {
-          type = messages::OutcomeEventAny_OutcomeEventNumeric;
-          any_event = messages::CreateOutcomeEventNumeric(builder, event_id_offset, evt.get_numeric_outcome()).Union();
+          const auto number_event = CreateNumericEvent(builder, event_id, evt.get_numeric_outcome()).Union();
+          retval = CreateOutcomeEventHolder(builder, OutcomeEvent_NumericEvent, number_event);
           break;
         }
         case outcome_event::outcome_type_action_taken:
         {
-          type = messages::OutcomeEventAny_OutcomeEventTaken;
-          any_event = messages::CreateOutcomeEventTaken(builder, event_id_offset).Union();
+          const auto action_taken_event = CreateActionTakenEvent(builder, event_id).Union();
+          retval = CreateOutcomeEventHolder(builder, OutcomeEvent_NumericEvent, action_taken_event);
           break;
         }
         default:
-          throw "Real exception";
-        break;
+        {
+          return report_error(status, error_code::serialize_unknown_outcome_type, error_code::serialize_unknown_outcome_type_s);
+        }
       }
-      return messages::CreateOutcomeEvent(builder, type, any_event);
+
+      return error_code::success;
     }
   };
 
@@ -83,15 +82,19 @@ namespace reinforcement_learning {
     using serializer_t = fb_event_serializer<event_t>;
     using buffer_t = utility::data_buffer;
 
+    static int message_id() { return 0; }
+
     fb_collection_serializer(buffer_t& buffer) :
-      _builder(buffer.capacity(), &_allocator),
       _allocator(buffer),
+      _builder(buffer.body_capacity(), &_allocator),
       _buffer(buffer)
     {}
 
-    void add(event_t& evt) {
-      auto const offset = serializer_t::serialize(evt, _builder);
+    int add(event_t& evt, api_status* status) {
+      flatbuffers::Offset<typename serializer_t::fb_event_t> offset;
+      RETURN_IF_FAIL(serializer_t::serialize(evt, _builder, offset, status));
       _event_offsets.push_back(offset);
+      return error_code::success;
     }
 
     uint64_t size() const {
@@ -100,17 +103,14 @@ namespace reinforcement_learning {
 
     void finalize() {
       auto event_offsets = _builder.CreateVector(_event_offsets);
-      typename serializer_t::batch_buider_t batch_builder(_builder);
+      typename serializer_t::batch_builder_t batch_builder(_builder);
       batch_builder.add_events(event_offsets);
-      auto orc = batch_builder.Finish();
-      _builder.Finish(orc);
-
-      //std::cerr << "flat buf" << _builder.GetBufferPointer() << "\n";
-      //std::cerr << "buf" << _buffer.data() << "\n";
-      auto offset = _builder.GetBufferPointer() - _buffer.data();
-      _buffer.set_begin_offset(offset);
-      //std::cerr << "offset" << offset << "\n";
-      //std::cerr << "new buff" << _buffer.data() << "\n";
+      auto batch_offset = batch_builder.Finish();
+      _builder.Finish(batch_offset);
+      // Where does the body of the data begin in relation to the start
+      // of the raw buffer
+      const auto offset = _builder.GetBufferPointer() - _buffer.raw_begin();
+      _buffer.set_body_offset(offset);
     }
 
     void reset() {
@@ -119,8 +119,14 @@ namespace reinforcement_learning {
     }
 
     typename serializer_t::offset_vector_t _event_offsets;
-    flatbuffers::FlatBufferBuilder _builder;
     flatbuffer_allocator _allocator;
+    flatbuffers::FlatBufferBuilder _builder;
     buffer_t& _buffer;
   };
-}
+
+  template<>
+  inline int fb_collection_serializer<outcome_event>::message_id() { return message_type::fb_outcome_event_collection; }
+
+  template<>
+  inline int fb_collection_serializer<ranking_event>::message_id() { return message_type::fb_ranking_event_collection; }
+}}

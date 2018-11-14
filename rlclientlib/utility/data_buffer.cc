@@ -1,68 +1,81 @@
 #include "data_buffer.h"
 #include <string>
-#include <iterator>
 #include <iostream>
 
 #include "err_constants.h"
 
 namespace reinforcement_learning {
   namespace utility {
-    data_buffer::data_buffer() = default;
+
+    data_buffer::data_buffer(size_t body_size, size_t preamble_size)
+      : _buffer(body_size + preamble_size), _body_begin_offset{ preamble_size }, _preamble_size(preamble_size) {
+    }
 
     void data_buffer::reset() {
+      _body_begin_offset = _preamble_size;
+      _body_write_pos = 0;
       _buffer.clear();
+      _buffer.resize(_preamble_size);
     }
 
-    size_t data_buffer::size() const {
-      return _buffer.size() - _begin_offset;
+    unsigned char* data_buffer::raw_begin() {
+      return _buffer.data();
     }
 
-    size_t data_buffer::capacity() const {
-      return _buffer.size();
+    size_t data_buffer::body_size() const {
+      return _buffer.size() - _body_begin_offset;
+    }
+
+    size_t data_buffer::body_capacity() const {
+      return _buffer.capacity() - _body_begin_offset;
     }
 
     void data_buffer::remove_last() { _buffer.pop_back(); }
 
-    size_t data_buffer::offset() const {
-      return _begin_offset;
+    size_t data_buffer::get_body_offset() const {
+      return _body_begin_offset;
     }
 
-    int data_buffer::set_begin_offset(size_t begin_offset){
-      if(begin_offset > _buffer.size()) {
+    int data_buffer::set_body_offset(size_t begin_offset) {
+      if (begin_offset > _buffer.size()) {
         return error_code::invalid_argument;
       }
 
-      _begin_offset = begin_offset;
+      _body_begin_offset = begin_offset;
+      return error_code::success;
     }
 
-    void data_buffer::append(const unsigned char* data, size_t len) {
-      _buffer.reserve(_buffer.size() + len);
-      _buffer.insert(_buffer.end(), data, data + len);
-    }
-
-    unsigned char* data_buffer::data() const {
-      return const_cast<unsigned char*>(_buffer.data()) + _begin_offset;
-    }
-
-    std::vector<unsigned char> data_buffer::buffer() {
-      return _buffer;
+    unsigned char* data_buffer::body() {
+      return (_buffer.data()) + _body_begin_offset;
     }
 
     void data_buffer::resize(size_t size) {
-      _buffer.resize(size);
+      _buffer.resize(size + _preamble_size);
     }
 
-    void data_buffer::reserve(size_t size){
-      _buffer.reserve(size);
+    int data_buffer::preamble(uint32_t preamble_size, unsigned char*& p_preamble) {
+      if (preamble_size != _preamble_size)
+        return error_code::incorrect_buffer_preamble_size;
+
+      p_preamble = _buffer.data() + (_body_begin_offset - _preamble_size);
+      return error_code::success;
     }
 
-    std::string data_buffer::str() const {
-      return std::string(_buffer.begin(), _buffer.end());
+    size_t data_buffer::preamble_size() const {
+      return _preamble_size;
     }
 
     data_buffer& data_buffer::operator<<(const std::string& cs) {
-      _buffer.reserve(_buffer.size() + cs.size());
-      _buffer.insert(_buffer.end(), cs.begin(), cs.end());
+      auto cs_size = cs.size();
+      // ensure there is enough buffer so we don't reallocate during insert
+      _buffer.reserve(body_size() + preamble_size() + cs_size);
+      // copy the string to the buffer
+      _buffer.insert(_buffer.begin() + preamble_size() + _body_write_pos, cs.begin(), cs.end());
+      // Null terminate.  For example if the buffer is being reused, this 
+      // guarantees that the body is null terminated
+      _buffer.emplace_back(0);
+      // Write body position is updated (not including the null terminator)
+      _body_write_pos += cs_size;
       return *this;
     }
 

@@ -16,14 +16,15 @@
 #include "ranking_event.h"
 
 #include "serialization/fb_serializer.h"
+#include "message_sender.h"
 
-namespace reinforcement_learning {
+namespace reinforcement_learning { namespace logger {
   // This class wraps logging event to event_hub in a generic way that live_model can consume.
   template<typename TEvent>
   class event_logger {
   public:
     event_logger(
-      i_sender* sender,
+      i_message_sender* sender,
       int send_high_watermark,
       int send_batch_interval_ms,
       int send_queue_maxsize,
@@ -48,7 +49,7 @@ namespace reinforcement_learning {
 
   template<typename TEvent>
   event_logger<TEvent>::event_logger(
-    i_sender* sender,
+    i_message_sender* sender,
     int send_high_watermark,
     int send_batch_interval_ms,
     int send_queue_maxsize,
@@ -93,7 +94,7 @@ namespace reinforcement_learning {
 
   class interaction_logger : public event_logger<ranking_event> {
   public:
-    interaction_logger(const utility::configuration& c, i_sender* sender, utility::watchdog& watchdog, error_callback_fn* perror_cb = nullptr)
+    interaction_logger(const utility::configuration& c, i_message_sender* sender, utility::watchdog& watchdog, error_callback_fn* perror_cb = nullptr)
       : event_logger(
         sender,
         c.get_int(name::INTERACTION_SEND_HIGH_WATER_MARK, 198 * 1024),
@@ -109,7 +110,7 @@ namespace reinforcement_learning {
 
   class observation_logger : public event_logger<outcome_event> {
   public:
-    observation_logger(const utility::configuration& c, i_sender* sender, utility::watchdog& watchdog, error_callback_fn* perror_cb = nullptr)
+    observation_logger(const utility::configuration& c, i_message_sender* sender, utility::watchdog& watchdog, error_callback_fn* perror_cb = nullptr)
       : event_logger(
         sender,
         c.get_int(name::OBSERVATION_SEND_HIGH_WATER_MARK, 198 * 1024),
@@ -127,4 +128,4 @@ namespace reinforcement_learning {
 
     int report_action_taken(const char* event_id, api_status* status);
   };
-}
+}}

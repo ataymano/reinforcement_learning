@@ -4,8 +4,10 @@
 
 #include "ranking_event.h"
 #include "utility/data_buffer.h"
+#include "logger/message_type.h"
+#include "api_status.h"
 
-namespace reinforcement_learning {
+namespace reinforcement_learning { namespace logger {
 
   template<typename T>
   struct json_event_serializer;
@@ -14,7 +16,7 @@ namespace reinforcement_learning {
   struct json_event_serializer<ranking_event> {
     using buffer_t = utility::data_buffer;
 
-    static void serialize(ranking_event& evt, buffer_t& buffer) {
+    static int serialize(ranking_event& evt, buffer_t& buffer, api_status* status) {
       // Add version and eventId
       buffer << R"({"Version":"1","EventId":")" << evt.get_event_id() << R"(")";
       if (evt.get_defered_action()) {
@@ -50,6 +52,8 @@ namespace reinforcement_learning {
         buffer << R"(,"pdrop":)" << (1 - evt.get_pass_prob());
       }
       buffer << R"(})";
+
+      return error_code::success;
     }
   };
 
@@ -57,22 +61,24 @@ namespace reinforcement_learning {
   struct json_event_serializer<outcome_event> {
     using buffer_t = utility::data_buffer;
 
-    static void serialize(outcome_event& evt, buffer_t& buffer)
+    static int serialize(outcome_event& evt, buffer_t& buffer, api_status* status)
     {
       switch (evt.get_outcome_type())
       {
-      case outcome_event::outcome_type_string:
-        buffer << R"({"EventId":")" << evt.get_event_id() << R"(","v":)" << evt.get_outcome() << R"(})";
-        break;
-      case outcome_event::outcome_type_numeric:
-        buffer << R"({"EventId":")" << evt.get_event_id() << R"(","v":)" << evt.get_numeric_outcome() << R"(})";
-        break;
-      case outcome_event::outcome_type_action_taken:
-        buffer << R"({"EventId":")" << evt.get_event_id() << R"(","ActionTaken":true})";
-        break;
-      default:
-        throw "Real exception";
+        case outcome_event::outcome_type_string:
+          buffer << R"({"EventId":")" << evt.get_event_id() << R"(","v":)" << evt.get_outcome() << R"(})";
+          break;
+        case outcome_event::outcome_type_numeric:
+          buffer << R"({"EventId":")" << evt.get_event_id() << R"(","v":)" << evt.get_numeric_outcome() << R"(})";
+          break;
+        case outcome_event::outcome_type_action_taken:
+          buffer << R"({"EventId":")" << evt.get_event_id() << R"(","ActionTaken":true})";
+          break;
+        default: {
+          return report_error(status, error_code::serialize_unknown_outcome_type, error_code::serialize_unknown_outcome_type_s);
+        }
       }
+      return error_code::success;
     }
   };
 
@@ -81,17 +87,20 @@ namespace reinforcement_learning {
     using serializer_t = json_event_serializer<event_t>;
     using buffer_t = utility::data_buffer;
 
+    static int message_id() { return 0; }
+
     json_collection_serializer(buffer_t& buffer) :
       _buffer(buffer)
     {}
 
-    void add(event_t& evt) {
-      serializer_t::serialize(evt, _buffer);
+    int add(event_t& evt, api_status* status) {
+      RETURN_IF_FAIL(serializer_t::serialize(evt, _buffer, status));
       _buffer << "\n";
+      return error_code::success;
     }
 
     uint64_t size() const {
-      return _buffer.size();
+      return _buffer.body_size();
     }
 
     void reset() {
@@ -104,4 +113,10 @@ namespace reinforcement_learning {
 
     buffer_t& _buffer;
   };
-}
+
+  template<>
+  inline int json_collection_serializer<outcome_event>::message_id() { return message_type::json_outcome_event_collection; }
+
+  template<>
+  inline int json_collection_serializer<ranking_event>::message_id() { return message_type::json_ranking_event_collection; }
+}}

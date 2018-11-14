@@ -1,27 +1,27 @@
 ﻿// EventHubInteraction Schema used by FlatBuffer
 
-namespace reinforcement_learning.messages;
+namespace reinforcement_learning.messages.FB;
 
-table OutcomeEventString {
+table StringEvent {
     event_id:string;
     value:string;
 }
 
-table OutcomeEventNumeric {
+table NumericEvent {
     event_id:string;
     value:float;
 }
 
-table OutcomeEventTaken {
+table ActionTakenEvent {
     event_id:string;
 }
 
-union OutcomeEventAny { OutcomeEventString, OutcomeEventNumeric, OutcomeEventTaken }
+union OutcomeEvent { StringEvent, NumericEvent, ActionTakenEvent }
 
-table OutcomeEvent {
-    event:OutcomeEventAny;
+table OutcomeEventHolder {
+    the_event:OutcomeEvent;
 }
 
 table OutcomeEventBatch {
-    events:[OutcomeEvent];
+    events:[OutcomeEventHolder];
 }

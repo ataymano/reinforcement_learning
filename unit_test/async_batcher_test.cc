@@ -17,29 +17,20 @@
 
 using namespace reinforcement_learning;
 
-//this class simply implement a 'send' method, in order to be used as a template in the async_batcher
-class sender : public i_sender {
+//This class simply implement a 'send' method, in order to be used as a template in the async_batcher
+class message_sender : public logger::i_message_sender {
+  std::vector<std::string>& items;
+
 public:
-  std::vector<std::vector<unsigned char>>& items;
-  sender(std::vector<std::vector<unsigned char>>& _items) : items(_items) {}
-
-  virtual int init(api_status* s) override {
-    return 0;
-  }
-
-  virtual int v_send(std::vector<unsigned char>&& data, api_status* status = nullptr) override {
-    items.push_back(data);
+  message_sender(std::vector<std::string>& _items) : items(_items) {}
+  int send(const uint16_t msg_type, utility::data_buffer& db) override {
+    items.push_back(std::string((char*)db.body()));
     return error_code::success;
   };
-
-  virtual int v_send(unsigned char* data, size_t size, api_status* status = nullptr) override {
-    std::vector<unsigned char> message;
-    for (int i = 0; i < size; i++) {
-      message.push_back(*(data + i));
-    }
-    items.push_back(message);
+  int init(api_status* status) override {
     return error_code::success;
   };
+  i_sender* sender;
 };
 
 class test_undroppable_event : public event {
@@ -80,12 +71,13 @@ public:
   }
 };
 
-namespace reinforcement_learning {
+namespace reinforcement_learning { namespace logger {
   template<>
   struct json_event_serializer<test_droppable_event> {
     using buffer_t = utility::data_buffer;
-    static void serialize(test_droppable_event& evt, buffer_t& buffer) {
+    static int serialize(test_droppable_event& evt, buffer_t& buffer, api_status* status) {
       buffer << evt.get_event_id();
+      return error_code::success;
     }
   };
 
@@ -93,11 +85,12 @@ namespace reinforcement_learning {
   template<>
   struct json_event_serializer<test_undroppable_event> {
     using buffer_t = utility::data_buffer;
-    static void serialize(test_undroppable_event& evt, buffer_t& buffer) {
+    static int serialize(test_undroppable_event& evt, buffer_t& buffer, api_status* status) {
       buffer << evt.get_event_id();
+      return error_code::success;
     }
   };
-}
+}}
 
 
 void expect_no_error(const api_status& s, void* cntxt)
@@ -109,13 +102,12 @@ void expect_no_error(const api_status& s, void* cntxt)
 //test the flush mecanism based on a timer
 BOOST_AUTO_TEST_CASE(flush_timeout)
 {
-  std::vector<std::vector<unsigned char>> items;
-  auto s = new sender(items);
-
+  std::vector<std::string> items;
+  auto s = new message_sender(items);
   size_t timeout_ms = 100; //set a short timeout
   error_callback_fn error_fn(expect_no_error, nullptr);
   utility::watchdog watchdog(nullptr);
-  async_batcher<test_undroppable_event> batcher(s, watchdog, &error_fn, 262143, timeout_ms, 8192);
+  logger::async_batcher<test_undroppable_event> batcher(s, watchdog, &error_fn, 262143, timeout_ms, 8192);
   batcher.init(nullptr);
 
   // Allow periodic_background_proc inside async_batcher to start waiting
@@ -131,7 +123,10 @@ BOOST_AUTO_TEST_CASE(flush_timeout)
   batcher.append(test_undroppable_event(bar));
 
   //check the batch was sent
-  std::string expected = foo + "\n" + bar;
+  std::string expected = foo + "\n" + bar +"\n";
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(150));
+
   BOOST_REQUIRE_EQUAL(items.size(), 1);
   std::string result;
   for (auto item : items) {
@@ -143,12 +138,12 @@ BOOST_AUTO_TEST_CASE(flush_timeout)
 //test that the batcher split batches as expected
 BOOST_AUTO_TEST_CASE(flush_batches)
 {
-  std::vector<std::vector<unsigned char>> items;
-  auto s = new sender(items);
+  std::vector<std::string> items;
+  auto s = new message_sender(items);
   size_t send_high_water_mark = 10;//bytes
   error_callback_fn error_fn(expect_no_error, nullptr);
   utility::watchdog watchdog(nullptr);
-  async_batcher<test_undroppable_event>* batcher = new async_batcher<test_undroppable_event>(s, watchdog, &error_fn, send_high_water_mark, 100000);
+  logger::async_batcher<test_undroppable_event>* batcher = new logger::async_batcher<test_undroppable_event>(s, watchdog, &error_fn, send_high_water_mark, 100000);
   batcher->init(nullptr);
 
   // Allow periodic_background_proc inside async_batcher to start waiting
@@ -168,26 +163,23 @@ BOOST_AUTO_TEST_CASE(flush_batches)
   std::string hello("hello");
   batcher->append(test_undroppable_event(hello));
 
-  std::string expected_batch_0 = foo + bar;
-  std::string expected_batch_1 = hello;
+  std::string expected_batch_0 = foo + "\n" + bar + "\n";
+  std::string expected_batch_1 = hello + "\n";
 
   delete batcher;//flush force
 
   BOOST_REQUIRE_EQUAL(items.size(), 2);
-  std::string batch_0(items[0].begin(), items[0].end());
-  std::string batch_1(items[1].begin(), items[1].end());
-
-  BOOST_CHECK_EQUAL(batch_0, expected_batch_0);
-  BOOST_CHECK_EQUAL(batch_1, expected_batch_1);
+  BOOST_CHECK_EQUAL(items[0], expected_batch_0);
+  BOOST_CHECK_EQUAL(items[1], expected_batch_1);
 }
 
 //test that the batcher flushes everything before deletion
 BOOST_AUTO_TEST_CASE(flush_after_deletion)
 {
-  std::vector<std::vector<unsigned char>> items;
-  auto s = new sender(items);
+  std::vector<std::string> items;
+  auto s = new message_sender(items);
   utility::watchdog watchdog(nullptr);
-  async_batcher<test_undroppable_event>* batcher = new async_batcher<test_undroppable_event>(s, watchdog);
+  logger::async_batcher<test_undroppable_event>* batcher = new logger::async_batcher<test_undroppable_event>(s, watchdog);
   batcher->init(nullptr);
 
   // Allow periodic_background_proc to start waiting
@@ -206,22 +198,21 @@ BOOST_AUTO_TEST_CASE(flush_after_deletion)
   //check the batch was sent
   BOOST_REQUIRE_EQUAL(items.size(), 1);
 
-  std::string expected = foo + bar;
-  std::string result(items[0].begin(), items[0].end());
-  BOOST_CHECK_EQUAL(result, expected);
+  std::string expected = foo + "\n" + bar + "\n";
+  BOOST_CHECK_EQUAL(items[0], expected);
 }
 
 //test that events are not dropped using the queue_dropping_disable option, even if the queue max capacity is reached
 BOOST_AUTO_TEST_CASE(queue_overflow_do_not_drop_event)
 {
-  std::vector<std::vector<unsigned char>> items;
-  auto s = new sender(items);
+  std::vector<std::string> items;
+  auto s = new message_sender(items);
   size_t timeout_ms = 100;
   size_t queue_max_size = 3;
   queue_mode_enum queue_mode = BLOCK;
   error_callback_fn error_fn(expect_no_error, nullptr);
   utility::watchdog watchdog(nullptr);
-  async_batcher<test_droppable_event>* batcher = new async_batcher<test_droppable_event>(s, watchdog, &error_fn, 262143, timeout_ms, queue_max_size, queue_mode);
+  logger::async_batcher<test_droppable_event>* batcher = new logger::async_batcher<test_droppable_event>(s, watchdog, &error_fn, 262143, timeout_ms, queue_max_size, queue_mode);
   batcher->init(nullptr);
 
   // Allow periodic_background_proc to start waiting
@@ -236,15 +227,16 @@ BOOST_AUTO_TEST_CASE(queue_overflow_do_not_drop_event)
   delete batcher;
 
   //all batches were sent. Check that no event was dropped
-  std::string expected_output = "0";
+  std::string expected_output = "0\n";
   for (int i = 1; i < n; ++i) {
     expected_output += std::to_string(i);
+    expected_output.append("\n");
   }
 
   BOOST_REQUIRE(items.size() > 0);
   std::string actual_output;
   for (auto item : items) {
-    actual_output.append(item.begin(), item.end());
+    actual_output.append(item);
   }
 
   BOOST_CHECK_EQUAL(expected_output, actual_output);
