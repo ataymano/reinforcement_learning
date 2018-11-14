@@ -22,3 +22,5 @@
 **/packages
 
 build
+rlclientlib/generated/OutcomeEvent_generated.h
+rlclientlib/generated/RankingEvent_generated.h
