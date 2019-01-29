@@ -12,9 +12,28 @@ table RankingEvent {
     pass_probability:float;	  // Probability of event surviving throttling operation
 }
 
+table RankingEventTransport {
+    event_id:string;          // event IDs
+    pass_probability:float;	  // Probability of event surviving throttling operation
+	payload:[ubyte];
+}
+
+table RankingEventBody {
+    deferred_action:bool = false;
+    action_ids:[uint64];      // action IDs
+    context:[ubyte];          // context
+    probabilities:[float];    // probabilities
+    model_id:string;          // model ID
+}
+
 // Collection of Ranking events
 table RankingEventBatch {
     events:[RankingEvent];
+}
+
+// Collection of Ranking events
+table RankingEventBatchTest {
+    events:[RankingEventTransport];
 }
 
 root_type RankingEventBatch;

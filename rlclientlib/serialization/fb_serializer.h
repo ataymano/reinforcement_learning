@@ -10,6 +10,10 @@ using namespace reinforcement_learning::messages::flatbuff;
 namespace reinforcement_learning { namespace logger {
   template <typename T>
   struct fb_event_serializer;
+
+  template <typename T>
+  struct fb_event_serializer2;
+
   template <>
   struct fb_event_serializer<ranking_event> {
     using fb_event_t = RankingEvent;
@@ -34,6 +38,38 @@ namespace reinforcement_learning { namespace logger {
       return error_code::success;
     }
   };
+
+  template<>
+  struct fb_event_serializer2<ranking_event> {
+    using fb_event_t = RankingEventTransport;
+    using offset_vector_t = typename std::vector<flatbuffers::Offset<fb_event_t>>;
+    using batch_builder_t = RankingEventBatchTestBuilder;
+    using buffer_t = utility::data_buffer;
+
+    static size_t size_estimate(const ranking_event& evt) {
+      return evt.get_event_id().size() + evt.get_action_ids().size() * sizeof(evt.get_action_ids()[0])
+        + evt.get_probabilities().size() * sizeof(evt.get_probabilities()[0]) + evt.get_context().size()
+        + evt.get_model_id().size() + sizeof(evt.get_defered_action()) + sizeof(evt.get_pass_prob());
+    }
+
+    static int serialize(ranking_event& evt, flatbuffers::FlatBufferBuilder& builder,
+      flatbuffers::Offset<fb_event_t>& ret_val, api_status* status) {
+      flatbuffers::FlatBufferBuilder temp_builder;
+      const auto action_ids_vector_offset = temp_builder.CreateVector(evt.get_action_ids());
+      const auto probabilities_vector_offset = temp_builder.CreateVector(evt.get_probabilities());
+      const auto context_offset = temp_builder.CreateVector(evt.get_context());
+      const auto model_id_offset = temp_builder.CreateString(evt.get_model_id());
+      
+      auto context = CreateRankingEventBody(temp_builder, evt.get_defered_action(), action_ids_vector_offset,  context_offset, probabilities_vector_offset, model_id_offset);
+      
+      const auto event_id_offset = builder.CreateString(evt.get_event_id());
+      const auto payload_offset = builder.CreateVector(std::vector<uint8_t>(temp_builder.GetBufferPointer(), temp_builder.GetBufferPointer() + temp_builder.GetSize()));
+      
+      ret_val = CreateRankingEventTransport(builder, event_id_offset, evt.get_pass_prob(), payload_offset);
+      return error_code::success;
+    }
+  };
+
   template <>
   struct fb_event_serializer<outcome_event> {
     using fb_event_t = OutcomeEventHolder;
@@ -99,6 +135,43 @@ namespace reinforcement_learning { namespace logger {
       batch_builder.add_events(event_offsets);
       auto batch_offset = batch_builder.Finish();
       _builder.Finish(batch_offset); 
+      // Where does the body of the data begin in relation to the start
+      // of the raw buffer
+      const auto offset = _builder.GetBufferPointer() - _buffer.raw_begin();
+      _buffer.set_body_endoffset(_buffer.preamble_size() + _buffer.body_capacity());
+      _buffer.set_body_beginoffset(offset);
+    }
+
+    typename serializer_t::offset_vector_t _event_offsets;
+    flatbuffer_allocator _allocator;
+    flatbuffers::FlatBufferBuilder _builder;
+    buffer_t& _buffer;
+  };
+
+  template <typename event_t>
+  struct fb_collection_serializer2 {
+    using serializer_t = fb_event_serializer2<event_t>;
+    using buffer_t = utility::data_buffer;
+    static int message_id() { return message_type::UNKNOWN; }
+
+    fb_collection_serializer2(buffer_t& buffer)
+      : _allocator(buffer), _builder(buffer.body_capacity(), &_allocator), _buffer(buffer) {}
+
+    int add(event_t& evt, api_status* status = nullptr) {
+      flatbuffers::Offset<typename serializer_t::fb_event_t> offset;
+      RETURN_IF_FAIL(serializer_t::serialize(evt, _builder, offset, status));
+      _event_offsets.push_back(offset);
+      return error_code::success;
+    }
+
+    uint64_t size() const { return _builder.GetSize(); }
+
+    void finalize() {
+      auto event_offsets = _builder.CreateVector(_event_offsets);
+      typename serializer_t::batch_builder_t batch_builder(_builder);
+      batch_builder.add_events(event_offsets);
+      auto batch_offset = batch_builder.Finish();
+      _builder.Finish(batch_offset);
       // Where does the body of the data begin in relation to the start
       // of the raw buffer
       const auto offset = _builder.GetBufferPointer() - _buffer.raw_begin();
