@@ -53,7 +53,7 @@ def handle_log_file(input_log_entry, output_path):
         print('Cannot find file: ' + input_log_entry.file_name)
 
 def is_good_for_train(line):
-    return line is not None and line.startswith('{"_label_cost')
+    return line is not None and line.startswith('{"_label_cost') or line.startswith('{"o":') or line.startswith('{"Timestamp"')
 
 def handle_log_file_to_1_file(input_log_entry, fout):
     if (os.path.isfile(input_log_entry.file_name)):
@@ -99,11 +99,10 @@ def extract_batches_to_1_file(input_folder, start_datetime, end_datetime, output
     with open(output_path, 'w') as fout:
         for ds_entry in iterate_ds_logs(start_datetime, end_datetime):
             ds_entry.file_name = os.path.join(input_folder, ds_entry.file_name)
-            print('Prrocessing log file: ' + ds_entry.file_name)
+            print('Processing log file: ' + ds_entry.file_name)
             handle_log_file_to_1_file(ds_entry, fout)
 
-print("In train.py")
-print("As a data scientist, this is where I use my training code.")
+print("Extracting data from application logs...")
 
 parser = argparse.ArgumentParser("train")
 parser.add_argument("--input_folder", type=str, help="input folder")
@@ -123,4 +122,5 @@ start_datetime = datetime.datetime.strptime(args.start_datetime, args.pattern)
 end_datetime = datetime.datetime.strptime(args.end_datetime, args.pattern)
 
 extract_batches_to_1_file(args.input_folder, start_datetime, end_datetime, args.output_folder)
+print("Done.")
 

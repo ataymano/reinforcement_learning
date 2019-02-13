@@ -20,13 +20,12 @@ class vw_wrapper:
         return result
 
     def process(self, input, output):
-        command = self.path + ' ' + self.args + ' ' + input + ' -f ' + output
+        command = self.path + ' ' + self.args + ' ' + input + ' -f ' + output + ' --id MyNewId'
         process = subprocess.Popen(command.split(), universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         output, error = process.communicate()
         return self.parse_vw_output(error)
 
-print("In train.py")
-print("As a data scientist, this is where I use my training code.")
+print("Training vw model...")
 
 parser = argparse.ArgumentParser("train")
 parser.add_argument("--input_folder", type=str, help="input folder")
@@ -43,5 +42,6 @@ print("DONE")
 os.makedirs(args.output_folder, exist_ok=True)
 result = vw.process(os.path.join(args.input_folder, 'dataset.json'), os.path.join(args.output_folder, 'current'))
 print('RESULT: ' +  result['average loss'])
+print('Done.')
 
 
