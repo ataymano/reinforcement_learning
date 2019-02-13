@@ -41,7 +41,7 @@ vw = vw_wrapper(vw_path = '/usr/local/bin/vw', args = '--cb_adf --dsjson')
 print("DONE")
 
 os.makedirs(args.output_folder, exist_ok=True)
-result = vw.process(os.path.join(args.input_folder, '0.json'), os.path.join(args.output_folder, 'current'))
+result = vw.process(os.path.join(args.input_folder, 'dataset.json'), os.path.join(args.output_folder, 'current'))
 print('RESULT: ' +  result['average loss'])
 
 

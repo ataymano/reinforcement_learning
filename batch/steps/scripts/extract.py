@@ -52,6 +52,28 @@ def handle_log_file(input_log_entry, output_path):
     else:
         print('Cannot find file: ' + input_log_entry.file_name)
 
+def is_good_for_train(line):
+    return line is not None and line.startswith('{"_label_cost')
+
+def handle_log_file_to_1_file(input_log_entry, fout):
+    if (os.path.isfile(input_log_entry.file_name)):
+        if input_log_entry.is_cutoff_needed():
+            print('Copying with cutoff: ' + input_log_entry.file_name)
+            with open(input_log_entry.file_name, 'r') as fin:
+                for line in fin:
+                    ts = get_timestamp(line)
+                    if ts is not None and input_log_entry.start_datetime <= ts and ts < input_log_entry.end_datetime and is_good_for_train(line):
+                        fout.write(line)
+        else:
+            print('Copying without cutoff: ' + input_log_entry.file_name)
+            with open(input_log_entry.file_name, 'r') as fin:
+                for line in fin:
+                    if is_good_for_train(line):
+                        fout.write(line)
+    else:
+        print('Cannot find file: ' + input_log_entry.file_name)
+
+
 def iterate_ds_logs(start_datetime, end_datetime):
     start_date = datetime.datetime(start_datetime.year, start_datetime.month, start_datetime.day)
     end_date = datetime.datetime(end_datetime.year, end_datetime.month, end_datetime.day)
@@ -70,6 +92,15 @@ def extract_batches(input_folder, start_datetime, end_datetime, output_folder):
         output_path = os.path.join(output_folder, str(batch_id) + '.json')
         handle_log_file(ds_entry, output_path)
         batch_id = batch_id + 1
+
+def extract_batches_to_1_file(input_folder, start_datetime, end_datetime, output_folder):
+    os.makedirs(output_folder, exist_ok=True)
+    output_path = os.path.join(output_folder, 'dataset.json')
+    with open(output_path, 'w') as fout:
+        for ds_entry in iterate_ds_logs(start_datetime, end_datetime):
+            ds_entry.file_name = os.path.join(input_folder, ds_entry.file_name)
+            print('Prrocessing log file: ' + ds_entry.file_name)
+            handle_log_file_to_1_file(ds_entry, fout)
 
 print("In train.py")
 print("As a data scientist, this is where I use my training code.")
@@ -91,5 +122,5 @@ print("Argument 5: %s" % args.pattern)
 start_datetime = datetime.datetime.strptime(args.start_datetime, args.pattern)
 end_datetime = datetime.datetime.strptime(args.end_datetime, args.pattern)
 
-extract_batches(args.input_folder, start_datetime, end_datetime, args.output_folder)
+extract_batches_to_1_file(args.input_folder, start_datetime, end_datetime, args.output_folder)
 
