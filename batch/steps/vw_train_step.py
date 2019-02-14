@@ -6,9 +6,12 @@ from azureml.pipeline.core.graph import PipelineParameter
 from azureml.core.runconfig import CondaDependencies, RunConfiguration
 from azureml.pipeline.core import PipelineData
 
+import helpers
+from helpers import compute
+
 class vw_train_step(PythonScriptStep):
  
-    def __init__(self, workspace, input_folder, compute):
+    def __init__(self, workspace, input_folder):
         self.input = input_folder
         self.output = PipelineData("Vw_model_intermediate_data", datastore = workspace.get_default_datastore())
 
@@ -31,7 +34,7 @@ class vw_train_step(PythonScriptStep):
             source_directory=os.path.join(dir_path, 'scripts'),
             script_name="vw_train.py", 
             arguments=["--input_folder", self.input, "--output_folder", self.output],
-            compute_target=compute, 
+            compute_target=compute.get_or_create_aml_compute_target(workspace, 'train-compute-0'), 
             inputs=[self.input],
             outputs=[self.output],
             runconfig = config

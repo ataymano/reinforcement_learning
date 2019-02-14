@@ -4,8 +4,11 @@ from azureml.pipeline.steps import PythonScriptStep
 from azureml.pipeline.core.graph import PipelineParameter
 from azureml.pipeline.core import PipelineData
 
+import helpers
+from helpers import compute
+
 class add_label_step(PythonScriptStep):
-    def __init__(self, workspace, input_folder, compute):
+    def __init__(self, workspace, input_folder):
         self.input = input_folder
         self.output = PipelineData("add_label_step_intermediate_data", datastore=workspace.get_default_datastore())
         
@@ -18,7 +21,7 @@ class add_label_step(PythonScriptStep):
             arguments=["--input_folder", self.input, "--output_folder", self.output],
             inputs=[self.input],
             outputs=[self.output],
-            compute_target=compute, 
+            compute_target=compute.get_or_create_aml_compute_target(workspace, 'aml-compute-0'), 
             source_directory=os.path.join(dir_path, 'scripts')
         )
         print("Add labels step is successfully created")

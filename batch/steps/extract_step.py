@@ -7,8 +7,11 @@ from azureml.pipeline.steps import PythonScriptStep
 from azureml.pipeline.core.graph import PipelineParameter
 from azureml.pipeline.core import PipelineData
 
+import helpers
+from helpers import compute
+
 class extract_step(PythonScriptStep):
-    def __init__(self, workspace, context, compute):
+    def __init__(self, workspace, context):
         self.input = DataReference(
                 datastore=context.get_datastore(workspace),
                 data_reference_name="Application_logs",
@@ -31,7 +34,7 @@ class extract_step(PythonScriptStep):
             arguments=["--input_folder", self.input, "--output_folder", self.output, "--start_datetime", start, "--end_datetime", end, "--pattern", pattern],
             inputs=[self.input],
             outputs=[self.output],
-            compute_target=compute, 
+            compute_target=compute.get_or_create_aml_compute_target(workspace, 'aml-compute-0'), 
             source_directory=os.path.join(dir_path, 'scripts')
         )
         print("Data extraction step is successfully created")

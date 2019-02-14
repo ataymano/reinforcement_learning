@@ -3,7 +3,7 @@ from azureml.core.compute_target import ComputeTargetException
 from azureml.core.compute import AmlCompute
 from azureml.core.compute import ComputeTarget, BatchCompute, DataFactoryCompute
 
-def get_or_create_aml_compute_target(ws, name, vm_size = "STANDARD_D2_v2", max_nodes = 1):
+def get_or_create_aml_compute_target(ws, name, vm_size = "STANDARD_D2_v2", max_nodes = 2):
     try:
         cluster = AmlCompute(ws, name)
         print("Found existing cluster: " + name)
