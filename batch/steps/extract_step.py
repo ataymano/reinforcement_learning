@@ -21,7 +21,9 @@ class extract_step(PythonScriptStep):
         path = os.path.abspath(__file__)
         dir_path = os.path.dirname(path)
         
-        pattern = "%Y-%m-%dT%H:%M:%S.%f0Z"
+    #    pattern = "%Y-%m-%dT%H:%M:%S.%f0Z"
+        pattern = "%m/%d/%Y %H:%M:%S"
+
         start = PipelineParameter(name = "start_datetime", default_value = '')
         end = PipelineParameter(name = "end_datetime", default_value = '')
 
