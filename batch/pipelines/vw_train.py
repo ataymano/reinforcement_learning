@@ -6,7 +6,6 @@ from steps import extract_step
 from steps import vw_train_step
 from steps import deployment_step
 from steps import add_label_step
-from steps import vw_mpi_step
 
 import azureml.core
 from azureml.core import Workspace, Experiment, Datastore
