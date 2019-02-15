@@ -11,7 +11,7 @@ import helpers
 from helpers import compute
 
 class extract_step(PythonScriptStep):
-    def __init__(self, workspace, context):
+    def __init__(self, workspace, context, with_labels = True):
         self.input = DataReference(
                 datastore=context.get_datastore(workspace),
                 data_reference_name="Application_logs",
@@ -30,9 +30,14 @@ class extract_step(PythonScriptStep):
         if not start or not end:
             raise ValueError("start_datetime or end_datetime is not specified")
 
+        if with_labels:
+            script_name = 'extract_with_labels.py'
+        else:
+            script_name = 'extract_no_labels.py'
+
         super().__init__(
             name="extract_batch",
-            script_name="extract.py", 
+            script_name=script_name, 
             arguments=["--input_folder", self.input, "--output_folder", self.output, "--start_datetime", start, "--end_datetime", end, "--pattern", pattern],
             inputs=[self.input],
             outputs=[self.output],
