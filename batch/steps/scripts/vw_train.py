@@ -4,6 +4,8 @@ import argparse
 import os
 import subprocess
 
+from azureml.core.run import Run
+
 class vw_wrapper:
     def __init__(self, vw_path, args):
         self.path = vw_path
@@ -40,8 +42,15 @@ vw = vw_wrapper(vw_path = '/usr/local/bin/vw', args = '--cb_adf --dsjson')
 print("DONE")
 
 os.makedirs(args.output_folder, exist_ok=True)
-result = vw.process(os.path.join(args.input_folder, 'dataset.json'), os.path.join(args.output_folder, 'current'))
-print('RESULT: ' +  result['average loss'])
+result = vw.process(os.path.join(args.input_folder, '0.json'), os.path.join(args.output_folder, 'current'))
+logger = Run.get_context()
+for key, value in result.items():
+    try:
+        f_value = float(value)
+        logger.log(key, f_value)
+    except ValueError:
+        print("Not a float value. " + key + ": " + value)
+
 print('Done.')
 
 

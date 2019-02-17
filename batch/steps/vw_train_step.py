@@ -20,7 +20,7 @@ class vw_train_step(PythonScriptStep):
 
         config = RunConfiguration()
         config.environment.docker.enabled = True
-        config.environment.docker.base_image = "ataymano/test:0.4"
+        config.environment.docker.base_image = "ataymano/test:0.7"
         config.environment.python.user_managed_dependencies = True
 
 
