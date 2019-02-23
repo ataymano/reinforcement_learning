@@ -36,12 +36,12 @@ class extract_step(PythonScriptStep):
             script_name = 'extract_no_labels.py'
 
         super().__init__(
-            name="extract_batch",
+            name="Extract",
             script_name=script_name, 
             arguments=["--input_folder", self.input, "--output_folder", self.output, "--start_datetime", start, "--end_datetime", end, "--pattern", pattern],
             inputs=[self.input],
             outputs=[self.output],
-            compute_target=compute.get_or_create_aml_compute_target(workspace, 'aml-compute-0'), 
+            compute_target=compute.get_or_create_aml_compute_target(workspace, 'extractor', vm_size = 'Standard_F2s_v2'), 
             source_directory=os.path.join(dir_path, 'scripts')
         )
         print("Data extraction step is successfully created")

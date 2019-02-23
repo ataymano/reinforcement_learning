@@ -16,7 +16,7 @@ class add_label_step(PythonScriptStep):
         dir_path = os.path.dirname(path)
         
         super().__init__(
-            name="add_labels",
+            name="Add label",
             script_name="add_label.py", 
             arguments=["--input_folder", self.input, "--output_folder", self.output],
             inputs=[self.input],

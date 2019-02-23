@@ -3,7 +3,7 @@ from azureml.core.compute_target import ComputeTargetException
 from azureml.core.compute import AmlCompute
 from azureml.core.compute import ComputeTarget, BatchCompute, DataFactoryCompute
 
-def get_or_create_aml_compute_target(ws, name, vm_size = "STANDARD_D2_v2", max_nodes = 2):
+def get_or_create_aml_compute_target(ws, name, vm_size = "STANDARD_D2_v2", max_nodes = 4):
     try:
         cluster = AmlCompute(ws, name)
         print("Found existing cluster: " + name)
@@ -11,6 +11,7 @@ def get_or_create_aml_compute_target(ws, name, vm_size = "STANDARD_D2_v2", max_n
     except ComputeTargetException:
         print("Creating new AmlCompute cluster: " + name)
         provisioning_config = AmlCompute.provisioning_configuration(vm_size = vm_size,
+                                                                    min_nodes = max_nodes,
                                                                     max_nodes = max_nodes)
 
         # create the cluster

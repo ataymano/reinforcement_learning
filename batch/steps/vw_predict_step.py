@@ -9,11 +9,12 @@ from azureml.pipeline.core import PipelineData
 import helpers
 from helpers import compute
 
-class vw_train_step(PythonScriptStep):
+class vw_predict_step(PythonScriptStep):
  
-    def __init__(self, workspace, input_folder):
+    def __init__(self, workspace, input_folder, command):
         self.input = input_folder
-        self.output = PipelineData("Vw_model_intermediate_data", datastore = workspace.get_default_datastore())
+        self.command = command
+        self.output = PipelineData("prediction", datastore = workspace.get_default_datastore())
 
         path = os.path.abspath(__file__)
         dir_path = os.path.dirname(path)
@@ -30,14 +31,15 @@ class vw_train_step(PythonScriptStep):
 #        config.environment.spark.precache_packages = False
 
         super().__init__(
-            name="Learn [vw]",
+            name="Predict [vw]",
             source_directory=os.path.join(dir_path, 'scripts'),
-            script_name="vw_train.py", 
-            arguments=["--input_folder", self.input, "--output_folder", self.output],
-            compute_target=compute.get_or_create_aml_compute_target(workspace, 'train-compute-0'), 
-            inputs=[self.input],
+            script_name="vw_predict.py", 
+            arguments=["--input_folder", self.input, "--output_folder", self.output, '--command', self.command],
+            compute_target=compute.get_or_create_aml_compute_target(workspace, 'vw-predict', vm_size = 'Standard_DS1_v2', max_nodes = 4), 
+            inputs=[self.input, self.command],
             outputs=[self.output],
-            runconfig = config
+            runconfig = config,
+            allow_reuse = True
         )
     
         print("Vw train step is successfully created") 

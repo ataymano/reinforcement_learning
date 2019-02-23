@@ -18,7 +18,8 @@ import datetime
 def create_pipeline(ws, ctx):
     extractStep = extract_step.extract_step(
         workspace = ws,
-        context = ctx
+        context = ctx,
+        with_labels = False
     )
 
     addLabelStep = add_label_step.add_label_step(
