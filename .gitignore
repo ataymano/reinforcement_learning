@@ -2,6 +2,8 @@
 *.a
 *.out
 
+*.pyc
+
 .DS_Store
 
 # build folders
