@@ -2,7 +2,7 @@ import os
 import azureml.core
 import datetime
 from azureml.pipeline.steps import PythonScriptStep, MpiStep
-from azureml.pipeline.core.graph import PipelineParameter
+from azureml.pipeline.core.graph import PipelineParameter, InputPortBinding
 from azureml.core.runconfig import CondaDependencies, RunConfiguration
 from azureml.pipeline.core import PipelineData
 from azureml.data.data_reference import DataReference
@@ -13,10 +13,10 @@ from helpers import compute
 class vw_cache_step(PythonScriptStep):
  
     def __init__(self, workspace, context):
-        self.input = DataReference(
+        self.input = InputPortBinding(name="Application_logs", bind_object=DataReference(
                 datastore=context.get_datastore(workspace),
                 data_reference_name="Application_logs",
-                path_on_datastore=context.appFolder)
+                path_on_datastore=context.appFolder))
         self.output = PipelineData("cache", datastore = workspace.get_default_datastore())
 
         path = os.path.abspath(__file__)

@@ -13,6 +13,104 @@ import os
 import datetime
 import shutil
 
+import itertools
+
+import json
+from enum import Enum
+import collections
+
+class PropType(Enum):
+    NONE = 1
+    BASIC = 2
+    MARGINAL = 3
+
+def detect_namespaces(j_obj, ns_set, marginal_set):
+    prop_type = PropType.NONE
+    if (j_obj is None) or type(j_obj) is not dict:
+        return prop_type
+
+    # The rule is: recurse into objects until a flat list of properties is found; the
+    # nearest enclosing name is the namespace
+    for kv_entry in j_obj.items():
+        key = kv_entry[0]
+        value = kv_entry[1]
+
+        # Ignore entries whose key begins with an '_' except _text
+        if key[0] == '_' and key != '_text':
+            continue
+
+        if type(value) is list:
+            # Unwrap lists so we retain knowledge of the enclosing key name
+            for item in value:
+                ret_val = detect_namespaces(item, ns_set, marginal_set)
+                if ret_val in [PropType.BASIC, PropType.MARGINAL]:
+                    ns_set.update([key])
+                    if ret_val is PropType.MARGINAL:
+                        marginal_set.update([key])
+        elif type(value) is dict:
+            # Recurse on the value
+            ret_val = detect_namespaces(value, ns_set, marginal_set)
+            if ret_val in [PropType.BASIC, PropType.MARGINAL]:
+                ns_set.update([key])
+                if ret_val is PropType.MARGINAL:
+                    marginal_set.update([key])
+        elif value is not None:
+            prop_type = PropType.BASIC
+
+    # If basic properties were found, check if they are actually marginal properties
+    if prop_type is PropType.BASIC:
+        if j_obj.get('constant', 0) == 1:
+            prop_type = PropType.MARGINAL
+
+    return prop_type
+
+def extract_namespaces(fname, auto_lines = 100):
+    shared_tmp = collections.Counter()
+    action_tmp = collections.Counter()
+    marginal_tmp = collections.Counter()
+
+    with open(fname, 'r') as f:
+        counter = 0
+        for line in f:
+            if not line.startswith('{"_label_cost"'):
+                continue
+
+            counter += 1
+                
+            event = json.loads(line)
+            # Separate the shared features from the action features for namespace analysis
+            if 'c' in event:
+                context = event['c']
+                action_set = context['_multi']
+                del context['_multi']
+                detect_namespaces(context, shared_tmp, marginal_tmp)
+                # Namespace detection expects object of type 'dict', so unwrap the action list
+                for action in action_set:
+                    detect_namespaces(action, action_tmp, marginal_tmp)
+            else:
+                raise ValueError('Error: c not in json:' + line)
+
+            # We assume the schema is consistent throughout the file, but since some
+            # namespaces may not appear in every datapoint, check enough points.
+            if counter >= auto_lines:
+                break
+    return ({x[0] for x in shared_tmp}, {x[0] for x in action_tmp}, {x[0] for x in marginal_tmp})   
+
+def iterate_subsets(s):
+    for i in range(1, len(s) + 1):
+        yield from itertools.combinations(s, i)
+
+def write_marginals(fname, marginals):
+    with open(fname, 'w') as f:
+        for element in iterate_subsets(marginals):
+            f.write('--marginal ' + ''.join(element) + '\n')
+
+def write_interactions(fname, shared, actions):
+    interactions = {''.join(x) for x in itertools.product(shared, actions)}
+    with open(fname, 'w') as f:
+        for element in iterate_subsets(interactions):
+            f.write('-q ' + ' -q '.join(element) + '\n')
+
 def datetime_2_subfolder(dt):
     return 'data/' + str(dt.year) + '/' + str(dt.month).zfill(2) + '/' + str(dt.day).zfill(2) + '_0.json'
 
@@ -50,37 +148,46 @@ def copy_with_cutoff(input_log_entry, stream):
 
 
 def handle_log_file(input_log_entry, stream):
-    if (os.path.isfile(input_log_entry.file_name)):
-        if not input_log_entry.is_cutoff_needed():
-            print('Processing whole file: ' + input_log_entry.file_name)
+    if not input_log_entry.is_cutoff_needed():
+        print('Processing whole file: ' + input_log_entry.file_name)
 
-            command = 'cat ' + input_log_entry.file_name
-            process = subprocess.Popen(command.split(), universal_newlines=True, stdout=stream, stderr=subprocess.PIPE)
-            output, error = process.communicate()
-            if error:
-                print('ERROR: ' + error)
-        else:
-            print('Processing partially: ' + input_log_entry.file_name)
-            copy_with_cutoff(input_log_entry, stream)
+        command = 'cat ' + input_log_entry.file_name
+        process = subprocess.Popen(command.split(), universal_newlines=True, stdout=stream, stderr=subprocess.PIPE)
+        output, error = process.communicate()
+        if error:
+            print('ERROR: ' + error)
     else:
-        print('Cannot find file: ' + input_log_entry.file_name)
+        print('Processing partially: ' + input_log_entry.file_name)
+        copy_with_cutoff(input_log_entry, stream)
 
 def is_good_for_train(line):
     return line is not None and line.startswith('{"_label_cost') or line.startswith('{"o":') or line.startswith('{"Timestamp"')
 
-def iterate_ds_logs(start_datetime, end_datetime):
+def iterate_ds_logs(input_folder, start_datetime, end_datetime):
     start_date = datetime.datetime(start_datetime.year, start_datetime.month, start_datetime.day)
     end_date = datetime.datetime(end_datetime.year, end_datetime.month, end_datetime.day)
 
     for d in (start_date + datetime.timedelta(i) for i in range((end_date - start_date).days + 1)):
         s = start_datetime if is_same_day(d, start_datetime) else datetime.datetime.min
         e = end_datetime if is_same_day(d, end_datetime) else datetime.datetime.max
-        yield logs_entry(datetime_2_subfolder(d), s, e)
+        path = os.path.join(input_folder, datetime_2_subfolder(d))
+        if os.path.isfile(path):
+            yield logs_entry(path, s, e)
         
+    return
+    yield
+
 def extract(input_folder, start_datetime, end_datetime, stream):
-    for ds_entry in iterate_ds_logs(start_datetime, end_datetime):
-        ds_entry.file_name = os.path.join(input_folder, ds_entry.file_name)
+    for ds_entry in iterate_ds_logs(input_folder, start_datetime, end_datetime):
         handle_log_file(ds_entry, stream)
+
+def extract_interactions_marginals(input_folder, start_datetime, end_datetime, output_folder):
+    for ds_entry in iterate_ds_logs(input_folder, start_datetime, end_datetime):
+        namespaces = extract_namespaces(ds_entry.file_name)
+        marginals_path = os.path.join(args.output_folder, 'marginals.txt')
+        interactions_path = os.path.join(args.output_folder, 'interactions.txt')
+        write_marginals(marginals_path, namespaces[2])
+        write_interactions(interactions_path, namespaces[0], namespaces[1])
 
 class vw_wrapper:
     def __init__(self, vw_path, cache_path):
@@ -126,6 +233,7 @@ os.makedirs(args.output_folder, exist_ok=True)
 cache_path = os.path.join(args.output_folder, 'dataset.cache')
 vw = vw_wrapper(vw_path = '/usr/local/bin/vw', cache_path = cache_path)
 extract(args.input_folder, start_datetime, end_datetime, vw.stdin())
+extract_interactions_marginals(args.input_folder, start_datetime, end_datetime, args.output_folder)
 vw.finalize()
 print('Done: '+ str(datetime.datetime.now()))
 

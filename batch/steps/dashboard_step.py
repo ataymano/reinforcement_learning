@@ -4,7 +4,7 @@ import datetime
 
 from azureml.data.data_reference import DataReference
 from azureml.pipeline.steps import PythonScriptStep, DataTransferStep
-from azureml.pipeline.core.graph import PipelineParameter
+from azureml.pipeline.core.graph import PipelineParameter, OutputPortBinding
 from azureml.pipeline.core import PipelineData
 from azureml.core.runconfig import CondaDependencies, RunConfiguration
 
@@ -19,7 +19,10 @@ class dashboard_step(PythonScriptStep):
                 path_on_datastore=context.appFolder)
         self.predictions = predictions
         dashboard_tmp = PipelineData("dashboard", datastore=workspace.get_default_datastore())
-
+        dashboard = OutputPortBinding(
+            name = 'dashboard',
+            datastore = workspace.get_default_datastore(),
+            bind_mode='mount')
         path = os.path.abspath(__file__)
         dir_path = os.path.dirname(path)
         
@@ -34,9 +37,9 @@ class dashboard_step(PythonScriptStep):
         self.step1 = PythonScriptStep(
             name="Dashboard",
             script_name='dashboard.py', 
-            arguments=["--log_fp", self.input, "--pred_fp", self.predictions, "--output_fp", dashboard_tmp],
+            arguments=["--log_fp", self.input, "--pred_fp", self.predictions, "--output_fp", dashboard],
             inputs=[self.input, self.predictions],
-            outputs=[dashboard_tmp],
+            outputs=[dashboard],
             compute_target=compute.get_or_create_aml_compute_target(workspace, 'dashboard', vm_size = 'Standard_F2s_v2'), 
             source_directory=os.path.join(dir_path, 'scripts'),
             runconfig = run_config,
@@ -48,14 +51,14 @@ class dashboard_step(PythonScriptStep):
             data_reference_name="dashboard",
             path_on_datastore="dashboard.json")
 
-        self.step2 = DataTransferStep(
-            name="Dashboard deploy",
-            source_data_reference=dashboard_tmp,
-            source_reference_type='file',
-            destination_data_reference=self.output,
-            destination_reference_type='file',
-            compute_target=compute.get_or_create_data_factory(workspace, 'adf-compute-0')
-        )
+ #       self.step2 = DataTransferStep(
+ #           name="Dashboard deploy",
+ #           source_data_reference=dashboard_tmp,
+ #           source_reference_type='file',
+ #           destination_data_reference=self.output,
+ #           destination_reference_type='file',
+ #           compute_target=compute.get_or_create_data_factory(workspace, 'adf-compute-0')
+ #       )
         print("Dashboard step is successfully created")
 
     def input(self):

@@ -29,11 +29,25 @@ class vw_wrapper:
         output, error = process.communicate()
         return self.parse_vw_output(error)
 
+def get_subcommand(fname, index):
+    if index == 0:
+        return ' '
+
+    if os.path.isfile(fname):
+        with open(fname, 'r') as f:
+            for result in f:
+                index = index - 1
+                if index == 0:
+                    return result
+    return None
+
 print("Estimating vw model...")
 
 parser = argparse.ArgumentParser("train")
 parser.add_argument("--input_folder", type=str, help="input folder")
 parser.add_argument("--base_command", type=str, help="base command")
+parser.add_argument("--marginals_index", type=str, help="marginal command index")
+parser.add_argument("--interactions_index", type=str, help="interactions command index")
 
 #parser.add_argument("--power_t", type=str, help="power_t")
 args = parser.parse_known_args()
@@ -44,21 +58,34 @@ with open(args[0].base_command, 'r') as f_command:
     command = f_command.readline()
 
 #c = '--cb_adf --dsjson --cb_type ips -l 1e-05 --l1 1e-05 --power_t ' + args.power_t
-c = command + ' ' +  ' '.join(args[1])
+c = command.rstrip() + ' ' +  ' '.join(args[1])
 
-print("Command: " + c)
-print('Started: ' + str(datetime.datetime.now()))
-vw = vw_wrapper(vw_path = '/usr/local/bin/vw', args = c)
-result = vw.process(os.path.join(args[0].input_folder, 'dataset.cache'))
-logger = Run.get_context()
-logger.log('Command', c)
-for key, value in result.items():
-    try:
-        f_value = float(value)
-        logger.log(key, f_value)
-    except ValueError:
-        print("Not a float value. " + key + ": " + value)
+marginals_path = os.path.join(args[0].input_folder, 'marginals.txt')
+interactions_path = os.path.join(args[0].input_folder, 'interactions.txt')
 
-print('Done: ' + str(datetime.datetime.now()))
+marg = ' '
+if args[0].marginals_index:
+    marg = get_subcommand(marginals_path, int(args[0].marginals_index))
+
+inter = ' '
+if args[0].interactions_index:
+    inter = get_subcommand(interactions_path, int(args[0].interactions_index))
+
+if marg is not None and inter is not None:
+    c = c + ' ' + marg.rstrip() + ' ' + inter.rstrip()
+    print("Command: " + c)
+    print('Started: ' + str(datetime.datetime.now()))
+    vw = vw_wrapper(vw_path = '/usr/local/bin/vw', args = c)
+    result = vw.process(os.path.join(args[0].input_folder, 'dataset.cache'))
+    logger = Run.get_context()
+    logger.log('Command', c)
+    for key, value in result.items():
+        try:
+            f_value = float(value)
+            logger.log(key, f_value)
+        except ValueError:
+            print("Not a float value. " + key + ": " + value)
+
+    print('Done: ' + str(datetime.datetime.now()))
 
 

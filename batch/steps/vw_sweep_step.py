@@ -36,7 +36,7 @@ class vw_sweep_step(HyperDriveStep):
                                 hyperparameter_sampling=param_grid,
                                 policy=None,
                                 primary_metric_name='average loss', 
-                                primary_metric_goal=PrimaryMetricGoal.MAXIMIZE, 
+                                primary_metric_goal=PrimaryMetricGoal.MINIMIZE, 
                                 max_total_runs=jobs_limit,
                                 max_concurrent_runs=parallel_jobs)
 
