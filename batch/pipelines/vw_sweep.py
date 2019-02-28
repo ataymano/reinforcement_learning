@@ -30,12 +30,11 @@ def create_pipeline(ws, ctx, parallel_jobs):
 
     extractStep = extract_step.extract_step(
         workspace = ws,
-        context = ctx,
-        with_labels = True)
+        context = ctx)
 
     cacheStep = vw_cache_step.vw_cache_step(
         workspace = ws,
-        context = ctx
+        input = extractStep.output
     )
 
     grid_1 = RandomParameterSampling(
@@ -84,7 +83,7 @@ def create_pipeline(ws, ctx, parallel_jobs):
     grid_2 = GridParameterSampling(
         {
             '--marginals_index': choice(0, 1),
-            '--interactions_index': choice(0, 1)        
+            '--interactions_index': choice(0, 1, 2, 3, 4, 5, 6, 7)        
         }
     )
 
@@ -110,16 +109,11 @@ def create_pipeline(ws, ctx, parallel_jobs):
 
     dashboard = dashboard_step.dashboard_step(
         workspace = ws,
-        context = ctx,
+        data = extractStep.output,
         predictions = predict_2.output
     )
-#    mpiStep = vw_mpi_step.vw_mpi_step(
-#        workspace=ws,
-#        input_folder = extractStep.output,
-#        node_count = node_count,
-#        process_per_node = process_per_node)
 
-    sweep_pipeline = Pipeline(workspace=ws, steps=[dashboard.step1])
+    sweep_pipeline = Pipeline(workspace=ws, steps=[dashboard])
     print ("VwTrainPipeline is succesfully created.")
 
     sweep_pipeline.validate()

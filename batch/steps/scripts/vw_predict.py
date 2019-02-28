@@ -4,8 +4,14 @@ import argparse
 import os
 import subprocess
 import datetime
+import shutil
 
 from azureml.core.run import Run
+
+def Log(key, value):
+        logger = Run.get_context()
+        logger.log(key, value)
+        print(key + ': ' + str(value))
 
 class vw_wrapper:
     def __init__(self, vw_path, args):
@@ -39,20 +45,21 @@ parser.add_argument("--command", type=str, help="command")
 #parser.add_argument("--power_t", type=str, help="power_t")
 args = parser.parse_known_args()
 
-print("Input folder: %s" % args[0].input_folder)
-print("Output folder: %s" % args[0].output_folder)
+Log("Input folder", args[0].input_folder)
+Log("Output folder", args[0].output_folder)
 with open(args[0].command, 'r') as f_command:
     c = f_command.readline()
 
-print("Command: " + c)
+Log("Command", c)
 print('Started: ' + str(datetime.datetime.now()))
 vw = vw_wrapper(vw_path = '/usr/local/bin/vw', args = c)
 input_path = os.path.join(args[0].input_folder, 'dataset.cache')
-output_path = os.path.join(args[0].output_folder, 'dataset.policy.pred')
+output_path = os.path.join(args[0].output_folder, 'dataset.best.pred')
+command_path = os.path.join(args[0].output_folder, 'dataset.best.command')
 os.makedirs(args[0].output_folder, exist_ok=True)
+shutil.copyfile(args[0].command, command_path)
 result = vw.process(input_path, output_path)
 logger = Run.get_context()
-logger.log('Command', c)
 for key, value in result.items():
     try:
         f_value = float(value)

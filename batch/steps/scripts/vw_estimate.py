@@ -7,10 +7,33 @@ import datetime
 
 from azureml.core.run import Run
 
-class vw_wrapper:
+def Log(key, value):
+        logger = Run.get_context()
+        logger.log(key, value)
+        print(key + ': ' + str(value))
+
+class Vw:
     def __init__(self, vw_path, args):
         self.path = vw_path
         self.args = args
+
+    @staticmethod
+    def parse_loss(line):
+        try:
+            loss_str = line[:line.find(' ')]
+            return float(loss_str)
+        except ValueError:
+            return None
+
+    @staticmethod
+    def parse_key_value(line):
+        if '=' in line:
+            index = line.find('=')
+            key = line[0:index].strip()
+            value = line[index+1:].strip()
+            return (key, value)       
+        else:
+            return None
 
     def parse_vw_output(self, txt):
         result = {}
@@ -26,8 +49,16 @@ class vw_wrapper:
         command = self.path + ' ' + self.args + ' --cache_file ' + input
         print('Processing: ' + command)
         process = subprocess.Popen(command.split(), universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        output, error = process.communicate()
-        return self.parse_vw_output(error)
+        for line in iter(process.stderr.readline, ""):
+            loss = Vw.parse_loss(line)
+            if loss is not None:
+                Log('loss_plot', loss)
+            else:
+                kv = Vw.parse_key_value(line)
+                if kv:
+                    Log(kv[0], kv[1])
+        process.stderr.close()
+        return process.wait()
 
 def get_subcommand(fname, index):
     if index == 0:
@@ -52,7 +83,8 @@ parser.add_argument("--interactions_index", type=str, help="interactions command
 #parser.add_argument("--power_t", type=str, help="power_t")
 args = parser.parse_known_args()
 
-print("Input folder: %s" % args[0].input_folder)
+Log("Input folder", args[0].input_folder)
+Log("Base command path", args[0].base_command)
 
 with open(args[0].base_command, 'r') as f_command:
     command = f_command.readline()
@@ -73,18 +105,10 @@ if args[0].interactions_index:
 
 if marg is not None and inter is not None:
     c = c + ' ' + marg.rstrip() + ' ' + inter.rstrip()
-    print("Command: " + c)
+    Log("Command", c)  
     print('Started: ' + str(datetime.datetime.now()))
-    vw = vw_wrapper(vw_path = '/usr/local/bin/vw', args = c)
+    vw = Vw(vw_path = '/usr/local/bin/vw', args = c)
     result = vw.process(os.path.join(args[0].input_folder, 'dataset.cache'))
-    logger = Run.get_context()
-    logger.log('Command', c)
-    for key, value in result.items():
-        try:
-            f_value = float(value)
-            logger.log(key, f_value)
-        except ValueError:
-            print("Not a float value. " + key + ": " + value)
 
     print('Done: ' + str(datetime.datetime.now()))
 

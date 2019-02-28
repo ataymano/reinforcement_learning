@@ -28,6 +28,3 @@ class base_command_step(PythonScriptStep):
             source_directory=os.path.join(dir_path, 'scripts')
         )
         print("Best command selection step is created successfully")
-        
-    def output(self):
-        return self.output

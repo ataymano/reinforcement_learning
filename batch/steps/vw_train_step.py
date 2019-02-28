@@ -23,12 +23,6 @@ class vw_train_step(PythonScriptStep):
         config.environment.docker.base_image = "ataymano/test:0.7"
         config.environment.python.user_managed_dependencies = True
 
-
-#        config.environment.docker.enabled = True
-#        config.environment.docker.gpu_support = True
-#        config.environment.docker.base_image = "pytorch/pytorch"
-#        config.environment.spark.precache_packages = False
-
         super().__init__(
             name="Learn [vw]",
             source_directory=os.path.join(dir_path, 'scripts'),
@@ -41,9 +35,3 @@ class vw_train_step(PythonScriptStep):
         )
     
         print("Vw train step is successfully created") 
-
-    def input(self):
-        return self.input
-
-    def output(self):
-        return self.output

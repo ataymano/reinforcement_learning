@@ -5,13 +5,17 @@ import os
 import json
 
 from azureml.core.run import Run
+def Log(key, value):
+        logger = Run.get_context()
+        logger.log(key, value)
+        print(key + ': ' + str(value))
 
 def get_best_command(path, metrics):    
     with open(path, 'r') as f:
         o = json.loads(f.read())
         best = None
         for el in o:
-            if best is None or (hasattr(o[el], metrics) and float(o[el][metrics][0]) < best[1]):
+            if best is None or (metrics in o[el].keys() and float(o[el][metrics][0]) < best[1]):
                 best = (o[el]['Command'][0], float(o[el][metrics][0]))
 
     if best is None:
@@ -26,15 +30,14 @@ parser.add_argument("--input", type=str, help="input metrics")
 parser.add_argument("--output", type=str, help="output")
 args = parser.parse_args()
 
-print("Input folder: %s" % args.input)
-print("Output folder: %s" % args.output)
+Log("Input metrics", args.input)
+Log("Output path", args.output)
 
 metrics_name = 'average loss'
 best = get_best_command(args.input, metrics_name)
 
-logger = Run.get_context()
-logger.log('Command', best[0])
-logger.log(metrics_name, best[1])
+Log('Command', best[0])
+Log(metrics_name, best[1])
 
 os.makedirs(os.path.dirname(args.output), exist_ok=True)
 with open(args.output, 'w+') as fout:

@@ -45,8 +45,8 @@ class vw_sweep_step(HyperDriveStep):
             hyperdrive_run_config = hd_config,
             estimator_entry_script_arguments=["--input_folder", self.input, "--base_command", self.base_command],
             inputs=[self.input, self.base_command],
-            metrics_output=self.output
-      #      allow_reuse=False
+            metrics_output=self.output,
+            allow_reuse=True
         )
     
         print("Vw sweep step is successfully created") 

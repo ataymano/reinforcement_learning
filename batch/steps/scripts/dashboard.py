@@ -3,6 +3,12 @@ import numpy as np
 import argparse
 import time
 
+from azureml.core.run import Run
+def Log(key, value):
+        logger = Run.get_context()
+        logger.log(key, value)
+        print(key + ': ' + str(value))
+
 def update_progress(current, total=None, prefix=''):
     if total:
         barLength = 50 # Length of the progress bar
@@ -350,7 +356,7 @@ def get_prediction_prob(a0, pred_line):
 
     return pred_prob
 
-def output_dashboard_data(d, dashboard_file):
+def output_dashboard_data(d, commands, dashboard_file):
     data_dict = collections.OrderedDict()
     for x in d:
         for type in d[x]:
@@ -383,10 +389,12 @@ def output_dashboard_data(d, dashboard_file):
             temp = collections.OrderedDict({field : tot[type+'_'+field] for field in df_col[type]})
             temp["w"] = "tot"
             temp["t"] = type
+            if type in commands.keys():
+                temp["command"] = commands[type]
             d.append(temp)
         f.write(json.dumps({"ts":"Total","d":d})+'\n')
 
-def create_stats(log_fp, dashboard_file, predictions_files=None):
+def create_stats(log_fp, dashboard_file, commands, predictions_files=None):
 
     t0 = time.time()
 
@@ -506,7 +514,7 @@ def create_stats(log_fp, dashboard_file, predictions_files=None):
         print('Error: Prediction file length ({}) is different from number of events in log file ({})'.format([len(pred[name]) for name in pred],evts))
         sys.exit()
 
-    output_dashboard_data(d, dashboard_file)
+    output_dashboard_data(d, commands, dashboard_file)
     
     print('Total Elapsed Time: {:.1f} sec.'.format(time.time()-t0))
 
@@ -521,7 +529,16 @@ if __name__ == '__main__':
     args_dict = vars(parser.parse_args())   # this creates a dictionary with all input CLI
     for x in args_dict:
         locals()[x] = args_dict[x]  # this is equivalent to foo = args.foo
-
-    print('Output path: ' + output_fp)
+    Log('Cache folder', log_fp)
+    Log('Predictions path', pred_fp)
+    Log('Output path', output_fp)
     os.makedirs(os.path.dirname(output_fp), exist_ok=True)
-    create_stats(os.path.join(log_fp, 'data/2018/10/29_0.json'), output_fp, [os.path.join(pred_fp, 'dataset.policy.pred')])
+
+    predictions_path = os.path.join(pred_fp, 'dataset.best.pred')
+    commands_path = os.path.join(pred_fp, 'dataset.best.command')
+    with open(commands_path, 'r') as f_command:
+        command = f_command.readline()
+
+    command = command.rstrip()
+    Log('Command', command)
+    create_stats(log_fp, output_fp, {'best': command}, [predictions_path])

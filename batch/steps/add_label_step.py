@@ -25,9 +25,3 @@ class add_label_step(PythonScriptStep):
             source_directory=os.path.join(dir_path, 'scripts')
         )
         print("Add labels step is successfully created")
-
-    def input(self):
-        return self.input
-
-    def output(self):
-        return self.output

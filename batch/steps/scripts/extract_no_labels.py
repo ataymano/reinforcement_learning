@@ -32,9 +32,6 @@ def get_timestamp(dsline):
     datetimeEnd = dsline.find('"', datetimeStart)
     return ds_timestamp_parse(dsline[datetimeStart:datetimeEnd])
 
-def is_good_for_train(line):
-    return line is not None and line.startswith('{"_label_cost') or line.startswith('{"o":') or line.startswith('{"Timestamp"')
-
 def handle_log_file_to_1_file(input_log_entry, fout):
     if (os.path.isfile(input_log_entry.file_name)):
         if input_log_entry.is_cutoff_needed():
@@ -48,8 +45,7 @@ def handle_log_file_to_1_file(input_log_entry, fout):
             print('Copying without cutoff: ' + input_log_entry.file_name)
             with open(input_log_entry.file_name, 'r') as fin:
                 for line in fin:
-                    if is_good_for_train(line):
-                        fout.write(line)
+                    fout.write(line)
     else:
         print('Cannot find file: ' + input_log_entry.file_name)
 
@@ -76,7 +72,7 @@ print("Extracting data from application logs...")
 
 parser = argparse.ArgumentParser("train")
 parser.add_argument("--input_folder", type=str, help="input folder")
-parser.add_argument("--output_folder", type=str, help="output folder")
+parser.add_argument("--output_зфер", type=str, help="output folder")
 parser.add_argument("--start_datetime", type=str, help="start datetime of batch")
 parser.add_argument("--end_datetime", type=str, help="end datetime of batch")
 parser.add_argument("--pattern", type=str, help="date time parsing pattern")

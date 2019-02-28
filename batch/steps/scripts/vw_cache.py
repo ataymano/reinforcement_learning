@@ -111,90 +111,16 @@ def write_interactions(fname, shared, actions):
         for element in iterate_subsets(interactions):
             f.write('-q ' + ' -q '.join(element) + '\n')
 
-def datetime_2_subfolder(dt):
-    return 'data/' + str(dt.year) + '/' + str(dt.month).zfill(2) + '/' + str(dt.day).zfill(2) + '_0.json'
+def extract_interactions_marginals(input_path, output_folder):
+    namespaces = extract_namespaces(input_path)
+    marginals_path = os.path.join(args.output_folder, 'marginals.txt')
+    interactions_path = os.path.join(args.output_folder, 'interactions.txt')
+    write_marginals(marginals_path, namespaces[2])
+    write_interactions(interactions_path, namespaces[0], namespaces[1])
 
-class logs_entry:
-    def __init__(self, file_name, start_datetime = datetime.datetime.min, end_datetime=datetime.datetime.max):
-        self.start_datetime = start_datetime
-        self.end_datetime = end_datetime
-        self.file_name = file_name
-    
-    def is_cutoff_needed(self):
-        return self.start_datetime != datetime.datetime.min or self.end_datetime != datetime.datetime.max
-
-def is_same_day(first, second):
-    return first.year == second.year and first.month == second.month and first.day == second.day
-
-def ds_timestamp_parse(ds_timestamp):
-    return datetime.datetime.strptime(ds_timestamp, "%Y-%m-%dT%H:%M:%S.%f0Z")
-
-def get_timestamp(dsline):
-    position = dsline.find('Timestamp')
-    if position == -1:
-        return None
-
-    datetimeStart = position + 12
-    datetimeEnd = dsline.find('"', datetimeStart)
-    return ds_timestamp_parse(dsline[datetimeStart:datetimeEnd])
-
-def copy_with_cutoff(input_log_entry, stream):
-    with open(input_log_entry.file_name, 'r') as fin:
-        for line in fin:
-            if (line.startswith('{"_label_cost')):
-                ts = get_timestamp(line)
-                if ts is not None and input_log_entry.start_datetime <= ts and ts < input_log_entry.end_datetime:
-                    stream.write(line)
-
-
-def handle_log_file(input_log_entry, stream):
-    if not input_log_entry.is_cutoff_needed():
-        print('Processing whole file: ' + input_log_entry.file_name)
-
-        command = 'cat ' + input_log_entry.file_name
-        process = subprocess.Popen(command.split(), universal_newlines=True, stdout=stream, stderr=subprocess.PIPE)
-        output, error = process.communicate()
-        if error:
-            print('ERROR: ' + error)
-    else:
-        print('Processing partially: ' + input_log_entry.file_name)
-        copy_with_cutoff(input_log_entry, stream)
-
-def is_good_for_train(line):
-    return line is not None and line.startswith('{"_label_cost') or line.startswith('{"o":') or line.startswith('{"Timestamp"')
-
-def iterate_ds_logs(input_folder, start_datetime, end_datetime):
-    start_date = datetime.datetime(start_datetime.year, start_datetime.month, start_datetime.day)
-    end_date = datetime.datetime(end_datetime.year, end_datetime.month, end_datetime.day)
-
-    for d in (start_date + datetime.timedelta(i) for i in range((end_date - start_date).days + 1)):
-        s = start_datetime if is_same_day(d, start_datetime) else datetime.datetime.min
-        e = end_datetime if is_same_day(d, end_datetime) else datetime.datetime.max
-        path = os.path.join(input_folder, datetime_2_subfolder(d))
-        if os.path.isfile(path):
-            yield logs_entry(path, s, e)
-        
-    return
-    yield
-
-def extract(input_folder, start_datetime, end_datetime, stream):
-    for ds_entry in iterate_ds_logs(input_folder, start_datetime, end_datetime):
-        handle_log_file(ds_entry, stream)
-
-def extract_interactions_marginals(input_folder, start_datetime, end_datetime, output_folder):
-    for ds_entry in iterate_ds_logs(input_folder, start_datetime, end_datetime):
-        namespaces = extract_namespaces(ds_entry.file_name)
-        marginals_path = os.path.join(args.output_folder, 'marginals.txt')
-        interactions_path = os.path.join(args.output_folder, 'interactions.txt')
-        write_marginals(marginals_path, namespaces[2])
-        write_interactions(interactions_path, namespaces[0], namespaces[1])
-
-class vw_wrapper:
-    def __init__(self, vw_path, cache_path):
-        command = vw_path + ' --cb_adf --dsjson --cache_file ' + cache_path
-        self._process = subprocess.Popen(command.split(), universal_newlines=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-    def parse_vw_output(self, txt):
+class Vw:
+    @staticmethod
+    def _parse_vw_output(txt):
         result = {}
         for line in txt.split('\n'):
             if '=' in line:
@@ -204,37 +130,36 @@ class vw_wrapper:
                 result[key] = value
         return result
 
-    def stdin(self):
-        return self._process.stdin
+    @staticmethod
+    def cache(vw_path, cache_path, input_path):
+        command = vw_path + ' --cb_adf --dsjson --cache_file ' + cache_path + ' ' + input_path
+        execution = subprocess.Popen(command.split(), universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        output, error = execution.communicate()
+        return Vw._parse_vw_output(error)
 
-    def finalize(self):
-        output, error = self._process.communicate()
-        return self.parse_vw_output(error)
+def Log(key, value):
+        logger = Run.get_context()
+        logger.log(key, value)
+        print(key + ': ' + str(value))
 
-print("Training vw model...")
+print("Caching and extracting namespaces...")
 
 parser = argparse.ArgumentParser("train")
-parser.add_argument("--input_folder", type=str, help="input folder")
+parser.add_argument("--input_path", type=str, help="input path")
 parser.add_argument("--output_folder", type=str, help="ouput folder")
-parser.add_argument("--start_datetime", type=str, help="start datetime")
-parser.add_argument("--end_datetime", type=str, help="end datetime")
-parser.add_argument("--pattern", type=str, help="date time parsing pattern")
 args = parser.parse_args()
 
-start_datetime = datetime.datetime.strptime(args.start_datetime, args.pattern)
-end_datetime = datetime.datetime.strptime(args.end_datetime, args.pattern)
-
-print("Input folder: %s" % args.input_folder)
-print("Output folder: %s" % args.output_folder)
+Log("Input path", args.input_path)
+Log("Output folder", args.output_folder)
 
 print('Started: ' + str(datetime.datetime.now()))
 
 os.makedirs(args.output_folder, exist_ok=True)
 cache_path = os.path.join(args.output_folder, 'dataset.cache')
-vw = vw_wrapper(vw_path = '/usr/local/bin/vw', cache_path = cache_path)
-extract(args.input_folder, start_datetime, end_datetime, vw.stdin())
-extract_interactions_marginals(args.input_folder, start_datetime, end_datetime, args.output_folder)
-vw.finalize()
+
+Vw.cache(vw_path = '/usr/local/bin/vw', cache_path = cache_path, input_path = args.input_path)
+extract_interactions_marginals(args.input_path, args.output_folder)
+
 print('Done: '+ str(datetime.datetime.now()))
 
 
