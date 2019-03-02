@@ -2,6 +2,7 @@ import pandas,json,collections,os,gzip,sys
 import numpy as np
 import argparse
 import time
+import re
 
 from azureml.core.run import Run
 def Log(key, value):
@@ -518,27 +519,47 @@ def create_stats(log_fp, dashboard_file, commands, predictions_files=None):
     
     print('Total Elapsed Time: {:.1f} sec.'.format(time.time()-t0))
 
+def extract_experiments(folder):
+    files = os.listdir(folder)
+    p = re.compile('dataset\.(.*)\.pred')
+    for f in files:
+        if p.match(f):
+            yield p.search(f).group(1)
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--log_fp', help="data file path (.json or .json.gz format - each line is a dsjson)", required=True)
-    parser.add_argument('--pred_fp', help="prediction file path (.json or .json.gz format - each line is a dsjson)", required=True)
+    parser.add_argument('--pred_fp', action='append', help="prediction file path (.json or .json.gz format - each line is a dsjson)", required=True)
     parser.add_argument('-o','--output_fp', help="output file", required=True)
 
     args_dict = vars(parser.parse_args())   # this creates a dictionary with all input CLI
     for x in args_dict:
         locals()[x] = args_dict[x]  # this is equivalent to foo = args.foo
     Log('Cache folder', log_fp)
-    Log('Predictions path', pred_fp)
+    for p in pred_fp:
+        Log('Predictions path', p)
     Log('Output path', output_fp)
     os.makedirs(os.path.dirname(output_fp), exist_ok=True)
 
-    predictions_path = os.path.join(pred_fp, 'dataset.best.pred')
-    commands_path = os.path.join(pred_fp, 'dataset.best.command')
-    with open(commands_path, 'r') as f_command:
-        command = f_command.readline()
+    commands = {}
+    predictions = []
+    for p_path in pred_fp:
+        for e in extract_experiments(p_path):
+            command_path = os.path.join(p_path, 'dataset.' + e + '.command')
+            p = os.path.join(p_path, 'dataset.' + e + '.pred')
+            with open(command_path, 'r') as f:
+                command = f.readline().rstrip()
 
-    command = command.rstrip()
-    Log('Command', command)
-    create_stats(log_fp, output_fp, {'best': command}, [predictions_path])
+            Log('Experiment ' + e, command)
+            predictions.append(p)
+            commands[e] = command
+
+#    predictions_path = os.path.join(pred_fp, 'dataset.best.pred')
+#    commands_path = os.path.join(pred_fp, 'dataset.best.command')
+#    with open(commands_path, 'r') as f_command:
+#        command = f_command.readline()
+
+  #  command = command.rstrip()
+  #  Log('Command', command)
+    create_stats(log_fp, output_fp, commands, predictions)

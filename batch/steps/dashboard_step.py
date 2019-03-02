@@ -26,12 +26,22 @@ class dashboard_step(PythonScriptStep):
         cd.add_conda_package("numpy")
 
         run_config = RunConfiguration(conda_dependencies=cd)
+        
+        p_args = []
+        for p in predictions:
+            p_args.extend(['--pred_fp', p])
 
+        args = ['--log_fp', data]
+        args.extend(p_args)
+        args.extend(['--output_fp', self.output])
+
+        inputs = [data]
+        inputs.extend(predictions)
         super().__init__(
             name="Dashboard",
             script_name='dashboard.py', 
-            arguments=["--log_fp", data, "--pred_fp", predictions, "--output_fp", self.output],
-            inputs=[data, predictions],
+            arguments=args,
+            inputs=inputs,
             outputs=[self.output],
             compute_target=compute.get_or_create_aml_compute_target(workspace, 'dashboard', vm_size = 'Standard_F2s_v2'), 
             source_directory=os.path.join(dir_path, 'scripts'),

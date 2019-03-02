@@ -104,13 +104,14 @@ def create_pipeline(ws, ctx, parallel_jobs):
     predict_2 = vw_predict_step.vw_predict_step(
         workspace = ws,
         input_folder = cacheStep.output,
-        command = best_2.output
+        command = best_2.output,
+        name = 'best'
     )
 
     dashboard = dashboard_step.dashboard_step(
         workspace = ws,
         data = extractStep.output,
-        predictions = predict_2.output
+        predictions = [predict_2.output]
     )
 
     sweep_pipeline = Pipeline(workspace=ws, steps=[dashboard])

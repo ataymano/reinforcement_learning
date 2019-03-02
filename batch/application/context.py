@@ -9,7 +9,7 @@ class Context:
         self.appFolder = appFolder 
 
     def _datastore_name(self):
-        return self.accountName + '_' + self.appId
+        return self.accountName + self.appId.replace('-', '')
 
     def get_datastore(self, workspace):
         name = self._datastore_name()

@@ -11,7 +11,7 @@ from helpers import compute
 
 class vw_predict_step(PythonScriptStep):
  
-    def __init__(self, workspace, input_folder, command):
+    def __init__(self, workspace, input_folder, command, name):
         self.input = input_folder
         self.command = command
         self.output = PipelineData("prediction", datastore = workspace.get_default_datastore())

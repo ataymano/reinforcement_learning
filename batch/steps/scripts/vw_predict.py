@@ -41,6 +41,7 @@ parser = argparse.ArgumentParser("train")
 parser.add_argument("--input_folder", type=str, help="input folder")
 parser.add_argument("--output_folder", type=str, help="output folder")
 parser.add_argument("--command", type=str, help="command")
+parser.add_argument("--name", type=str, help="command name")
 
 #parser.add_argument("--power_t", type=str, help="power_t")
 args = parser.parse_known_args()
@@ -51,13 +52,20 @@ with open(args[0].command, 'r') as f_command:
     c = f_command.readline()
 
 Log("Command", c)
+c = c.replace('--cb_adf', '--cb_explore_adf --epsilon 0.2')
+Log("Command with exploration: ", c)
+
+if args[0].name is None:
+    args[0].name = '_'.join(filter(None, c.replace('-','').split(' ')))
+
 print('Started: ' + str(datetime.datetime.now()))
 vw = vw_wrapper(vw_path = '/usr/local/bin/vw', args = c)
 input_path = os.path.join(args[0].input_folder, 'dataset.cache')
-output_path = os.path.join(args[0].output_folder, 'dataset.best.pred')
-command_path = os.path.join(args[0].output_folder, 'dataset.best.command')
+output_path = os.path.join(args[0].output_folder, 'dataset.' + args[0].name+ '.pred')
+command_path = os.path.join(args[0].output_folder, 'dataset.' + args[0].name + '.command')
 os.makedirs(args[0].output_folder, exist_ok=True)
-shutil.copyfile(args[0].command, command_path)
+with open(command_path, 'w+') as f:
+    f.write(c)
 result = vw.process(input_path, output_path)
 logger = Run.get_context()
 for key, value in result.items():
