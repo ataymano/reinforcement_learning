@@ -562,4 +562,5 @@ if __name__ == '__main__':
 
   #  command = command.rstrip()
   #  Log('Command', command)
+    print(str(commands))
     create_stats(log_fp, output_fp, commands, predictions)

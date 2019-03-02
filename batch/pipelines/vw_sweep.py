@@ -43,28 +43,8 @@ def create_pipeline(ws, ctx, parallel_jobs):
             '--l1': choice(0, 1e-06, 1e-04, 1e-3),
             '-l': choice(1e-05, 1e-3, 1e-2, 1e-1, 0.5, 10),
             '--cb_type': choice('mtr', 'ips'),
-            # '--with_marginal': choice(true, false)         
         }
     )
-
-#Marginal:
-#False
-#True - {--marginal A}
-#       {--marginal B}
-
-
-#Quadratics:
-
-    
-#    grid_1 = GridParameterSampling(
-#        {
-#            '--power_t': choice(1e-09, 1.4953487812212204e-07),
-#            '--l1': choice(1e-09, 1e-07),
-#            '-l': choice(1e-05, 0.00036840314986403866),
-#            '--cb_type': choice('mtr', 'ips')
-#        }
-#    )
-
 
     sweep_Step_1 = vw_sweep_step.vw_sweep_step(
         workspace = ws,
@@ -73,11 +53,6 @@ def create_pipeline(ws, ctx, parallel_jobs):
         param_grid = grid_1,  
         parallel_jobs = parallel_jobs,
         jobs_limit = 100
-    )
-
-    best_1 = best_command_step.best_command_step(
-        workspace = ws,
-        input = sweep_Step_1.output
     )
 
     grid_2 = GridParameterSampling(
@@ -90,28 +65,31 @@ def create_pipeline(ws, ctx, parallel_jobs):
     sweep_Step_2 = vw_sweep_step.vw_sweep_step(
         workspace = ws,
         input_folder = cacheStep.output,
-        base_command = best_1.output,
+        base_command = sweep_Step_1.output,
         param_grid = grid_2,  
         parallel_jobs = parallel_jobs,
         jobs_limit = 100
     )
 
-    best_2 = best_command_step.best_command_step(
+
+    predict_1 = vw_predict_step.vw_predict_step(
         workspace = ws,
-        input = sweep_Step_2.output
+        input_folder = cacheStep.output,
+        command = sweep_Step_1.output,
+        name = 'Hyper1'
     )
 
     predict_2 = vw_predict_step.vw_predict_step(
         workspace = ws,
         input_folder = cacheStep.output,
-        command = best_2.output,
-        name = 'best'
+        command = sweep_Step_2.output,
+        name = 'Best'
     )
 
     dashboard = dashboard_step.dashboard_step(
         workspace = ws,
         data = extractStep.output,
-        predictions = [predict_2.output]
+        predictions = [predict_1.output, predict_2.output]
     )
 
     sweep_pipeline = Pipeline(workspace=ws, steps=[dashboard])
