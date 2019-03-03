@@ -8,18 +8,18 @@ def Log(key, value):
         logger.log(key, value)
         print(key + ': ' + str(value))
 
-print("Preparing base command...")
+print("Preparing command...")
 
-parser = argparse.ArgumentParser("prepare_base_command")
-parser.add_argument("--base_command_output", type=str, help="output folder")
+parser = argparse.ArgumentParser("prepare_command")
+parser.add_argument("--command_output", type=str, help="output folder")
 args = parser.parse_known_args()
 
 
-Log("Output path", args[0].base_command_output)
+Log("Output path", args[0].command_output)
 command = ' '.join(args[1])
 Log("Command", command)
-os.makedirs(os.path.dirname(args[0].base_command_output), exist_ok=True)
-with open(args[0].base_command_output, 'w+') as fout:
+os.makedirs(os.path.dirname(args[0].command_output), exist_ok=True)
+with open(args[0].command_output, 'w+') as fout:
     fout.write(command)
 print('Done.')
 

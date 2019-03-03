@@ -5,14 +5,22 @@ from azureml.pipeline.steps import PythonScriptStep, MpiStep
 from azureml.pipeline.core.graph import PipelineParameter
 from azureml.core.runconfig import CondaDependencies, RunConfiguration
 from azureml.pipeline.core import PipelineData
+from steps import prepare_command_step
 
 import helpers
 from helpers import compute
 
 class vw_predict_step(PythonScriptStep):
  
-    def __init__(self, workspace, input_folder, command, name):
+    def __init__(self, workspace, input_folder, name, command = None, commandline = None):
         self.input = input_folder
+        if (command is None and commandline is None) or (command is not None and commandline is not None):
+            raise ValueError('vw_predict_step error: either command or commandline has to be specified')
+
+        if command is None:
+            self.preprocessor = prepare_command_step.prepare_command_step(workspace = workspace, command = commandline)
+            command = self.preprocessor.output
+
         self.command = command
         self.output = PipelineData("pred_" + name, datastore = workspace.get_default_datastore())
 

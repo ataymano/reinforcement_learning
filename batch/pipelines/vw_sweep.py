@@ -11,7 +11,7 @@ from steps import vw_train_step
 from steps import deployment_step
 from steps import add_label_step
 from steps import vw_sweep_step
-from steps import vw_cache_step, base_command_step, best_command_step, vw_predict_step, dashboard_step
+from steps import vw_cache_step, prepare_command_step, best_command_step, vw_predict_step, dashboard_step
 
 import azureml.core
 from azureml.core import Workspace, Experiment, Datastore
@@ -20,12 +20,15 @@ from azureml.pipeline.core import Pipeline, PipelineData
 from azureml.data.data_reference import DataReference
 from azureml.pipeline.steps import PythonScriptStep, DataTransferStep
 from azureml.train.hyperdrive import GridParameterSampling, RandomParameterSampling, choice
+from azureml.pipeline.core.graph import PipelineParameter
+
 import datetime
 import os
 
 def create_pipeline(ws, ctx, parallel_jobs):
-    baseCommandStep = base_command_step.base_command_step(
-        workspace = ws
+    baseCommandStep = prepare_command_step.prepare_command_step(
+        workspace = ws,
+        command = PipelineParameter(name = "base_command", default_value = '--cb_adf --dsjson')
     )
 
     extractStep = extract_step.extract_step(
@@ -86,10 +89,24 @@ def create_pipeline(ws, ctx, parallel_jobs):
         name = 'Best'
     )
 
+    predict_3 = vw_predict_step.vw_predict_step(
+        workspace = ws,
+        input_folder = cacheStep.output,
+        commandline = PipelineParameter(name = "extra_1", default_value = '--cb_explore_adf --epsilon 0.2 --dsjson'),
+        name = 'Extra1'
+    )
+
+    predict_4 = vw_predict_step.vw_predict_step(
+        workspace = ws,
+        input_folder = cacheStep.output,
+        commandline = PipelineParameter(name = "extra_2", default_value = '--cb_explore_adf --epsilon 0.2 --dsjson'),
+        name = 'Extra2'
+    )
+
     dashboard = dashboard_step.dashboard_step(
         workspace = ws,
         data = extractStep.output,
-        predictions = [predict_1.output, predict_2.output]
+        predictions = [predict_1.output, predict_2.output, predict_3.output, predict_4.output]
     )
 
     sweep_pipeline = Pipeline(workspace=ws, steps=[dashboard])
