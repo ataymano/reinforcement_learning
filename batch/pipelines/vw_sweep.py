@@ -93,14 +93,14 @@ def create_pipeline(ws, ctx, parallel_jobs):
         workspace = ws,
         input_folder = cacheStep.output,
         commandline = PipelineParameter(name = "extra_1", default_value = '--cb_explore_adf --epsilon 0.2 --dsjson'),
-        name = 'Extra1'
+        name = 'NoHyper'
     )
 
     predict_4 = vw_predict_step.vw_predict_step(
         workspace = ws,
         input_folder = cacheStep.output,
         commandline = PipelineParameter(name = "extra_2", default_value = '--cb_explore_adf --epsilon 0.2 --dsjson'),
-        name = 'Extra2'
+        name = 'NoMarginal'
     )
 
     dashboard = dashboard_step.dashboard_step(
