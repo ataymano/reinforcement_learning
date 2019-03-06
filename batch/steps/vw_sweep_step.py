@@ -13,7 +13,7 @@ import helpers
 from helpers import compute
 
 class vw_sweep_step(HyperDriveStep):
-    def __init__(self, workspace, input_folder, base_command, param_grid, parallel_jobs, jobs_limit):
+    def __init__(self, workspace, input_folder, base_command, param_grid, parallel_jobs, jobs_limit, allow_reuse = True):
         self.input = input_folder
         self.base_command = base_command
         metrics_output = PipelineData("metrics", datastore = workspace.get_default_datastore())
@@ -57,7 +57,8 @@ class vw_sweep_step(HyperDriveStep):
             inputs=[metrics_output],
             outputs=[self.output],
             compute_target=compute.get_or_create_aml_compute_target(workspace, 'python', vm_size = 'STANDARD_D2_v2'), 
-            source_directory=os.path.join(dir_path, 'scripts')
+            source_directory=os.path.join(dir_path, 'scripts'),
+            allow_reuse = allow_reuse
         )
     
         print("Vw sweep step is successfully created") 

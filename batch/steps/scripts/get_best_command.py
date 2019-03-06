@@ -10,13 +10,24 @@ def Log(key, value):
         logger.log(key, value)
         print(key + ': ' + str(value))
 
+
+def to_float(str):
+    try:
+        return float(str)
+    except ValueError:
+        return None
+
 def get_best_command(path, metrics):    
     with open(path, 'r') as f:
         o = json.loads(f.read())
         best = None
         for el in o:
-            if best is None or (metrics in o[el].keys() and float(o[el][metrics][0]) < best[1]):
-                best = (o[el]['Command'][0], float(o[el][metrics][0]))
+            if metrics in o[el].keys():
+                m = to_float(o[el][metrics][0])
+            else:
+                m = None
+            if m is not None and (best is None or m < best[1]):
+                best = (o[el]['Command'][0], m)
 
     if best is None:
         raise ValueError('Best variant was not selected')

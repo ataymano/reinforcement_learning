@@ -46,7 +46,6 @@ def create_pipeline(ws, ctx, parallel_jobs):
             '--l1': choice(0, 1e-06, 1e-04, 1e-3),
             '-l': choice(1e-05, 1e-3, 1e-2, 1e-1, 0.5, 10),
             '--cb_type': choice('mtr', 'ips'),
-    #        '--marginals_index': choice(0, 1),
         }
     )
 
@@ -61,8 +60,8 @@ def create_pipeline(ws, ctx, parallel_jobs):
 
     grid_2 = GridParameterSampling(
         {
-
-            '--interactions_index': choice(0, 1)#, 2, 3, 4, 5, 6, 7)        
+            '--marginals_index': choice(0, 1),
+            '--interactions_index': choice(0, 1, 2, 3, 4, 5, 6, 7)        
         }
     )
 
@@ -72,19 +71,9 @@ def create_pipeline(ws, ctx, parallel_jobs):
         base_command = sweep_Step_1.output,
         param_grid = grid_2,  
         parallel_jobs = parallel_jobs,
-        jobs_limit = 100,
-#        allow_reuse = False
+        jobs_limit = 100
     )
 
-    sweep_Step_3 = vw_sweep_step.vw_sweep_step(
-        workspace = ws,
-        input_folder = cacheStep.output,
-        base_command = sweep_Step_2.output,
-        param_grid = grid_1,  
-        parallel_jobs = parallel_jobs,
-        jobs_limit = 100,
-    #    allow_reuse = False
-    )
 
     predict_1 = vw_predict_step.vw_predict_step(
         workspace = ws,
@@ -97,34 +86,27 @@ def create_pipeline(ws, ctx, parallel_jobs):
         workspace = ws,
         input_folder = cacheStep.output,
         command = sweep_Step_2.output,
-        name = 'Hyper1Quad'
+        name = 'Best'
     )
 
     predict_3 = vw_predict_step.vw_predict_step(
         workspace = ws,
         input_folder = cacheStep.output,
-        command = sweep_Step_3.output,
-        name = 'QuadHyper2'
+        commandline = PipelineParameter(name = "extra_1", default_value = '--cb_explore_adf --epsilon 0.2 --dsjson'),
+        name = 'NoHyper'
     )
 
-#    predict_3 = vw_predict_step.vw_predict_step(
-#        workspace = ws,
-#        input_folder = cacheStep.output,
-#        commandline = PipelineParameter(name = "extra_1", default_value = '--cb_explore_adf --epsilon 0.2 --dsjson'),
-#        name = 'NoHyper'
-#    )
-
-#    predict_4 = vw_predict_step.vw_predict_step(
-#        workspace = ws,
-#        input_folder = cacheStep.output,
-#        commandline = PipelineParameter(name = "extra_2", default_value = '--cb_explore_adf --epsilon 0.2 --dsjson'),
-#        name = 'NoMarginal'
-#    )
+    predict_4 = vw_predict_step.vw_predict_step(
+        workspace = ws,
+        input_folder = cacheStep.output,
+        commandline = PipelineParameter(name = "extra_2", default_value = '--cb_explore_adf --epsilon 0.2 --dsjson'),
+        name = 'NoMarginal'
+    )
 
     dashboard = dashboard_step.dashboard_step(
         workspace = ws,
         data = extractStep.output,
-        predictions = [predict_1.output, predict_2.output, predict_3.output]
+        predictions = [predict_1.output, predict_2.output, predict_3.output, predict_4.output]
     )
 
     sweep_pipeline = Pipeline(workspace=ws, steps=[dashboard])

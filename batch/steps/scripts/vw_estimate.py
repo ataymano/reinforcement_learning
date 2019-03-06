@@ -89,19 +89,25 @@ Log("Base command path", args[0].base_command)
 with open(args[0].base_command, 'r') as f_command:
     command = f_command.readline()
 
-#c = '--cb_adf --dsjson --cb_type ips -l 1e-05 --l1 1e-05 --power_t ' + args.power_t
-c = command.rstrip() + ' ' +  ' '.join(args[1])
 
 marginals_path = os.path.join(args[0].input_folder, 'marginals.txt')
-interactions_path = os.path.join(args[0].input_folder, 'interactions.txt')
-
 marg = ' '
 if args[0].marginals_index:
     marg = get_subcommand(marginals_path, int(args[0].marginals_index))
 
 inter = ' '
+interactions_path = os.path.join(args[0].input_folder, 'interactions.txt')
 if args[0].interactions_index:
-    inter = get_subcommand(interactions_path, int(args[0].interactions_index))
+    inter = get_subcommand(interactions_path,int(args[0].interactions_index))
+
+if '-q' in command:
+    tmpparser =  argparse.ArgumentParser("trtmpain")
+    tmpparser.add_argument("-q", type=str, help="interactions command index")
+    tmpargs = tmpparser.parse_known_args(command.split(' '))
+    command = '--cb_adf --dsjson -q ' + tmpargs[0].q
+
+#c = '--cb_adf --dsjson --cb_type ips -l 1e-05 --l1 1e-05 --power_t ' + args.power_t
+c = command.rstrip() + ' ' +  ' '.join(args[1])
 
 if marg is not None and inter is not None:
     c = c + ' ' + marg.rstrip() + ' ' + inter.rstrip()
