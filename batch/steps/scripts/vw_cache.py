@@ -76,7 +76,7 @@ def extract_namespaces(fname, auto_lines = 100):
                 continue
 
             counter += 1
-                
+
             event = json.loads(line)
             # Separate the shared features from the action features for namespace analysis
             if 'c' in event:
@@ -94,7 +94,7 @@ def extract_namespaces(fname, auto_lines = 100):
             # namespaces may not appear in every datapoint, check enough points.
             if counter >= auto_lines:
                 break
-    return ({x[0] for x in shared_tmp}, {x[0] for x in action_tmp}, {x[0] for x in marginal_tmp})   
+    return ({x[0] for x in shared_tmp}, {x[0] for x in action_tmp}, {x[0] for x in marginal_tmp})
 
 def iterate_subsets(s):
     for i in range(1, len(s) + 1):
@@ -156,10 +156,9 @@ print('Started: ' + str(datetime.datetime.now()))
 
 os.makedirs(args.output_folder, exist_ok=True)
 cache_path = os.path.join(args.output_folder, 'dataset.cache')
+print("**cache path: " + cache_path)
 
 Vw.cache(vw_path = '/usr/local/bin/vw', cache_path = cache_path, input_path = args.input_path)
-extract_interactions_marginals(args.input_path, args.output_folder)
+# extract_interactions_marginals(args.input_path, args.output_folder)
 
 print('Done: '+ str(datetime.datetime.now()))
-
-

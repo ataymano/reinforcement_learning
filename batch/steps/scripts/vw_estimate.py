@@ -8,9 +8,9 @@ import datetime
 from azureml.core.run import Run
 
 def Log(key, value):
-        logger = Run.get_context()
-        logger.log(key, value)
-        print(key + ': ' + str(value))
+    logger = Run.get_context()
+    logger.log(key, value)
+    print(key + ': ' + str(value))
 
 class Vw:
     def __init__(self, vw_path, args):
@@ -31,7 +31,7 @@ class Vw:
             index = line.find('=')
             key = line[0:index].strip()
             value = line[index+1:].strip()
-            return (key, value)       
+            return (key, value)
         else:
             return None
 
@@ -89,7 +89,6 @@ Log("Base command path", args[0].base_command)
 with open(args[0].base_command, 'r') as f_command:
     command = f_command.readline()
 
-
 marginals_path = os.path.join(args[0].input_folder, 'marginals.txt')
 marg = ' '
 if args[0].marginals_index:
@@ -111,11 +110,9 @@ c = command.rstrip() + ' ' +  ' '.join(args[1])
 
 if marg is not None and inter is not None:
     c = c + ' ' + marg.rstrip() + ' ' + inter.rstrip()
-    Log("Command", c)  
+    Log("Command", c)
     print('Started: ' + str(datetime.datetime.now()))
     vw = Vw(vw_path = '/usr/local/bin/vw', args = c)
     result = vw.process(os.path.join(args[0].input_folder, 'dataset.cache'))
 
     print('Done: ' + str(datetime.datetime.now()))
-
-

@@ -1,0 +1,13 @@
+2019-03-21 17:18:14.4399|DEBUG|EngineHost|Startup|MessageParser initialized|d4d89d1c-4c1e-11e9-8d1e-2816a84849b7
+2019-03-21 17:18:14.5539|DEBUG|EngineHost|Startup|MessageLoop initialized|d4d89d1c-4c1e-11e9-8d1e-2816a84849b7
+2019-03-21 17:18:15.6112|DEBUG|Caching|Cache|Initializing Cache|d4d89d1c-4c1e-11e9-8d1e-2816a84849b7
+2019-03-21 17:18:15.8281|DEBUG|Caching|Cache|Initializing Cache|d4d89d1c-4c1e-11e9-8d1e-2816a84849b7
+2019-03-21 17:18:15.8964|DEBUG|Activity|Blocks|Adding block|{"Type":"Microsoft.DPrep.GetFilesBlock","id":"a816f4d9-43de-48c7-9b0d-449eee5a63f0","position":0,"ActivityId":"c6cdb7e4-8d6e-432c-b8ef-385961a1290c","BranchId":"00000000-0000-0000-0000-000000000000"}|d4d89d1c-4c1e-11e9-8d1e-2816a84849b7
+2019-03-21 17:18:15.9669|DEBUG|Telemetry|event: BlockAdded|metrics: {"blockIndex":0.0,"blockCount":1.0}, properties: {"id":"a816f4d9-43de-48c7-9b0d-449eee5a63f0","arguments":"{\r\n  \"isArchive\": false,\r\n  \"path\": \"50081034\"\r\n}","blockType":"Microsoft.DPrep.GetFilesBlock","parentId":"c6cdb7e4-8d6e-432c-b8ef-385961a1290c"}|d4d89d1c-4c1e-11e9-8d1e-2816a84849b7
+2019-03-21 17:18:16.2194|DEBUG|DynamicPythonPathCLexExecutor|EnsureCLexExecutorReady|No more tasks in progress. Creating new CLexExecutor.|d4d89d1c-4c1e-11e9-8d1e-2816a84849b7
+2019-03-21 17:18:16.2834|DEBUG|CLexExecutor|ExecuteLariatScriptAsync|Start Execution|{"Id":"0425abe4-011c-499c-bc7c-848be0f35e6e"}|d4d89d1c-4c1e-11e9-8d1e-2816a84849b7
+2019-03-21 17:18:16.3021|DEBUG|CLexExecutor|ExecuteLariatScriptAsync|End Execution (Success)|{"Id":"0425abe4-011c-499c-bc7c-848be0f35e6e"}|d4d89d1c-4c1e-11e9-8d1e-2816a84849b7
+2019-03-21 17:18:16.3972|DEBUG|CLex|MapReduceExecutor|Execution started|{"ExecutionId":"18564901-ae6d-4d4f-af31-105fa7bf0858","Main":"aJHW3k3jYliBsbsVfd5fckfZc2iCEo20ZabdIQ/jniU="}|d4d89d1c-4c1e-11e9-8d1e-2816a84849b7
+2019-03-21 17:18:16.3972|DEBUG|CLex|QueryCacheOperationVisitor|Visiting activity. Activity: aJHW3k3jYliBsbsVfd5fckfZc2iCEo20ZabdIQ/jniU=|d4d89d1c-4c1e-11e9-8d1e-2816a84849b7
+2019-03-21 17:18:16.4358|DEBUG|CLex|QueryCache|Build RDD|{"Operation":"GetFilesOperation","Reference":"","Tag":"a816f4d9-43de-48c7-9b0d-449eee5a63f0","ContextTag":"0","ParentContextTag":""}|d4d89d1c-4c1e-11e9-8d1e-2816a84849b7
+2019-03-21 17:18:16.5536|ERROR|CLex|MapReduceExecutor|Execution Failed|{"ExecutionId":"18564901-ae6d-4d4f-af31-105fa7bf0858","Main":"aJHW3k3jYliBsbsVfd5fckfZc2iCEo20ZabdIQ/jniU=","ErrorCode":3,"ErrorStepIds":"a816f4d9-43de-48c7-9b0d-449eee5a63f0","ExceptionMessage":"Invalid path."}|d4d89d1c-4c1e-11e9-8d1e-2816a84849b7

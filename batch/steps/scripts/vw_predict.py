@@ -5,13 +5,12 @@ import os
 import subprocess
 import datetime
 import shutil
-
 from azureml.core.run import Run
 
 def Log(key, value):
-        logger = Run.get_context()
-        logger.log(key, value)
-        print(key + ': ' + str(value))
+    logger = Run.get_context()
+    logger.log(key, value)
+    print(key + ': ' + str(value))
 
 class vw_wrapper:
     def __init__(self, vw_path, args):
@@ -60,21 +59,32 @@ if args[0].name is None:
 
 print('Started: ' + str(datetime.datetime.now()))
 vw = vw_wrapper(vw_path = '/usr/local/bin/vw', args = c)
-input_path = os.path.join(args[0].input_folder, 'dataset.cache')
-output_path = os.path.join(args[0].output_folder, 'dataset.' + args[0].name+ '.pred')
-command_path = os.path.join(args[0].output_folder, 'dataset.' + args[0].name + '.command')
-os.makedirs(args[0].output_folder, exist_ok=True)
-with open(command_path, 'w+') as f:
-    f.write(c)
-result = vw.process(input_path, output_path)
-logger = Run.get_context()
-for key, value in result.items():
-    try:
-        f_value = float(value)
-        logger.log(key, f_value)
-    except ValueError:
-        print("Not a float value. " + key + ": " + value)
+
+counter = 1
+while (True):
+    input_path = os.path.join(args[0].input_folder, str(counter) + '.cache')
+    print('reading cache from: ' + input_path)
+    print('cache file exist? ' + str(os.path.isfile(input_path)))
+
+    if os.path.isfile(input_path):
+        output_path = os.path.join(args[0].output_folder, 'dataset.' + args[0].name + str(counter) + '.pred')
+        command_path = os.path.join(args[0].output_folder, 'dataset.' + args[0].name + '.command')
+        os.makedirs(args[0].output_folder, exist_ok=True)
+        with open(command_path, 'w+') as f:
+            f.write(c)
+        result = vw.process(input_path, output_path)
+        logger = Run.get_context()
+        for key, value in result.items():
+            print('key: ' + key)
+            print('value: ' + value)
+            print('====================')
+            try:
+                f_value = float(value)
+                logger.log(key, f_value)
+            except ValueError:
+                print("Not a float value. " + key + ": " + value)
+        counter += 1
+    else:
+        break
 
 print('Done: ' + str(datetime.datetime.now()))
-
-

@@ -54,7 +54,7 @@ def create_pipeline(ws, ctx, parallel_jobs):
         workspace = ws,
         input_folder = cacheStep.output,
         base_command = baseCommandStep.output,
-        param_grid = grid_1,  
+        param_grid = grid_1,
         parallel_jobs = parallel_jobs,
         jobs_limit = 100
     )
@@ -62,7 +62,7 @@ def create_pipeline(ws, ctx, parallel_jobs):
     grid_2 = GridParameterSampling(
         {
 
-            '--interactions_index': choice(0, 1)#, 2, 3, 4, 5, 6, 7)        
+            '--interactions_index': choice(0, 1)#, 2, 3, 4, 5, 6, 7)
         }
     )
 
@@ -70,7 +70,7 @@ def create_pipeline(ws, ctx, parallel_jobs):
         workspace = ws,
         input_folder = cacheStep.output,
         base_command = sweep_Step_1.output,
-        param_grid = grid_2,  
+        param_grid = grid_2,
         parallel_jobs = parallel_jobs,
         jobs_limit = 100,
 #        allow_reuse = False
@@ -80,7 +80,7 @@ def create_pipeline(ws, ctx, parallel_jobs):
         workspace = ws,
         input_folder = cacheStep.output,
         base_command = sweep_Step_2.output,
-        param_grid = grid_1,  
+        param_grid = grid_1,
         parallel_jobs = parallel_jobs,
         jobs_limit = 100,
     #    allow_reuse = False
@@ -133,4 +133,4 @@ def create_pipeline(ws, ctx, parallel_jobs):
     sweep_pipeline.validate()
     print("VwTrainPipeline is succesfully validated.")
 
-    return sweep_pipeline        
+    return sweep_pipeline
