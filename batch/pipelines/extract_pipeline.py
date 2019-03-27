@@ -1,7 +1,7 @@
 import application
 from steps import create_cache_step
 from azureml.pipeline.core import Pipeline
-from steps import vw_predict_step
+# from steps import vw_predict_step
 from azureml.pipeline.core.graph import PipelineParameter
 
 

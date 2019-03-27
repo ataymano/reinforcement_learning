@@ -4,7 +4,7 @@ from azureml.pipeline.steps import PythonScriptStep
 from azureml.pipeline.core.graph import PipelineParameter
 from azureml.pipeline.core import PipelineData
 from azureml.core.runconfig import RunConfiguration
-from helpers import compute
+from utils import compute
 
 
 class create_cache_step(PythonScriptStep):
@@ -17,7 +17,7 @@ class create_cache_step(PythonScriptStep):
         )
 
         self.output = PipelineData(
-            "Dataset",
+            "Cache",
             datastore=workspace.get_default_datastore()
         )
 
@@ -31,6 +31,7 @@ class create_cache_step(PythonScriptStep):
             raise ValueError("start_date or end_date is not specified")
 
         config = RunConfiguration()
+        print(config)
         config.environment.docker.enabled = True
         config.environment.docker.base_image = "ataymano/test:0.9"
         config.environment.python.user_managed_dependencies = True

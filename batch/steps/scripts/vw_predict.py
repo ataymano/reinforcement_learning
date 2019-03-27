@@ -4,13 +4,14 @@ import argparse
 import os
 import subprocess
 import datetime
-import shutil
 from azureml.core.run import Run
+from helpers import utils
 
 def Log(key, value):
     logger = Run.get_context()
     logger.log(key, value)
     print(key + ': ' + str(value))
+
 
 class vw_wrapper:
     def __init__(self, vw_path, args):
@@ -36,13 +37,12 @@ class vw_wrapper:
 
 print("Estimating vw model...")
 
-parser = argparse.ArgumentParser("train")
+parser = argparse.ArgumentParser("predict")
 parser.add_argument("--input_folder", type=str, help="input folder")
 parser.add_argument("--output_folder", type=str, help="output folder")
 parser.add_argument("--command", type=str, help="command")
 parser.add_argument("--name", type=str, help="command name")
 
-#parser.add_argument("--power_t", type=str, help="power_t")
 args = parser.parse_known_args()
 
 Log("Input folder", args[0].input_folder)

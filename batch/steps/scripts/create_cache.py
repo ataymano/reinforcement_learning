@@ -1,64 +1,8 @@
 import argparse
 import os
 import datetime
-from azureml.core.run import Run
-import subprocess
-
-
-class Vw:
-    @staticmethod
-    def _parse_vw_output(txt):
-        result = {}
-        for line in txt.split('\n'):
-            if '=' in line:
-                index = line.find('=')
-                key = line[0:index].strip()
-                value = line[index+1:].strip()
-                result[key] = value
-        return result
-
-    @staticmethod
-    def cache(
-        vw_path,
-        input_path,
-        cache_path,
-        previous_model_path,
-        new_model_path
-    ):
-        print("cache_path:" + cache_path)
-        print("input_path:" + input_path)
-
-        command = ' '.join([
-            vw_path,
-            '--cb_adf',
-            '--dsjson',
-            '--cache_file',
-            cache_path,
-            '-d',
-            input_path,
-            '-f',
-            new_model_path,
-            '--save_resume',
-            '--preserve_performance_counters'
-        ])
-
-        if previous_model_path:
-            command = ' '.join([
-                command,
-                '-i',
-                previous_model_path
-            ])
-        print(command)
-        process = subprocess.Popen(
-            command.split(),
-            universal_newlines=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
-        # output, error = execution.communicate()
-        # return Vw._parse_vw_output(error)
-        print("==output==")
-        print(process.communicate())
+from helpers import vw
+from helpers import utils
 
 
 class LogsExtractor:
@@ -130,19 +74,19 @@ def extract(input_folder, output_folder, start_date, end_date):
             get_file_name(log.current_date, 'model')
         )
 
-        Vw.cache(
-            vw_path='/usr/local/bin/vw',
-            input_path=log.file_name,
-            cache_path=cache_path,
-            previous_model_path=previous_model_path,
-            new_model_path=new_model_path
-        )
+        command_options = {
+            '--cache_file': cache_path,
+            '-d': log.file_name,
+            '-f': new_model_path
+        }
 
+        if (previous_model_path):
+            command_options['-i'] = previous_model_path
 
-def Log(key, value):
-    logger = Run.get_context()
-    logger.log(key, value)
-    print(key + ': ' + str(value))
+        command = vw.build_command(command_options)
+        print("create cache command: ")
+        print(command)
+        vw.run(command)
 
 
 def main():
@@ -157,8 +101,8 @@ def main():
 
     date_format = '%m/%d/%Y'
 
-    Log('Input folder', args.input_folder)
-    Log('Output folder', args.output_folder)
+    utils.logger('Input folder', args.input_folder)
+    utils.logger('Output folder', args.output_folder)
 
     os.makedirs(args.output_folder, exist_ok=True)
 
