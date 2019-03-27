@@ -1,11 +1,9 @@
-# Copyright (c) Microsoft. All rights reserved.
-# Licensed under the MIT license.
 import argparse
 import os
 import datetime
 from azureml.core.run import Run
 import subprocess
-import shutil
+
 
 class Vw:
     @staticmethod
@@ -20,111 +18,159 @@ class Vw:
         return result
 
     @staticmethod
-    def cache(vw_path, base_command, cache_path, input_path, counter, prediction_name = None):
+    def cache(
+        vw_path,
+        input_path,
+        cache_path,
+        previous_model_path,
+        new_model_path
+    ):
         print("cache_path:" + cache_path)
         print("input_path:" + input_path)
 
-        if prediction_name:
-            base_command += ' -p ' + prediction_name + '_' + str(counter) + '.pred'
-        if counter == 1:
-            command = vw_path + ' ' + base_command + ' --cache_file ' + cache_path + ' -d ' + input_path + ' -f ' + str(counter) + '_model.vw' + '  --save_resume --preserve_performance_counters'
-        else:
-            command = vw_path + base_command + ' --cache_file ' + cache_path + ' -d ' + input_path + ' -f ' + str(counter) + '_model.vw' + '  --save_resume --preserve_performance_counters' + ' -i ' + str(counter - 1) + '_model.vw '
+        command = ' '.join([
+            vw_path,
+            '--cb_adf',
+            '--dsjson',
+            '--cache_file',
+            cache_path,
+            '-d',
+            input_path,
+            '-f',
+            new_model_path,
+            '--save_resume',
+            '--preserve_performance_counters'
+        ])
 
-        print(str(counter) + "command: " + command)
-        process = subprocess.Popen(command.split(), universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if previous_model_path:
+            command = ' '.join([
+                command,
+                '-i',
+                previous_model_path
+            ])
+        print(command)
+        process = subprocess.Popen(
+            command.split(),
+            universal_newlines=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
         # output, error = execution.communicate()
-
+        # return Vw._parse_vw_output(error)
         print("==output==")
         print(process.communicate())
-        # return Vw._parse_vw_output(error)
+
 
 class LogsExtractor:
     class Entry:
         def __init__(
             self,
             file_name,
-            start_datetime = datetime.datetime.min, end_datetime=datetime.datetime.max
+            previous_date=None,
+            current_date=None
         ):
-            self.start_datetime = start_datetime
-            self.end_datetime = end_datetime
             self.file_name = file_name
-
-        def is_cutoff_needed(self):
-            return self.start_datetime != datetime.datetime.min or    self.end_datetime != datetime.datetime.max
-
-    @staticmethod
-    def _datetime_2_path(dt):
-        return 'data/' + str(dt.year) + '/' + str(dt.month).zfill(2) + '/' + str(dt.day).zfill(2) + '_0.json'
+            self.previous_date = previous_date
+            self.current_date = current_date
 
     @staticmethod
-    def _ds_timestamp_parse(ds_timestamp):
-        return datetime.datetime.strptime(ds_timestamp, "%Y-%m-%dT%H:%M:%S.%f0Z")
-
-    @staticmethod
-    def _get_timestamp(dsline):
-        position = dsline.find('Timestamp')
-        if position == -1:
-            return None
-
-        datetimeStart = position + 12
-        datetimeEnd = dsline.find('"', datetimeStart)
-        return LogsExtractor._ds_timestamp_parse(
-            dsline[datetimeStart:datetimeEnd]
+    def _get_log_path(input_folder, date):
+        log_path = 'data/%s/%s/%s_0.json' % (
+            str(date.year),
+            str(date.month).zfill(2),
+            str(date.day).zfill(2)
         )
+        return os.path.join(input_folder, log_path)
 
     @staticmethod
-    def iterate_files(input_folder, start_datetime, end_datetime):
-        start_date = datetime.datetime(start_datetime.year, start_datetime.month, start_datetime.day)
-        end_date = datetime.datetime(end_datetime.year, end_datetime.month, end_datetime.day)
-        for d in (start_date + datetime.timedelta(i) for i in range((end_date - start_date).days + 1)):
-            logfile = os.path.join(input_folder, LogsExtractor._datetime_2_path(d))
+    def iterate_files(folder, start_date, end_date):
+        previous_date = None
+        for i in range((end_date - start_date).days + 1):
+            current_date = start_date + datetime.timedelta(i)
+            logfile = LogsExtractor._get_log_path(folder, current_date)
             if os.path.isfile(logfile):
-                yield LogsExtractor.Entry(file_name = logfile, start_datetime = start_datetime, end_datetime = end_datetime)
+                print(previous_date)
+                print(current_date)
+                yield LogsExtractor.Entry(
+                    file_name=logfile,
+                    previous_date=previous_date,
+                    current_date=current_date
+                )
+                previous_date = current_date
         return
         yield
 
-def extract(input_folder, start_datetime, end_datetime, output_path):
-    print('Creating folder for the file: ' + output_path)
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
-    counter = 1;
-    for f in LogsExtractor.iterate_files(input_folder, start_datetime, end_datetime):
-        cache_path = os.path.join(output_path, str(counter) + '.cache')
-        Vw.cache(
-            vw_path = '/usr/local/bin/vw',
-            cache_path = cache_path,
-            input_path = f.file_name,
-            counter = counter
+def get_file_name(date, type):
+    if date:
+        date_str = str(date.year) + str(date.month) + str(date.day)
+        if type == 'cache':
+            return '%s.cache' % (date_str)
+        elif type == 'model':
+            return '%s.vw' % (date_str)
+    return None
+
+
+def extract(input_folder, output_folder, start_date, end_date):
+    for log in LogsExtractor.iterate_files(input_folder, start_date, end_date):
+        cache_path = os.path.join(
+            output_folder,
+            get_file_name(log.current_date, 'cache')
         )
-        counter += 1
+
+        previous_model_path = None
+        if log.previous_date:
+            previous_model_path = os.path.join(
+                output_folder,
+                get_file_name(log.previous_date, 'model')
+            )
+
+        new_model_path = os.path.join(
+            output_folder,
+            get_file_name(log.current_date, 'model')
+        )
+
+        Vw.cache(
+            vw_path='/usr/local/bin/vw',
+            input_path=log.file_name,
+            cache_path=cache_path,
+            previous_model_path=previous_model_path,
+            new_model_path=new_model_path
+        )
+
 
 def Log(key, value):
     logger = Run.get_context()
     logger.log(key, value)
     print(key + ': ' + str(value))
 
+
 def main():
     print("Extracting data from application logs...")
 
-    parser = argparse.ArgumentParser("train")
+    parser = argparse.ArgumentParser("create cache")
     parser.add_argument("--input_folder", type=str, help="input folder")
-    parser.add_argument("--output_path", type=str, help="output path")
-    parser.add_argument("--start_datetime", type=str, help="start datetime of batch")
-    parser.add_argument("--end_datetime", type=str, help="end datetime of batch")
-    parser.add_argument("--pattern", type=str, help="date time parsing pattern")
+    parser.add_argument("--output_folder", type=str, help="output folder")
+    parser.add_argument("--start_date", type=str, help="start date")
+    parser.add_argument("--end_date", type=str, help="end date")
     args = parser.parse_args()
 
+    date_format = '%m/%d/%Y'
+
     Log('Input folder', args.input_folder)
-    Log('Output path', args.output_path)
+    Log('Output folder', args.output_folder)
 
-    os.makedirs(args.output_path, exist_ok=True)
+    os.makedirs(args.output_folder, exist_ok=True)
 
-    start_datetime = datetime.datetime.strptime(args.start_datetime, args.pattern)
-    end_datetime = datetime.datetime.strptime(args.end_datetime, args.pattern)
     print('Extracting...')
-    extract(args.input_folder, start_datetime, end_datetime, args.output_path)
+    extract(
+        args.input_folder,
+        args.output_folder,
+        datetime.datetime.strptime(args.start_date, date_format),
+        datetime.datetime.strptime(args.end_date, date_format)
+    )
     print('Done.')
+
 
 if __name__ == '__main__':
     main()

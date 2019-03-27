@@ -13,7 +13,7 @@ def get_label_cost(parsed):
     return 0
 
 def get_chosen_a_p(parsed):
-    return (parsed['a'][0], parsed['p'][0]) 
+    return (parsed['a'][0], parsed['p'][0])
 
 def add_label(line):
     parsed = json.loads(line)
