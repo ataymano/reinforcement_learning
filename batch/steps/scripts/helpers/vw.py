@@ -13,8 +13,6 @@ def _parse_vw_output(txt):
 
 
 def run(command):
-    print("run: ")
-    print(command)
     process = subprocess.Popen(
         command.split(),
         universal_newlines=True,
@@ -27,23 +25,28 @@ def run(command):
     print(process.communicate())
 
 
-def build_command(opts={}):
+def build_command(command='', opts={}):
     vw_path = '/usr/local/bin/vw'
-    command = ' '.join([
-        vw_path,
-        '--cb_adf',
-        '--dsjson',
-        '--save_resume',
-        '--preserve_performance_counters'
-    ])
-
+    print('build command: ' + command)
+    if command:
+        command = ' '.join([
+            vw_path,
+            command
+        ])
+    else:
+        command = ' '.join([
+            vw_path,
+            '--cb_adf',
+            '--dsjson',
+            '--save_resume',
+            '--preserve_performance_counters'
+        ])
+    print('build command without options: ' + command)
     for key, val in opts.items():
         command = ' '.join([
             command,
             key,
             val
         ])
-
-    print("build command: ")
-    print(command)
+    print('build command with options: ' + command)
     return command

@@ -2,89 +2,55 @@
 # Licensed under the MIT license.
 import argparse
 import os
-import subprocess
-import datetime
-from azureml.core.run import Run
 from helpers import utils
+from helpers import vw
 
-def Log(key, value):
-    logger = Run.get_context()
-    logger.log(key, value)
-    print(key + ': ' + str(value))
-
-
-class vw_wrapper:
-    def __init__(self, vw_path, args):
-        self.path = vw_path
-        self.args = args
-
-    def parse_vw_output(self, txt):
-        result = {}
-        for line in txt.split('\n'):
-            if '=' in line:
-                index = line.find('=')
-                key = line[0:index].strip()
-                value = line[index+1:].strip()
-                result[key] = value
-        return result
-
-    def process(self, input, output):
-        command = self.path + ' ' + self.args + ' --cache_file ' + input + ' -p ' + output
-        print('Processing: ' + command)
-        process = subprocess.Popen(command.split(), universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        output, error = process.communicate()
-        return self.parse_vw_output(error)
-
-print("Estimating vw model...")
+print("Generate predictions...")
 
 parser = argparse.ArgumentParser("predict")
 parser.add_argument("--input_folder", type=str, help="input folder")
 parser.add_argument("--output_folder", type=str, help="output folder")
 parser.add_argument("--command", type=str, help="command")
-parser.add_argument("--name", type=str, help="command name")
+parser.add_argument("--policy_name", type=str, help="policy name")
+args = parser.parse_args()
 
-args = parser.parse_known_args()
+input_folder = args.input_folder
+output_folder = args.output_folder
+command = args.command
+policy_name = args.policy_name
 
-Log("Input folder", args[0].input_folder)
-Log("Output folder", args[0].output_folder)
-with open(args[0].command, 'r') as f_command:
+utils.logger("Cache folder", input_folder)
+utils.logger("Prediction folder", output_folder)
+
+with open(args.command, 'r') as f_command:
     c = f_command.readline()
 
-Log("Command", c)
 c = c.replace('--cb_adf', '--cb_explore_adf --epsilon 0.2')
-Log("Command with exploration: ", c)
 
-if args[0].name is None:
-    args[0].name = '_'.join(filter(None, c.replace('-','').split(' ')))
+if policy_name is None:
+    policy_name = '_'.join(filter(None, c.replace('-', '').split(' ')))
+utils.logger("Policy name: ", policy_name)
 
-print('Started: ' + str(datetime.datetime.now()))
-vw = vw_wrapper(vw_path = '/usr/local/bin/vw', args = c)
+cache_list = filter(lambda f: '.cache' in f, os.listdir(input_folder))
+cache_list = sorted(cache_list)
 
-counter = 1
-while (True):
-    input_path = os.path.join(args[0].input_folder, str(counter) + '.cache')
-    print('reading cache from: ' + input_path)
-    print('cache file exist? ' + str(os.path.isfile(input_path)))
+print("cache list: ")
+print(cache_list)
 
-    if os.path.isfile(input_path):
-        output_path = os.path.join(args[0].output_folder, 'dataset.' + args[0].name + str(counter) + '.pred')
-        command_path = os.path.join(args[0].output_folder, 'dataset.' + args[0].name + '.command')
-        os.makedirs(args[0].output_folder, exist_ok=True)
-        with open(command_path, 'w+') as f:
-            f.write(c)
-        result = vw.process(input_path, output_path)
-        logger = Run.get_context()
-        for key, value in result.items():
-            print('key: ' + key)
-            print('value: ' + value)
-            print('====================')
-            try:
-                f_value = float(value)
-                logger.log(key, f_value)
-            except ValueError:
-                print("Not a float value. " + key + ": " + value)
-        counter += 1
-    else:
-        break
+for cache_file in cache_list:
+    cache_path = os.path.join(input_folder, cache_file)
+    cache_file_name, cache_path_extension = os.path.splitext(cache_file)
+    prediction_dir = os.path.join(output_folder, policy_name)
+    os.makedirs(prediction_dir, exist_ok=True)
 
-print('Done: ' + str(datetime.datetime.now()))
+    prediction_path = os.path.join(
+        prediction_dir,
+        '%s.pred' % (cache_file_name)
+    )
+
+    command = vw.build_command(c, {
+        '--cache_file': cache_path,
+        '-p': prediction_path
+    })
+    print('predict command built: ' + command)
+    vw.run(command)

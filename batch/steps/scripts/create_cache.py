@@ -83,7 +83,7 @@ def extract(input_folder, output_folder, start_date, end_date):
         if (previous_model_path):
             command_options['-i'] = previous_model_path
 
-        command = vw.build_command(command_options)
+        command = vw.build_command('', command_options)
         print("create cache command: ")
         print(command)
         vw.run(command)

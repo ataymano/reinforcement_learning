@@ -34,7 +34,6 @@ class create_cache_step(PythonScriptStep):
         print(config)
         config.environment.docker.enabled = True
         config.environment.docker.base_image = "ataymano/test:0.9"
-        config.environment.python.user_managed_dependencies = True
 
         super().__init__(
             name="Cache",
