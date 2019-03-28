@@ -7,11 +7,12 @@ from utils import compute
 
 
 class dashboard_step(PythonScriptStep):
-    def __init__(self, workspace, data, predictions):
+    def __init__(self, workspace, log, predictions):
         self.output = OutputPortBinding(
             name='dashboard',
             datastore=workspace.get_default_datastore(),
-            bind_mode='mount')
+            bind_mode='mount'
+        )
         path = os.path.abspath(__file__)
         dir_path = os.path.dirname(path)
 
@@ -22,16 +23,16 @@ class dashboard_step(PythonScriptStep):
 
         run_config = RunConfiguration(conda_dependencies=cd)
 
-        p_args = []
-        for p in predictions:
-            p_args.extend(['--pred_fp', p])
+        # p_args = []
+        # for p in predictions:
+        #     p_args.extend(['--pred_fp', p])
 
-        args = ['--log_fp', data]
-        args.extend(p_args)
-        args.extend(['--output_fp', self.output])
+        # args = ['--log_fp', data]
+        # args.extend(p_args)
+        # args.extend(['--output_fp', self.output])
 
-        inputs = [data]
-        inputs.extend(predictions)
+        # inputs = [data]
+        # inputs.extend(predictions)
         super().__init__(
             name="Dashboard",
             script_name='dashboard.py',

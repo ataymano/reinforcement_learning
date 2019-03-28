@@ -1,7 +1,8 @@
 import application
-from steps import create_cache_step
 from azureml.pipeline.core import Pipeline
+from steps import create_cache_step
 from steps import vw_predict_step
+from steps import dashboard_step
 from azureml.pipeline.core.graph import PipelineParameter
 
 
@@ -20,6 +21,12 @@ def create_pipeline(ws, ctx, parallel_jobs):
         ),
         policy_name='NoMarginal'
     )
+
+    # dashboard = dashboard_step.dashboard_step(
+    #     workspace=ws,
+    #     context=ctx,
+    #     predictions_folder=predict.output
+    # )
 
     extractPipeline = Pipeline(workspace=ws, steps=[cacheStep, predict])
     print ("extractPipeline is succesfully created.")

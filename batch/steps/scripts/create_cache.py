@@ -56,7 +56,9 @@ def get_file_name(date, type):
 
 
 def extract(input_folder, output_folder, start_date, end_date):
+    log_files = []
     for log in LogsExtractor.iterate_files(input_folder, start_date, end_date):
+        log_files.append(log.file_name)
         cache_path = os.path.join(
             output_folder,
             get_file_name(log.current_date, 'cache')
@@ -87,6 +89,14 @@ def extract(input_folder, output_folder, start_date, end_date):
         print("create cache command: ")
         print(command)
         vw.run(command)
+
+    log_list_path = os.path.join(
+        output_folder,
+        'log_list.txt'
+    )
+    print('log list path: ' + log_list_path)
+    with open(log_list_path, 'w+') as fout:
+        fout.write(','.join(log_files))
 
 
 def main():

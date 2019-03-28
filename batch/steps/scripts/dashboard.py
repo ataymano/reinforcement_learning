@@ -26,112 +26,6 @@ def update_progress(current, total=None, prefix=''):
 
 header_str = 'version,date,# obs,# rews,sum rews,# obs multi,# rews multi a,sum rews multi a,# obs1,# rews1,sum rews1,rews1 ips,tot ips slot1,tot slot1,rews rand ips,tot rand ips,tot unique,tot,not joined unique,not joined,not activated,1,2,>2,max(a),time'
 
-def process_files(files, output_file=None, d=None, e=None):
-    t0 = time.time()
-    fp_list = input_files_to_fp_list(files)
-    if output_file:
-        f = open(output_file, 'a', 1)
-    print(header_str)
-    for fp in fp_list:
-        t1 = time.time()
-        stats, d_s, e_s, d_c, e_c, slot_len_c, rew_multi_a, baselineRandom, not_activated = process_dsjson_file(fp, d, e)
-        res_list = os.path.basename(fp).replace('_0.json','').split('_data_',1)+[sum(stats[x][i] for x in stats) for i in range(3)]+rew_multi_a+stats.get(1,[0,0,0,0,0,0])+baselineRandom+[len(d_s),d_c,len(e_s),e_c,not_activated,slot_len_c[1],slot_len_c[2],sum(slot_len_c[i] for i in slot_len_c if i > 2),max(i for i in slot_len_c if slot_len_c[i] > 0),'{:.1f}'.format(time.time()-t1)]
-        print(','.join(map(str,res_list)))
-        if output_file:
-            f.write('\t'.join(map(str,res_list))+'\n')
-    if output_file:
-        f.close()
-    print('Total time: {:.1f} sec'.format(time.time()-t0))
-
-def process_dsjson_file(fp, d=None, e=None):
-    stats = {}
-    slot_len_c = collections.Counter()
-    e_s = set()
-    d_s = set()
-    e_c = 0
-    d_c = 0
-    not_activated = 0
-    rew_multi_a = [0,0,0]
-    baselineRandom = [0,0]
-    bytes_count = 0
-    tot_bytes = os.path.getsize(fp)
-    with (gzip.open(fp, 'rb') if fp.endswith('.gz') else open(fp, 'rb')) as file_input:
-        for i,x in enumerate(file_input):
-            bytes_count += len(x)
-            if (i+1) % 1000 == 0:
-                if fp.endswith('.gz'):
-                    update_progress(i+1,prefix=fp+' - ')
-                else:
-                    update_progress(bytes_count,tot_bytes,fp+' - ')
-
-            if x.startswith(b'['):   # Ignore checkpoint info line
-                continue
-
-            if not (x.startswith(b'{"') or x.strip().endswith(b'}')):
-                print('Corrupted line: {}'.format(x))
-                continue
-
-            if x.startswith(b'{"_label_cost":'):
-                data = json_cooked(x)
-
-                if data['skipLearn']:    # Ignore not activated lines
-                    not_activated += 1
-                    continue
-
-                slot_len_c.update([data['num_a']])
-                if d is not None:
-                    d.setdefault(data['ei'], []).append((data, fp, i))
-                d_c += 1
-                d_s.add(data['ei'])
-                if data['a'] not in stats:
-                    stats[data['a']] = [0,0,0,0,0,0]
-
-                stats[data['a']][5] += 1
-                if data['p'] <= 0:
-                    continue
-
-                stats[data['a']][4] += 1/data['p']
-                baselineRandom[1] += 1/data['p']/data['num_a']
-                if data['o'] == 1:
-                    stats[data['a']][0] += 1
-                    if data['num_a'] > 1:
-                        rew_multi_a[0] += 1
-                if data['cost'] != b'0':
-                    r = -float(data['cost'])
-                    stats[data['a']][1] += 1
-                    stats[data['a']][2] += r
-                    stats[data['a']][3] += r/data['p']
-                    baselineRandom[0] += r/data['p']/data['num_a']
-                    if data['num_a'] > 1:
-                        rew_multi_a[1] += 1
-                        rew_multi_a[2] += r
-            else:
-                data = json_dangling(x)
-
-                if e is not None:
-                    e.setdefault(data['ei'], []).append((data,fp,i))
-                e_c += 1
-                e_s.add(data['ei'])
-
-        if fp.endswith('.gz'):
-            len_text = update_progress(i+1,prefix=fp+' - ')
-        else:
-            len_text = update_progress(bytes_count,tot_bytes, fp+' - ')
-        sys.stdout.write("\r" + " "*len_text + "\r")
-        sys.stdout.flush()
-    return stats, d_s, e_s, d_c, e_c, slot_len_c, rew_multi_a, baselineRandom, not_activated
-
-def input_files_to_fp_list(files):
-    if not (isinstance(files, types.GeneratorType) or isinstance(files, list)):
-        print('Input is not list or generator. Wrapping it into a list...')
-        files = [files]
-    fp_list = []
-    for x in files:
-        try:
-            fp_list.append(x.path)
-        except:
-            fp_list.append(x)
-    return fp_list
 
 ###############################################################################################################################################################################
 
@@ -372,7 +266,7 @@ def output_dashboard_data(d, commands, dashboard_file):
         df_col.setdefault(temp[0],[]).append(temp[1])
 
     agg_windows = [('5T',5),('H',60),('6H',360),('D',1440)]
-    with open(dashboard_file, 'w') as f:
+    with open(dashboard_file, 'a') as f:
         for ag in agg_windows:
             for index, row in df.resample(ag[0]).agg({type+'_'+field : max if field == 'c' else sum for type in df_col for field in df_col[type]}).replace(np.nan, 0.0).iterrows():
                 d = []

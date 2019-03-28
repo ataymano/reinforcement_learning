@@ -5,8 +5,6 @@ import os
 from helpers import utils
 from helpers import vw
 
-utils.logger("Generate predictions...")
-
 parser = argparse.ArgumentParser("predict")
 parser.add_argument("--input_folder", type=str, help="input folder")
 parser.add_argument("--output_folder", type=str, help="output folder")
