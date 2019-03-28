@@ -21,7 +21,7 @@ def run(command):
     )
     # output, error = execution.communicate()
     # return Vw._parse_vw_output(error)
-    print("==output==")
+    # utils.logger(process.communicate())
     print(process.communicate())
 
 
@@ -43,12 +43,12 @@ def build_command(command='', opts={}):
             '--save_resume',
             '--preserve_performance_counters'
         ])
-    print('build command without options: ' + command)
+
     for key, val in opts.items():
         command = ' '.join([
             command,
             key,
             val
         ])
-    print('build command with options: ' + command)
+
     return command

@@ -5,7 +5,7 @@ import os
 from helpers import utils
 from helpers import vw
 
-print("Generate predictions...")
+utils.logger("Generate predictions...")
 
 parser = argparse.ArgumentParser("predict")
 parser.add_argument("--input_folder", type=str, help="input folder")
@@ -34,9 +34,6 @@ utils.logger("Policy name: ", policy_name)
 cache_list = filter(lambda f: '.cache' in f, os.listdir(input_folder))
 cache_list = sorted(cache_list)
 
-print("cache list: ")
-print(cache_list)
-
 previous_model = None
 for cache_file in cache_list:
     cache_path = os.path.join(input_folder, cache_file)
@@ -62,6 +59,6 @@ for cache_file in cache_list:
     command = vw.build_command(c, command_options)
 
     previous_model = '%s.vw' % (cache_file_name)
-    print('predict command built: ' + command)
+    utils.logger('predict command', command)
 
     vw.run(command)
