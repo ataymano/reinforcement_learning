@@ -31,7 +31,9 @@ def build_command(command='', opts={}):
     if command:
         command = ' '.join([
             vw_path,
-            command
+            command,
+            '--save_resume',
+            '--preserve_performance_counters'
         ])
     else:
         command = ' '.join([

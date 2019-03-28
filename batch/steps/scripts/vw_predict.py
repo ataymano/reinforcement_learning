@@ -37,9 +37,11 @@ cache_list = sorted(cache_list)
 print("cache list: ")
 print(cache_list)
 
+previous_model = None
 for cache_file in cache_list:
     cache_path = os.path.join(input_folder, cache_file)
     cache_file_name, cache_path_extension = os.path.splitext(cache_file)
+
     prediction_dir = os.path.join(output_folder, policy_name)
     os.makedirs(prediction_dir, exist_ok=True)
 
@@ -48,9 +50,18 @@ for cache_file in cache_list:
         '%s.pred' % (cache_file_name)
     )
 
-    command = vw.build_command(c, {
+    command_options = {
         '--cache_file': cache_path,
         '-p': prediction_path
-    })
+    }
+
+    if previous_model:
+        previous_model_path = os.path.join(input_folder, previous_model)
+        command_options['-i'] = previous_model_path
+
+    command = vw.build_command(c, command_options)
+
+    previous_model = '%s.vw' % (cache_file_name)
     print('predict command built: ' + command)
+
     vw.run(command)
