@@ -1,14 +1,14 @@
-import pandas,json,collections,os,gzip,sys
+import pandas
+import json
+import collections
+import os
+import gzip
+import sys
 import numpy as np
 import argparse
 import time
 import re
 
-from azureml.core.run import Run
-def Log(key, value):
-        logger = Run.get_context()
-        logger.log(key, value)
-        print(key + ': ' + str(value))
 
 def update_progress(current, total=None, prefix=''):
     if total:
@@ -42,7 +42,7 @@ def process_files(files, output_file=None, d=None, e=None):
     if output_file:
         f.close()
     print('Total time: {:.1f} sec'.format(time.time()-t0))
-    
+
 def process_dsjson_file(fp, d=None, e=None):
     stats = {}
     slot_len_c = collections.Counter()
@@ -63,14 +63,14 @@ def process_dsjson_file(fp, d=None, e=None):
                     update_progress(i+1,prefix=fp+' - ')
                 else:
                     update_progress(bytes_count,tot_bytes,fp+' - ')
-                
+
             if x.startswith(b'['):   # Ignore checkpoint info line
                 continue
 
             if not (x.startswith(b'{"') or x.strip().endswith(b'}')):
                 print('Corrupted line: {}'.format(x))
                 continue
-            
+
             if x.startswith(b'{"_label_cost":'):
                 data = json_cooked(x)
 
@@ -132,7 +132,7 @@ def input_files_to_fp_list(files):
         except:
             fp_list.append(x)
     return fp_list
-    
+
 ###############################################################################################################################################################################
 
 def json_cooked(x, do_devType=False, do_VWState=False, do_p_vec=False):
@@ -167,17 +167,17 @@ def json_cooked(x, do_devType=False, do_VWState=False, do_p_vec=False):
     data['a'] = int(data['a_vec'][0])
     data['num_a'] = len(data['a_vec'])
     data['skipLearn'] = b'"_skipLearn":true' in x[ind2+34:ind3] # len('"_label_Action":1,"_labelIndex":0,') = 34
-    
+
     if do_VWState:
         ind11 = x[-120:].find(b'VWState')
         data['model_id'] = x[-120+ind11+15:-4] if ind11 > -1 else b'N/A'
 
     if do_p_vec:
         data['p_vec'] = [float(p) for p in extract_field(x[-120-15*data['num_a']:], b'"p":[', b']').split(b',')]
-        
+
     if do_devType:
         data['devType'] = extract_field(x[ind8:],b'"DeviceType":"',b'"')
-            
+
     return data
 
 def json_dangling(x):
@@ -195,7 +195,7 @@ def json_dangling(x):
         ind2 = x.find(b',',ind1+16)         # equal to: x.find(',"EnqueuedTimeUtc',ind1+16)
         ind3 = x.find(b'"',ind2+39)             # equal to: x.find('","EventId',ind2+39)
         ind4 = x.find(b'"',ind3+40)
-        
+
         data['r'] = x[ind1+16:ind2]         # len('","RewardValue":') = 16
         data['et'] = x[ind2+20:ind3]                    # len(',"EnqueuedTimeUtc":"') = 20
         data['ei'] = x[ind3+13:ind4]                    # len('","EventId":"') = 13
@@ -208,7 +208,7 @@ def json_dangling(x):
         data['r'] = x[15:ind2]                # len('{"RewardValue":') = 15
         data['et'] = x[ind3+19:ind4]                    # len(',"EnqueuedTimeUtc":"') = 20
         data['ei'] = x[ind4+13:ind5]                    # len('","EventId":"') = 13
-        
+
     data['ActionTaken'] = b'"DeferredAction":false' in x[:70]
     return data
 
@@ -304,7 +304,7 @@ def create_time_hist(d,e, normed=True, cumulative=True, scale_sec=1, n_bins=100,
         ei_ = ei_.intersection(ei)
         print('len(ei): {}'.format(len(ei)))
         print('len(ei_): {}'.format(len(ei_)))
-    
+
     for x in ei_:
         td = datetime.datetime.strptime(str(d[x][0][0]['ts'],'utf-8').split('.')[0].replace('Z',''), "%Y-%m-%dT%H:%M:%S")
         if td_day_start and td < datetime.datetime.strptime(td_day_start, "%Y-%m-%d"):
@@ -315,7 +315,7 @@ def create_time_hist(d,e, normed=True, cumulative=True, scale_sec=1, n_bins=100,
         else:
             te = datetime.datetime.strptime(str(ts,'utf-8').split('.', 1)[0].replace('Z',''), "%Y-%m-%dT%H:%M:%S")
         t_vec.append((x,(te-td).total_seconds()/scale_sec))
-    
+
     print('len(t_vec): {}'.format(len(t_vec)))
     plt.hist([x[1] for x in t_vec], n_bins, normed=normed, cumulative=cumulative, histtype='step')
     if xlabel:
@@ -323,7 +323,7 @@ def create_time_hist(d,e, normed=True, cumulative=True, scale_sec=1, n_bins=100,
     if ylabel:
         plt.ylabel(ylabel)
     plt.show()
-    
+
     return t_vec
 
 
@@ -334,11 +334,11 @@ def get_ts_5min_bin(ts):
         str_5min += '0'
     str_5min += str(x)+':00Z'
     return str_5min
-    
+
 def get_prediction_prob(a0, pred_line):
     # parse probability of predicted action
     # this function assume that a0 is 0-index
-    
+
     if ':' in pred_line:                           # prediction file has pdf of all actions (as in --cb_explore_adf -p)
         if ',' in pred_line:
             if pred_line.startswith(str(a0)+':'):
@@ -446,27 +446,57 @@ def create_stats(log_fp, dashboard_file, commands, predictions_files=None):
 
             r = 0 if data['cost'] == b'0' else -float(data['cost'])
 
-            ############################### Aggregates for each bin ######################################
+            # Aggregates for each bin ######################################
             #
             # 'n':   IPS of numerator
             # 'N':   total number of samples in bin from log (IPS = n/N)
             # 'd':   IPS of denominator (SNIPS = n/d)
-            # 'Ne':  number of samples in bin when off-policy agrees with log policy
-            # 'c':   max abs. value of numerator's items (needed for Clopper-Pearson confidence intervals)
-            # 'SoS': sum of squares of numerator's items (needed for Gaussian confidence intervals)
+            # 'Ne':  number of samples in bin when off-policy agrees
+            #        with log policy
+            # 'c':   max abs. value of numerator's items (needed for
+            #        Clopper-Pearson confidence intervals)
+            # 'SoS': sum of squares of numerator's items (needed for
+            #        Gaussian confidence intervals)
             #
-            #################################################################################################
+            ###############################################################
 
             # binning timestamp every 5 min
             ts_bin = get_ts_5min_bin(data['ts'])
 
             # initialize aggregates for ts_bin
             if ts_bin not in d:
-                d[ts_bin] = collections.OrderedDict({'online' : {'n':0,'N':0,'d':0},
-                                                     'baseline1' : {'n':0.,'N':0,'d':0.,'Ne':0,'c':0.,'SoS':0},
-                                                     'baselineRand' : {'n':0.,'N':0,'d':0.,'Ne':0,'c':0.,'SoS':0}})
+                d[ts_bin] = collections.OrderedDict({
+                    'online': {
+                        'n': 0,
+                        'N': 0,
+                        'd': 0
+                    },
+                    'baseline1': {
+                        'n': 0.0,
+                        'N': 0,
+                        'd': 0.0,
+                        'Ne': 0,
+                        'c': 0.0,
+                        'SoS': 0
+                    },
+                    'baselineRand': {
+                        'n': 0.0,
+                        'N': 0,
+                        'd': 0.0,
+                        'Ne': 0,
+                        'c': 0.0,
+                        'SoS': 0
+                    }
+                })
                 for name in pred:
-                    d[ts_bin][name] = {'n':0.,'N':0,'d':0.,'Ne':0,'c':0.,'SoS':0}
+                    d[ts_bin][name] = {
+                        'n': 0.0,
+                        'N': 0,
+                        'd': 0.0,
+                        'Ne': 0,
+                        'c': 0.0,
+                        'SoS': 0
+                    }
 
             # update aggregates for online and baseline policies
             d[ts_bin]['online']['d'] += 1
@@ -483,16 +513,27 @@ def create_stats(log_fp, dashboard_file, commands, predictions_files=None):
             if r != 0:
                 d[ts_bin]['online']['n'] += r
                 d[ts_bin]['baselineRand']['n'] += r/data['p']/data['num_a']
-                d[ts_bin]['baselineRand']['c'] = max(d[ts_bin]['baselineRand']['c'], r/data['p']/data['num_a'])
-                d[ts_bin]['baselineRand']['SoS'] += (r/data['p']/data['num_a'])**2
+                d[ts_bin]['baselineRand']['c'] = max(
+                    d[ts_bin]['baselineRand']['c'],
+                    r/data['p']/data['num_a']
+                )
+                d[ts_bin]['baselineRand']['SoS'] += (
+                    r/data['p']/data['num_a']
+                )**2
                 if data['a'] == 1:
                     d[ts_bin]['baseline1']['n'] += r/data['p']
-                    d[ts_bin]['baseline1']['c'] = max(d[ts_bin]['baseline1']['c'], r/data['p'])
-                    d[ts_bin]['baseline1']['SoS'] += (r/data['p'])**2                   
+                    d[ts_bin]['baseline1']['c'] = max(
+                        d[ts_bin]['baseline1']['c'],
+                        r/data['p']
+                    )
+                    d[ts_bin]['baseline1']['SoS'] += (r/data['p'])**2
 
             # update aggregates for additional policies from predictions
             for name in pred:
-                pred_prob = get_prediction_prob(data['a']-1, pred[name][evts])     # a-1: 0-index action
+                pred_prob = get_prediction_prob(
+                    data['a'] - 1,   # a-1: 0-index action
+                    pred[name][evts]
+                )
                 d[ts_bin][name]['N'] += 1
                 if pred_prob > 0:
                     p_over_p = pred_prob/data['p']
@@ -500,24 +541,22 @@ def create_stats(log_fp, dashboard_file, commands, predictions_files=None):
                     d[ts_bin][name]['Ne'] += 1
                     if r != 0:
                         d[ts_bin][name]['n'] += r*p_over_p
-                        d[ts_bin][name]['c'] = max(d[ts_bin][name]['c'], r*p_over_p)
+                        d[ts_bin][name]['c'] = max(
+                            d[ts_bin][name]['c'],
+                            r*p_over_p
+                        )
                         d[ts_bin][name]['SoS'] += (r*p_over_p)**2
             evts += 1
-    if log_fp.endswith('.gz'):
-        len_text = update_progress(i+1)
-    else:
-        len_text = update_progress(bytes_count,tot_bytes)
-    sys.stdout.write("\r" + " "*len_text + "\r")
-    sys.stdout.flush()
 
-    print('Read {} lines - Processed {} events'.format(i+1,evts))
+    print('Read {} lines - Processed {} events'.format(i+1, evts))
     if any(len(pred[name]) != evts for name in pred):
         print('Error: Prediction file length ({}) is different from number of events in log file ({})'.format([len(pred[name]) for name in pred],evts))
         sys.exit()
 
     output_dashboard_data(d, commands, dashboard_file)
-    
+
     print('Total Elapsed Time: {:.1f} sec.'.format(time.time()-t0))
+
 
 def extract_experiments(folder):
     files = os.listdir(folder)
@@ -526,20 +565,29 @@ def extract_experiments(folder):
         if p.match(f):
             yield p.search(f).group(1)
 
+
 if __name__ == '__main__':
-
     parser = argparse.ArgumentParser()
-    parser.add_argument('--log_fp', help="data file path (.json or .json.gz format - each line is a dsjson)", required=True)
-    parser.add_argument('--pred_fp', action='append', help="prediction file path (.json or .json.gz format - each line is a dsjson)", required=True)
-    parser.add_argument('-o','--output_fp', help="output file", required=True)
+    parser.add_argument('--log_fp', help="cooked log folder", required=True)
+    parser.add_argument(
+        '--pred_fp',
+        action='append',
+        help="predictions folder", required=True
+    )
+    parser.add_argument(
+        '-o',
+        '--output_fp',
+        help="dashboard file folder",
+        required=True
+    )
 
-    args_dict = vars(parser.parse_args())   # this creates a dictionary with all input CLI
+    args_dict = vars(parser.parse_args())  # creates a dictionary with all input CLI
     for x in args_dict:
         locals()[x] = args_dict[x]  # this is equivalent to foo = args.foo
-    Log('Cache folder', log_fp)
+    print('Cache folder', log_fp)
     for p in pred_fp:
-        Log('Predictions path', p)
-    Log('Output path', output_fp)
+        print('Predictions path', p)
+    print('Output path', output_fp)
     os.makedirs(os.path.dirname(output_fp), exist_ok=True)
 
     commands = {}
@@ -551,15 +599,8 @@ if __name__ == '__main__':
             with open(command_path, 'r') as f:
                 command = f.readline().rstrip()
 
-            Log('Experiment ' + e, command)
+            print('Experiment ' + e, command)
             predictions.append(p)
             commands[e] = command
 
-#    predictions_path = os.path.join(pred_fp, 'dataset.best.pred')
-#    commands_path = os.path.join(pred_fp, 'dataset.best.command')
-#    with open(commands_path, 'r') as f_command:
-#        command = f_command.readline()
-
-  #  command = command.rstrip()
-  #  Log('Command', command)
     create_stats(log_fp, output_fp, commands, predictions)

@@ -19,9 +19,6 @@ def run(command):
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
     )
-    # output, error = execution.communicate()
-    # return Vw._parse_vw_output(error)
-    # utils.logger(process.communicate())
     print(process.communicate())
 
 

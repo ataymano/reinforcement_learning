@@ -22,7 +22,7 @@ policy_name = args.policy_name
 utils.logger("Cache folder", input_folder)
 utils.logger("Prediction folder", output_folder)
 
-with open(args.command, 'r') as f_command:
+with open(command, 'r') as f_command:
     c = f_command.readline()
 
 c = c.replace('--cb_adf', '--cb_explore_adf --epsilon 0.2')
