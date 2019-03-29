@@ -278,7 +278,7 @@ def output_dashboard_data(d, commands, dashboard_file):
             d.append(temp)
         f.write(json.dumps({"ts":"Total","d":d})+'\n')
 
-def create_stats(log_fp, dashboard_file, commands, predictions_files=None):
+def create_stats(log_fp, d, predictions_files=None):
 
     t0 = time.time()
 
@@ -307,7 +307,6 @@ def create_stats(log_fp, dashboard_file, commands, predictions_files=None):
         print('Error: Prediction file length ({}) must be equal for all files'.format([len(pred[name]) for name in pred]))
         sys.exit()
 
-    d = {}
     print('Processing: {}'.format(log_fp))
     evts = 0
     print (os.getcwd())
@@ -421,13 +420,11 @@ def create_stats(log_fp, dashboard_file, commands, predictions_files=None):
                         )
                         d[ts_bin][name]['SoS'] += (r*p_over_p)**2
             evts += 1
-
+    return d
     print('Read {} lines - Processed {} events'.format(i+1, evts))
     if any(len(pred[name]) != evts for name in pred):
         print('Error: Prediction file length ({}) is different from number of events in log file ({})'.format([len(pred[name]) for name in pred],evts))
         sys.exit()
-
-    output_dashboard_data(d, commands, dashboard_file)
 
     print('Total Elapsed Time: {:.1f} sec.'.format(time.time()-t0))
 
@@ -464,6 +461,8 @@ if __name__ == '__main__':
         metadata = json.load(json_file)
 
     print(metadata)
+
+    d = {}
     for i, log_relative_path in enumerate(metadata.get('log_files')):
         log_path = os.path.join(log_folder, log_relative_path)
         print(os.path.exists(log_path))
@@ -479,4 +478,6 @@ if __name__ == '__main__':
             print(prediction_path)
             print(os.path.exists(prediction_path))
             prediction_path_list.append(prediction_path)
-        create_stats(log_path, output_path, commands, prediction_path_list)
+
+        d = create_stats(log_path, d, prediction_path_list)
+    output_dashboard_data(d, commands, output_path)
