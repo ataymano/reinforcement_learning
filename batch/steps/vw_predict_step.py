@@ -28,7 +28,7 @@ class vw_predict_step(PythonScriptStep):
             command = self.preprocessor.output
 
         self.command = command
-        # self.output = PipelineData("pred_" + name, datastore = workspace.get_default_datastore())
+
         self.output = PipelineData(
             "Predictions",
             datastore=workspace.get_default_datastore()

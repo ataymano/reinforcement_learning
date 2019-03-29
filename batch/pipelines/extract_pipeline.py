@@ -22,13 +22,17 @@ def create_pipeline(ws, ctx, parallel_jobs):
         policy_name='NoMarginal'
     )
 
-    # dashboard = dashboard_step.dashboard_step(
-    #     workspace=ws,
-    #     context=ctx,
-    #     predictions_folder=predict.output
-    # )
+    dashboard = dashboard_step.dashboard_step(
+        workspace=ws,
+        ctx=ctx,
+        metadata_folder=cacheStep.output,
+        predictions_folder=predict.output
+    )
 
-    extractPipeline = Pipeline(workspace=ws, steps=[cacheStep, predict])
+    extractPipeline = Pipeline(
+        workspace=ws,
+        steps=[cacheStep, predict, dashboard]
+    )
     print ("extractPipeline is succesfully created.")
 
     extractPipeline.validate()

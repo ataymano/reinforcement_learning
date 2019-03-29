@@ -1,6 +1,7 @@
 import argparse
 import os
 import datetime
+import json
 from helpers import vw
 from helpers import utils
 
@@ -45,9 +46,13 @@ class LogsExtractor:
         yield
 
 
+def convert_date_to_str(date):
+    return str(date.year) + str(date.month) + str(date.day)
+
+
 def get_file_name(date, type):
     if date:
-        date_str = str(date.year) + str(date.month) + str(date.day)
+        date_str = convert_date_to_str(date)
         if type == 'cache':
             return '%s.cache' % (date_str)
         elif type == 'model':
@@ -57,8 +62,11 @@ def get_file_name(date, type):
 
 def extract(input_folder, output_folder, start_date, end_date):
     log_files = []
+    date_list = []
     for log in LogsExtractor.iterate_files(input_folder, start_date, end_date):
         log_files.append(log.file_name)
+        date_list.append(convert_date_to_str(log.current_date))
+
         cache_path = os.path.join(
             output_folder,
             get_file_name(log.current_date, 'cache')
@@ -90,13 +98,21 @@ def extract(input_folder, output_folder, start_date, end_date):
         print(command)
         vw.run(command)
 
-    log_list_path = os.path.join(
+    meta_data_file_path = os.path.join(
         output_folder,
-        'log_list.txt'
+        'metadata.json'
     )
-    print('log list path: ' + log_list_path)
-    with open(log_list_path, 'w+') as fout:
-        fout.write(','.join(log_files))
+
+    metadata = {
+        'log_files': log_files,
+        'date_list': date_list
+    }
+
+    print('metadata file path: ' + meta_data_file_path)
+    print(metadata)
+
+    with open(meta_data_file_path, 'w+') as fout:
+        json.dump(metadata, fout)
 
 
 def main():

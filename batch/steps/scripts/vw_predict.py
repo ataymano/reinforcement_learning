@@ -37,12 +37,12 @@ for cache_file in cache_list:
     cache_path = os.path.join(input_folder, cache_file)
     cache_file_name, cache_path_extension = os.path.splitext(cache_file)
 
-    prediction_dir = os.path.join(output_folder, policy_name)
+    prediction_dir = os.path.join(output_folder, cache_file_name)
     os.makedirs(prediction_dir, exist_ok=True)
 
     prediction_path = os.path.join(
         prediction_dir,
-        '%s.pred' % (cache_file_name)
+        '%s.pred' % (policy_name)
     )
 
     command_options = {

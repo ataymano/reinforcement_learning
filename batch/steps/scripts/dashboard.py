@@ -10,18 +10,6 @@ import time
 import re
 
 
-def update_progress(current, total=None, prefix=''):
-    if total:
-        barLength = 50 # Length of the progress bar
-        progress = current/total
-        block = int(barLength*progress)
-        text = "\r{}Progress: [{}] {:.1f}%".format(prefix, "#"*block + "-"*(barLength-block), progress*100)
-    else:
-        text = "\r{}Iter: {}".format(prefix, current)
-    sys.stdout.write(text)
-    sys.stdout.flush()
-    return len(text)-1      # return length of text string not counting the initial \r
-
 #########################################################################  CREATE DSJSON FILES STATS #########################################################################
 
 header_str = 'version,date,# obs,# rews,sum rews,# obs multi,# rews multi a,sum rews multi a,# obs1,# rews1,sum rews1,rews1 ips,tot ips slot1,tot slot1,rews rand ips,tot rand ips,tot unique,tot,not joined unique,not joined,not activated,1,2,>2,max(a),time'
@@ -266,7 +254,7 @@ def output_dashboard_data(d, commands, dashboard_file):
         df_col.setdefault(temp[0],[]).append(temp[1])
 
     agg_windows = [('5T',5),('H',60),('6H',360),('D',1440)]
-    with open(dashboard_file, 'a') as f:
+    with open(dashboard_file, 'a+') as f:
         for ag in agg_windows:
             for index, row in df.resample(ag[0]).agg({type+'_'+field : max if field == 'c' else sum for type in df_col for field in df_col[type]}).replace(np.nan, 0.0).iterrows():
                 d = []
@@ -320,17 +308,8 @@ def create_stats(log_fp, dashboard_file, commands, predictions_files=None):
 
     d = {}
     print('Processing: {}'.format(log_fp))
-    bytes_count = 0
-    tot_bytes = os.path.getsize(log_fp)
     evts = 0
-    for i,x in enumerate(gzip.open(log_fp, 'rb') if log_fp.endswith('.gz') else open(log_fp, 'rb')):
-        # display progress
-        bytes_count += len(x)
-        if (i+1) % 1000 == 0:
-            if log_fp.endswith('.gz'):
-                update_progress(i+1)
-            else:
-                update_progress(bytes_count,tot_bytes)
+    for i, x in enumerate(open(log_fp, 'rb')):
 
         if x.startswith(b'{"_label_cost":'):
             data = json_cooked(x)
@@ -452,49 +431,48 @@ def create_stats(log_fp, dashboard_file, commands, predictions_files=None):
     print('Total Elapsed Time: {:.1f} sec.'.format(time.time()-t0))
 
 
-def extract_experiments(folder):
-    files = os.listdir(folder)
-    p = re.compile('dataset\.(.*)\.pred')
-    for f in files:
-        if p.match(f):
-            yield p.search(f).group(1)
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--log_fp', help="cooked log folder", required=True)
-    parser.add_argument(
-        '--pred_fp',
-        action='append',
-        help="predictions folder", required=True
-    )
-    parser.add_argument(
-        '-o',
-        '--output_fp',
-        help="dashboard file folder",
-        required=True
-    )
+    parser.add_argument('--log_folder', help="cooked log", required=True)
+    parser.add_argument('--metadata_folder', help="metadata", required=True)
+    parser.add_argument('--predictions_folder', help="predict", required=True)
+    parser.add_argument('--output_folder', help="dashboard", required=True)
+    args = parser.parse_args()
 
-    args_dict = vars(parser.parse_args())  # creates a dictionary with all input CLI
-    for x in args_dict:
-        locals()[x] = args_dict[x]  # this is equivalent to foo = args.foo
-    print('Cache folder', log_fp)
-    for p in pred_fp:
-        print('Predictions path', p)
-    print('Output path', output_fp)
-    os.makedirs(os.path.dirname(output_fp), exist_ok=True)
+    log_folder = args.log_folder
+    metadata_folder = args.metadata_folder
+    predictions_folder = args.predictions_folder
+    output_folder = args.output_folder
 
+    os.makedirs(args.output_folder, exist_ok=True)
+    output_path = os.path.join(
+        output_folder,
+        'dashboard.txt'
+    )
     commands = {}
     predictions = []
-    for p_path in pred_fp:
-        for e in extract_experiments(p_path):
-            command_path = os.path.join(p_path, 'dataset.' + e + '.command')
-            p = os.path.join(p_path, 'dataset.' + e + '.pred')
-            with open(command_path, 'r') as f:
-                command = f.readline().rstrip()
 
-            print('Experiment ' + e, command)
-            predictions.append(p)
-            commands[e] = command
+    predictions = os.listdir(predictions_folder)
 
-    create_stats(log_fp, output_fp, commands, predictions)
+    metadata_path = os.path.join(
+        metadata_folder,
+        'metadata.json'
+    )
+
+    with open(metadata_path) as json_file:
+        metadata = json.load(json_file)
+
+    print(metadata)
+    for i, log_path in enumerate(metadata.get('log_files')):
+        predictions_dir = os.path.join(
+            predictions_folder,
+            metadata.get('date_list')[i]
+        )
+        print('predictions dir: ' + predictions_dir)
+
+        predictions = os.listdir(predictions_dir)
+        prediction_path_list = []
+        for prediction_file in predictions:
+            prediction_path = os.path.join(predictions_dir, prediction_file)
+            prediction_path_list.append(prediction_path)
+        create_stats(log_path, output_path, commands, prediction_path_list)
