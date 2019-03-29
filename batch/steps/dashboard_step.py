@@ -21,9 +21,6 @@ class dashboard_step(PythonScriptStep):
             bind_mode='mount'
         )
 
-        self.metadata_folder = metadata_folder
-        self.predictions_folder = predictions_folder
-
         path = os.path.abspath(__file__)
         dir_path = os.path.dirname(path)
 
@@ -39,11 +36,11 @@ class dashboard_step(PythonScriptStep):
             script_name='dashboard.py',
             arguments=[
                 "--log_folder", self.input,
-                "--metadata_folder", self.metadata_folder,
-                "--predictions_folder", self.predictions_folder,
+                "--metadata_folder", metadata_folder,
+                "--predictions_folder", predictions_folder,
                 "--output_folder", self.output
             ],
-            inputs=[self.input, self.metadata_folder, self.predictions_folder],
+            inputs=[self.input, metadata_folder, predictions_folder],
             outputs=[self.output],
             compute_target=compute.get_or_create_aml_compute_target(
                 workspace,

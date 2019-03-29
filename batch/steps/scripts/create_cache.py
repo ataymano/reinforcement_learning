@@ -10,34 +10,37 @@ class LogsExtractor:
     class Entry:
         def __init__(
             self,
-            file_name,
+            file_relative_path,
+            file_path,
             previous_date=None,
             current_date=None
         ):
-            self.file_name = file_name
+            self.file_relative_path = file_relative_path
+            self.file_path = file_path
             self.previous_date = previous_date
             self.current_date = current_date
 
     @staticmethod
-    def _get_log_path(input_folder, date):
-        log_path = 'data/%s/%s/%s_0.json' % (
+    def _get_log_relative_path(date):
+        return 'data/%s/%s/%s_0.json' % (
             str(date.year),
             str(date.month).zfill(2),
             str(date.day).zfill(2)
         )
-        return os.path.join(input_folder, log_path)
 
     @staticmethod
     def iterate_files(folder, start_date, end_date):
         previous_date = None
         for i in range((end_date - start_date).days + 1):
             current_date = start_date + datetime.timedelta(i)
-            logfile = LogsExtractor._get_log_path(folder, current_date)
-            if os.path.isfile(logfile):
-                print(previous_date)
-                print(current_date)
+            log_relative_path = LogsExtractor._get_log_relative_path(
+                current_date
+            )
+            log_path = os.path.join(folder, log_relative_path)
+            if os.path.isfile(log_path):
                 yield LogsExtractor.Entry(
-                    file_name=logfile,
+                    file_relative_path=log_relative_path,
+                    file_path=log_path,
                     previous_date=previous_date,
                     current_date=current_date
                 )
@@ -64,7 +67,7 @@ def extract(input_folder, output_folder, start_date, end_date):
     log_files = []
     date_list = []
     for log in LogsExtractor.iterate_files(input_folder, start_date, end_date):
-        log_files.append(log.file_name)
+        log_files.append(log.file_relative_path)
         date_list.append(convert_date_to_str(log.current_date))
 
         cache_path = os.path.join(
@@ -86,7 +89,7 @@ def extract(input_folder, output_folder, start_date, end_date):
 
         command_options = {
             '--cache_file': cache_path,
-            '-d': log.file_name,
+            '-d': log.file_path,
             '-f': new_model_path
         }
 

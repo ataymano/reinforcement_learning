@@ -263,6 +263,7 @@ def output_dashboard_data(d, commands, dashboard_file):
                     temp["w"] = ag[1]
                     temp["t"] = type
                     d.append(temp)
+                    print(d)
                 f.write(json.dumps({"ts":index.strftime("%Y-%m-%dT%H:%M:%SZ"),"d":d})+'\n')
 
         # total aggregates
@@ -292,7 +293,7 @@ def create_stats(log_fp, dashboard_file, commands, predictions_files=None):
     pred = {}
     for pred_fp in predictions_files:
         if os.path.isfile(pred_fp):
-            name = pred_fp.split('.')[-2]   # check that policy name is encoded in file_name
+            name = pred_fp.split('/')[-1].split('.')[-2]   # check that policy name is encoded in file_name
             if name:
                 pred[name] = [x.strip() for x in open(pred_fp) if x.strip()]
                 print('Loaded {} predictions from {}'.format(len(pred[name]),pred_fp))
@@ -309,8 +310,8 @@ def create_stats(log_fp, dashboard_file, commands, predictions_files=None):
     d = {}
     print('Processing: {}'.format(log_fp))
     evts = 0
+    print (os.getcwd())
     for i, x in enumerate(open(log_fp, 'rb')):
-
         if x.startswith(b'{"_label_cost":'):
             data = json_cooked(x)
 
@@ -433,7 +434,7 @@ def create_stats(log_fp, dashboard_file, commands, predictions_files=None):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--log_folder', help="cooked log", required=True)
+    parser.add_argument('--log_folder', help="log", required=True)
     parser.add_argument('--metadata_folder', help="metadata", required=True)
     parser.add_argument('--predictions_folder', help="predict", required=True)
     parser.add_argument('--output_folder', help="dashboard", required=True)
@@ -443,7 +444,7 @@ if __name__ == '__main__':
     metadata_folder = args.metadata_folder
     predictions_folder = args.predictions_folder
     output_folder = args.output_folder
-
+    print('log folder: ', log_folder)
     os.makedirs(args.output_folder, exist_ok=True)
     output_path = os.path.join(
         output_folder,
@@ -463,16 +464,19 @@ if __name__ == '__main__':
         metadata = json.load(json_file)
 
     print(metadata)
-    for i, log_path in enumerate(metadata.get('log_files')):
+    for i, log_relative_path in enumerate(metadata.get('log_files')):
+        log_path = os.path.join(log_folder, log_relative_path)
+        print(os.path.exists(log_path))
         predictions_dir = os.path.join(
             predictions_folder,
             metadata.get('date_list')[i]
         )
-        print('predictions dir: ' + predictions_dir)
 
         predictions = os.listdir(predictions_dir)
         prediction_path_list = []
         for prediction_file in predictions:
             prediction_path = os.path.join(predictions_dir, prediction_file)
+            print(prediction_path)
+            print(os.path.exists(prediction_path))
             prediction_path_list.append(prediction_path)
         create_stats(log_path, output_path, commands, prediction_path_list)
