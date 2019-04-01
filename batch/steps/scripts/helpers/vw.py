@@ -1,5 +1,6 @@
 import subprocess
-
+from subprocess import check_output
+import sys
 
 def _parse_vw_output(txt):
     result = {}
@@ -12,19 +13,28 @@ def _parse_vw_output(txt):
     return result
 
 
+def parse_average_loss(vw_output):
+    for line in vw_output.split('\n'):
+        if (line.startswith('average loss =')):
+            loss = line.split('=')[1].strip()
+            if (loss == 'n.a.'):
+                loss = sys.float_info.max
+            return float(loss)
+
+
 def run(command):
     process = subprocess.Popen(
         command.split(),
         universal_newlines=True,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
+        stderr=subprocess.STDOUT
     )
-    print(process.communicate())
+    stdout, stderr = process.communicate()
+    return stdout
 
 
 def build_command(command='', opts={}):
     vw_path = '/usr/local/bin/vw'
-    print('build command: ' + command)
     if command:
         command = ' '.join([
             vw_path,

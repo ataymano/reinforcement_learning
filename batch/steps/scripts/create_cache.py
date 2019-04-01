@@ -97,7 +97,6 @@ def extract(input_folder, output_folder, start_date, end_date):
             command_options['-i'] = previous_model_path
 
         command = vw.build_command('', command_options)
-        print("create cache command: ")
         print(command)
         vw.run(command)
 
@@ -135,14 +134,12 @@ def main():
 
     os.makedirs(args.output_folder, exist_ok=True)
 
-    print('Extracting...')
     extract(
         args.input_folder,
         args.output_folder,
         datetime.datetime.strptime(args.start_date, date_format),
         datetime.datetime.strptime(args.end_date, date_format)
     )
-    print('Done.')
 
 
 if __name__ == '__main__':

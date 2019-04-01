@@ -65,10 +65,11 @@ class vw_sweep_step(HyperDriveStep):
             hyperdrive_run_config=hd_config,
             estimator_entry_script_arguments=[
                 "--input_folder", self.input,
+                "--metrics_folder", self.metrics_output,
                 "--base_command", self.base_command
             ],
             inputs=[self.input, self.base_command],
-            metrics_output=self.metrics_output,
+            outputs=[self.metrics_output],
             allow_reuse=False
         )
 
