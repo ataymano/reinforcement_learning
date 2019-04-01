@@ -45,7 +45,7 @@ class vw_sweep_step(HyperDriveStep):
                 workspace,
                 'vw',
                 vm_size='Standard_DS1_v2',
-                max_nodes=64
+                max_nodes=2
             ),
             entry_script='vw_estimate.py',
             environment_definition=config.environment
