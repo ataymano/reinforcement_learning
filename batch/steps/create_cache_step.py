@@ -48,8 +48,9 @@ class create_cache_step(PythonScriptStep):
             outputs=[self.output],
             compute_target=compute.get_or_create_aml_compute_target(
                 workspace,
-                'extractor',
-                vm_size='Standard_F2s_v2'
+                'extractorf8',
+                vm_size='Standard_F8s_v2',
+                max_nodes=1
             ),
             source_directory=os.path.join(dir_path, 'scripts'),
             runconfig=config
