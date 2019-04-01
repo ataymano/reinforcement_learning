@@ -18,7 +18,7 @@ command = args.command
 policy_name = args.policy_name
 
 utils.logger("Cache folder", input_folder)
-utils.logger("Prediction folder", output_folder)
+utils.logger("Prediction output folder", output_folder)
 
 with open(command, 'r') as f_command:
     c = f_command.readline()

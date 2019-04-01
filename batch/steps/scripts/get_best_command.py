@@ -3,8 +3,9 @@
 import argparse
 import os
 import json
-
 from azureml.core.run import Run
+
+
 def Log(key, value):
         logger = Run.get_context()
         logger.log(key, value)
@@ -17,7 +18,8 @@ def to_float(str):
     except ValueError:
         return None
 
-def get_best_command(path, metrics):    
+
+def get_best_command(path, metrics):
     with open(path, 'r') as f:
         o = json.loads(f.read())
         best = None
@@ -31,8 +33,9 @@ def get_best_command(path, metrics):
 
     if best is None:
         raise ValueError('Best variant was not selected')
-        
+
     return best
+
 
 print("Selecting best command...")
 
@@ -52,6 +55,6 @@ Log(metrics_name, best[1])
 
 os.makedirs(os.path.dirname(args.output), exist_ok=True)
 with open(args.output, 'w+') as fout:
-    fout.write(best[0] + '\n') 
+    fout.write(best[0] + '\n')
     fout.write(str(best[1]))
 print('Done.')

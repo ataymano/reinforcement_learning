@@ -1,10 +1,10 @@
 # Copyright (c) Microsoft. All rights reserved.
 # Licensed under the MIT license.
+import json
 import argparse
 import os
 import subprocess
 import datetime
-
 from azureml.core.run import Run
 
 def Log(key, value):
@@ -35,16 +35,6 @@ class Vw:
         else:
             return None
 
-    def parse_vw_output(self, txt):
-        result = {}
-        for line in txt.split('\n'):
-            if '=' in line:
-                index = line.find('=')
-                key = line[0:index].strip()
-                value = line[index+1:].strip()
-                result[key] = value
-        return result
-
     def process(self, input):
         command = self.path + ' ' + self.args + ' --cache_file ' + input
         print('Processing: ' + command)
@@ -63,7 +53,6 @@ class Vw:
 def get_subcommand(fname, index):
     if index == 0:
         return ' '
-
     if os.path.isfile(fname):
         with open(fname, 'r') as f:
             for result in f:
@@ -74,13 +63,12 @@ def get_subcommand(fname, index):
 
 print("Estimating vw model...")
 
-parser = argparse.ArgumentParser("train")
+parser = argparse.ArgumentParser("sweep")
 parser.add_argument("--input_folder", type=str, help="input folder")
 parser.add_argument("--base_command", type=str, help="base command")
 parser.add_argument("--marginals_index", type=str, help="marginal command index")
 parser.add_argument("--interactions_index", type=str, help="interactions command index")
 
-#parser.add_argument("--power_t", type=str, help="power_t")
 args = parser.parse_known_args()
 
 Log("Input folder", args[0].input_folder)
@@ -105,7 +93,6 @@ if '-q' in command:
     tmpargs = tmpparser.parse_known_args(command.split(' '))
     command = '--cb_adf --dsjson -q ' + tmpargs[0].q
 
-#c = '--cb_adf --dsjson --cb_type ips -l 1e-05 --l1 1e-05 --power_t ' + args.power_t
 c = command.rstrip() + ' ' +  ' '.join(args[1])
 
 if marg is not None and inter is not None:
@@ -113,6 +100,22 @@ if marg is not None and inter is not None:
     Log("Command", c)
     print('Started: ' + str(datetime.datetime.now()))
     vw = Vw(vw_path = '/usr/local/bin/vw', args = c)
-    result = vw.process(os.path.join(args[0].input_folder, 'dataset.cache'))
+
+    metadata_path = os.path.join(
+        args[0].input_folder,
+        'metadata.json'
+    )
+
+    with open(metadata_path) as json_file:
+        metadata = json.load(json_file)
+
+    for date in metadata.get('date_list'):
+        cache_file_path = os.path.join(
+            args[0].input_folder,
+            date + '.cache'
+        )
+        print("sweep step cache path:")
+        print(cache_file_path)
+        result = vw.process(cache_file_path)
 
     print('Done: ' + str(datetime.datetime.now()))
