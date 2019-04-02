@@ -97,14 +97,14 @@ if marg is not None and inter is not None:
 
         command = vw.build_command(c, command_options)
         previous_model = date + '.vw'
-        command_list.append(command)
+
         vw_output = vw.run(command)
 
     average_loss = vw.parse_average_loss(vw_output)
 
     metrics = {
-        'command_list': command_list,
-        'average_loss': average_loss
+        "command": c,
+        "average_loss": average_loss
     }
 
     with open(metrics_path, 'w+') as fout:

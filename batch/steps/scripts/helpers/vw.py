@@ -2,6 +2,7 @@ import subprocess
 from subprocess import check_output
 import sys
 
+
 def _parse_vw_output(txt):
     result = {}
     for line in txt.split('\n'):

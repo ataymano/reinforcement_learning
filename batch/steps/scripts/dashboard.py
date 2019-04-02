@@ -448,9 +448,9 @@ if __name__ == '__main__':
         'dashboard.txt'
     )
     commands = {}
-    predictions = []
-
-    predictions = os.listdir(predictions_folder)
+    # predictions = []
+    #
+    # predictions = os.listdir(predictions_folder)
 
     metadata_path = os.path.join(
         metadata_folder,

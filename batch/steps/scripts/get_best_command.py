@@ -3,58 +3,42 @@
 import argparse
 import os
 import json
-from azureml.core.run import Run
-
-
-def Log(key, value):
-        logger = Run.get_context()
-        logger.log(key, value)
-        print(key + ': ' + str(value))
-
-
-def to_float(str):
-    try:
-        return float(str)
-    except ValueError:
-        return None
-
-
-def get_best_command(path, metrics):
-    with open(path, 'r') as f:
-        o = json.loads(f.read())
-        best = None
-        for el in o:
-            if metrics in o[el].keys():
-                m = to_float(o[el][metrics][0])
-            else:
-                m = None
-            if m is not None and (best is None or m < best[1]):
-                best = (o[el]['Command'][0], m)
-
-    if best is None:
-        raise ValueError('Best variant was not selected')
-
-    return best
+import sys
+from helpers import utils
 
 
 print("Selecting best command...")
 
 parser = argparse.ArgumentParser("select_best_command")
-parser.add_argument("--input", type=str, help="input metrics")
-parser.add_argument("--output", type=str, help="output")
+parser.add_argument("--metrics_folder", type=str, help="metrics folder")
+parser.add_argument("--best_commands_folder", type=str, help="output")
+parser.add_argument("--policy_name", type=str, help="policy name")
+
 args = parser.parse_args()
+metrics_folder = args.metrics_folder
+best_commands_folder = args.best_commands_folder
+policy_name = args.policy_name
 
-Log("Input metrics", args.input)
-Log("Output path", args.output)
+utils.logger("Metrics folder", metrics_folder)
+utils.logger("Best commands folder", best_commands_folder)
 
-metrics_name = 'average loss'
-best = get_best_command(args.input, metrics_name)
+os.makedirs(best_commands_folder, exist_ok=True)
 
-Log('Command', best[0])
-Log(metrics_name, best[1])
+best_command = None
+min_average_loss = sys.float_info.max
 
-os.makedirs(os.path.dirname(args.output), exist_ok=True)
-with open(args.output, 'w+') as fout:
-    fout.write(best[0] + '\n')
-    fout.write(str(best[1]))
-print('Done.')
+for metrics_file in os.listdir(metrics_folder):
+    metrics_path = os.path.join(metrics_folder, metrics_file)
+    with open(metrics_path) as json_file:
+        metrics = json.load(json_file)
+        print(metrics)
+        if (float(metrics.get('average_loss')) < min_average_loss):
+            best_command = metrics.get('command')
+
+best_command_path = os.path.join(
+    best_commands_folder,
+    policy_name + '_command'
+)
+
+with open(best_command_path, 'w+') as fout:
+    fout.write(best_command)

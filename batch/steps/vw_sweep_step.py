@@ -14,6 +14,7 @@ class vw_sweep_step(HyperDriveStep):
         workspace,
         input_folder,
         base_command,
+        policy_name,
         param_grid,
         parallel_jobs,
         jobs_limit,
@@ -27,7 +28,7 @@ class vw_sweep_step(HyperDriveStep):
         )
 
         self.output = PipelineData(
-            "command",
+            "best_commands",
             datastore=workspace.get_default_datastore()
         )
 
@@ -77,8 +78,9 @@ class vw_sweep_step(HyperDriveStep):
             name="Best command",
             script_name='get_best_command.py',
             arguments=[
-                "--input", self.metrics_output,
-                "--output", self.output
+                "--metrics_folder", self.metrics_output,
+                "--best_commands_folder", self.output,
+                "--policy_name", policy_name
             ],
             inputs=[self.metrics_output],
             outputs=[self.output],
