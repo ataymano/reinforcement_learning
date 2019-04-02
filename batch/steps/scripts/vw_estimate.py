@@ -24,14 +24,17 @@ print("Estimating vw model...")
 parser = argparse.ArgumentParser("sweep")
 parser.add_argument("--input_folder", type=str, help="input folder")
 parser.add_argument("--metrics_folder", type=str, help="metrics folder")
+parser.add_argument("--model_folder", type=str, help="model folder")
 parser.add_argument("--base_command", type=str, help="base command")
 parser.add_argument("--marginals_index", type=str, help="marginal command index")
 parser.add_argument("--interactions_index", type=str, help="interactions command index")
 
 args = parser.parse_known_args()
 metrics_folder = args[0].metrics_folder
+model_folder = args[0].model_folder
 
 os.makedirs(metrics_folder, exist_ok=True)
+os.makedirs(model_folder, exist_ok=True)
 
 utils.logger("Input folder", args[0].input_folder)
 utils.logger("Base command path", args[0].base_command)
@@ -57,55 +60,55 @@ if '-q' in command:
 
 c = command.rstrip() + ' ' +  ' '.join(args[1])
 
-if marg is not None and inter is not None:
+if marg and inter:
     c = c + ' ' + marg.rstrip() + ' ' + inter.rstrip()
 
-    metadata_path = os.path.join(
+metadata_path = os.path.join(
+    args[0].input_folder,
+    'metadata.json'
+)
+
+with open(metadata_path) as json_file:
+    metadata = json.load(json_file)
+
+previous_model_path = None
+vw_output = None
+command_list = []
+metrics_path = os.path.join(
+    metrics_folder,
+    str(uuid.uuid4()) + '.json'
+)
+
+for date in metadata.get('date_list'):
+    cache_file_path = os.path.join(
         args[0].input_folder,
-        'metadata.json'
+        date + '.cache'
     )
-
-    with open(metadata_path) as json_file:
-        metadata = json.load(json_file)
-
-    previous_model = None
-    vw_output = None
-    command_list = []
-    metrics_path = os.path.join(
-        metrics_folder,
-        str(uuid.uuid4()) + '.json'
+    new_model_path = os.path.join(
+        model_folder,
+        date + '.vw'
     )
-
-    for date in metadata.get('date_list'):
-        cache_file_path = os.path.join(
-            args[0].input_folder,
-            date + '.cache'
-        )
-        print("sweep step cache path:")
-        print(cache_file_path)
-
-        command_options = {
-            '--cache_file': cache_file_path,
-        }
-
-        if previous_model:
-            previous_model_path = os.path.join(
-                args[0].input_folder,
-                previous_model
-            )
-            command_options['-i'] = previous_model_path
-
-        command = vw.build_command(c, command_options)
-        previous_model = date + '.vw'
-
-        vw_output = vw.run(command)
-
-    average_loss = vw.parse_average_loss(vw_output)
-
-    metrics = {
-        "command": c,
-        "average_loss": average_loss
+    command_options = {
+        '--cache_file': cache_file_path,
+        '-f': new_model_path
     }
 
-    with open(metrics_path, 'w+') as fout:
-        json.dump(metrics, fout)
+    if previous_model_path:
+        command_options['-i'] = previous_model_path
+
+    command = vw.build_command(c, command_options)
+    previous_model_path = new_model_path
+
+    vw_output = vw.run(command)
+    print("command: " + command)
+    print(vw_output)
+    print("*********************************")
+average_loss = vw.parse_average_loss(vw_output)
+
+metrics = {
+    "command": c,
+    "average_loss": average_loss
+}
+
+with open(metrics_path, 'w+') as fout:
+    json.dump(metrics, fout)

@@ -27,6 +27,11 @@ class vw_sweep_step(HyperDriveStep):
             datastore=workspace.get_default_datastore()
         )
 
+        model_folder = PipelineData(
+            policy_name + "_models",
+            datastore=workspace.get_default_datastore()
+        )
+
         self.output = PipelineData(
             "best_commands",
             datastore=workspace.get_default_datastore()
@@ -66,11 +71,12 @@ class vw_sweep_step(HyperDriveStep):
             hyperdrive_run_config=hd_config,
             estimator_entry_script_arguments=[
                 "--input_folder", self.input,
+                "--model_folder", model_folder,
                 "--metrics_folder", self.metrics_output,
                 "--base_command", self.base_command
             ],
             inputs=[self.input, self.base_command],
-            outputs=[self.metrics_output],
+            outputs=[self.metrics_output, model_folder],
             allow_reuse=False
         )
 

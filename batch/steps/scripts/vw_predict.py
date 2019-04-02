@@ -7,6 +7,7 @@ from helpers import vw
 
 parser = argparse.ArgumentParser("predict")
 parser.add_argument("--cache_folder", type=str, help="cache folder")
+parser.add_argument("--model_folder", type=str, help="model folder")
 parser.add_argument("--commands_folder", type=str, help="commands folder")
 parser.add_argument("--output_folder", type=str, help="output folder")
 args = parser.parse_args()
@@ -14,6 +15,9 @@ args = parser.parse_args()
 cache_folder = args.cache_folder
 commands_folder = args.commands_folder
 output_folder = args.output_folder
+model_folder = args.model_folder
+
+os.makedirs(model_folder, exist_ok=True)
 
 utils.logger("Cache folder", cache_folder)
 utils.logger("Prediction folder", output_folder)
@@ -32,11 +36,14 @@ for command_file in os.listdir(commands_folder):
         c = f_command.readline()
         c = c.replace('--cb_adf', '--cb_explore_adf --epsilon 0.2')
 
-    previous_model = None
+    previous_model_path = None
     for cache_file in cache_list:
         cache_path = os.path.join(cache_folder, cache_file)
         cache_file_name, cache_path_extension = os.path.splitext(cache_file)
-
+        new_model_path = os.path.join(
+            model_folder,
+            cache_file_name + '.vw'
+        )
         prediction_dir = os.path.join(output_folder, cache_file_name)
         os.makedirs(prediction_dir, exist_ok=True)
 
@@ -47,16 +54,16 @@ for command_file in os.listdir(commands_folder):
 
         command_options = {
             '--cache_file': cache_path,
+            '-f': new_model_path,
             '-p': prediction_path
         }
 
-        if previous_model:
-            previous_model_path = os.path.join(cache_folder, previous_model)
+        if previous_model_path:
             command_options['-i'] = previous_model_path
 
         command = vw.build_command(c, command_options)
 
-        previous_model = '%s.vw' % (cache_file_name)
+        previous_model_path = new_model_path
         utils.logger('predict command', command)
 
         vw.run(command)

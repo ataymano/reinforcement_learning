@@ -39,7 +39,7 @@ def create_pipeline(ws, ctx, parallel_jobs):
         policy_name='Hyper1',
         param_grid=grid_1,
         parallel_jobs=parallel_jobs,
-        jobs_limit=2
+        jobs_limit=100
     )
 
     predict = vw_predict_step.vw_predict_step(
@@ -47,16 +47,6 @@ def create_pipeline(ws, ctx, parallel_jobs):
         cache_folder=cache_step.output,
         commands_folder=sweep_step_1.output
     )
-
-    # predict = vw_predict_step.vw_predict_step(
-    #     workspace=ws,
-    #     input_folder=cache_step.output,
-    #     commandline=PipelineParameter(
-    #         name='extra_2',
-    #         default_value='--cb_explore_adf --epsilon 0.2 --dsjson'
-    #     ),
-    #     policy_name='NoMarginal'
-    # )
 
     dashboard = dashboard_step.dashboard_step(
         workspace=ws,

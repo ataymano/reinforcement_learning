@@ -1,5 +1,5 @@
 {
     "subscription_id": "9a2d7383-3c7d-492c-94fc-ba65be408672",
     "resource_group": "cps-dev-cheng",
-    "workspace_name": "cheng_offline_dashboard"
+    "workspace_name": "cheng_dashboard_debug"
 }
