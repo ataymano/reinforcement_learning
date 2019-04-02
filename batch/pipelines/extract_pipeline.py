@@ -58,10 +58,10 @@ def create_pipeline(ws, ctx, parallel_jobs):
     extractPipeline = Pipeline(
         workspace=ws,
         steps=[
-            base_command_step,
+            # base_command_step,
             cache_step,
-            predict,
-            dashboard
+            # predict,
+            # dashboard
         ]
     )
     print ("extractPipeline is succesfully created.")
