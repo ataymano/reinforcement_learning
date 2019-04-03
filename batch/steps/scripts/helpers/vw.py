@@ -1,34 +1,35 @@
 import subprocess
 import multiprocessing
 import logging
+import os
 
-def _cache(vw_path, input):
+
+def _cache(vw_path, input, output):
     opts = {}
     opts['-d'] = input
-    opts['--cache_file'] = input + '.cache'
+    opts['--cache_file'] = output
     return (opts, run(build_command(vw_path, '', opts)))
 
 def _cache_func(input):
-    return _cache(input[0], input[1])
+    return _cache(input[0], input[1], input[2])
 
-def _cache_multi(vw_path, inputs, pool):
-    inputs = list(map(lambda i: (vw_path, i), inputs))
+def _cache_multi(vw_path, inputs, output_path_gen, pool):
+    inputs = list(map(lambda i: (vw_path, i, output_path_gen.get(i, 'cache')), inputs))
     result = pool.map(_cache_func, inputs)
     return result
 
-def _train(vw_path, cache_file, opts = {}):
+def _train(vw_path, cache_file, model_file, opts = {}):
     opts['--cache_file'] = cache_file
-    model_file = cache_file + '.' + str(_hash('', opts)) + '.vw'
     opts['-f'] = model_file
     return (opts, run(build_command(vw_path, '', opts)))
 
 def _train_func(input):
-    return _train(input[0], input[1], input[2])
+    return _train(input[0], input[1], input[2], input[3])
 
-def _train_multi(vw_path, cache_files, opts, pool):
+def _train_multi(vw_path, cache_files, model_path_gen, opts, pool):
     previous = [(None, None)] * len(opts) 
     for c in cache_files:
-        inputs = list(map(lambda o: (vw_path, c, o), opts))
+        inputs = list(map(lambda o: (vw_path, c, model_path_gen.get(c, str(_hash('', o)) + '.vw'), o), opts))
         result = pool.map(_train_func, inputs)
         opts = list(map(lambda r: r[0], result))
         for o in opts:
@@ -46,7 +47,6 @@ def _parse_vw_output(txt):
     return result
 
 def _hash(command='', opts={}):
-    tmp = command
     for key, val in opts.items():
         command = ' '.join([
             command,
@@ -54,7 +54,7 @@ def _hash(command='', opts={}):
             val
         ])
 
-    return hash(tmp)
+    return hash(command)
 
 def run(command):
     print('Running the command: ' + command)
@@ -94,23 +94,24 @@ def build_command(vw_path, command='', opts={}):
         ])
     return command
 
-def cache(vw_path, input, opts = {}, procs = 1):
+def cache(vw_path, input, output_path_gen, opts = {}, procs = 1):
     if not isinstance(input, list):
         input = [input]
     p = multiprocessing.Pool(procs)
-    result = _cache_multi(vw_path, input, p)
+    result = _cache_multi(vw_path, input, output_path_gen, p)
     p.close()
     p.join()
     return list(map(lambda r: r[0]['--cache_file'], result))
 
-def train(vw_path, cache, opts = {}, procs = 1):
+def train(vw_path, cache, model_path_gen, opts = {}, procs = 1):
     if not isinstance(opts, list):
         opts = [opts]
     
     if not isinstance(cache, list):
         cache = [cache]
+
     p = multiprocessing.Pool(procs)
-    result = _train_multi(vw_path, cache, opts, p)
+    result = _train_multi(vw_path, cache, model_path_gen, opts, p)
     p.close()
     p.join()
     for r in result:
