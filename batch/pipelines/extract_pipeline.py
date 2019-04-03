@@ -30,3 +30,7 @@ def create_pipeline(ws, ctx):
     print("extractPipeline is succesfully validated.")
 
     return extractPipeline
+
+
+
+

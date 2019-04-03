@@ -55,6 +55,15 @@ def _hash(command='', opts={}):
 
     return hash(command)
 
+def parse_average_loss(vw_output):
+    for line in vw_output.split('\n'):
+        if (line.startswith('average loss =')):
+            loss = line.split('=')[1].strip()
+            if (loss == 'n.a.'):
+                loss = sys.float_info.max
+            return float(loss)
+
+
 def run(command):
     print('[' + str(datetime.datetime.now()) + ']  ' +  'Running the command: ' + command)
     process = subprocess.Popen(

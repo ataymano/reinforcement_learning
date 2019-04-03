@@ -11,26 +11,17 @@ class vw_predict_step(PythonScriptStep):
     def __init__(
         self,
         workspace,
-        input_folder,
-        policy_name,
-        command=None,
-        commandline=None
+        cache_folder,
+        command_folders
     ):
-        self.input = input_folder
-        if not (command or commandline):
-            raise ValueError('predict step error: command cannot be empty')
 
-        if command is None:
-            self.preprocessor = prepare_command_step.prepare_command_step(
-                workspace=workspace,
-                command=commandline
-            )
-            command = self.preprocessor.output
-
-        self.command = command
-        # self.output = PipelineData("pred_" + name, datastore = workspace.get_default_datastore())
         self.output = PipelineData(
             "Predictions",
+            datastore=workspace.get_default_datastore()
+        )
+
+        self.model_folder = PipelineData(
+            "models",
             datastore=workspace.get_default_datastore()
         )
 
@@ -41,24 +32,37 @@ class vw_predict_step(PythonScriptStep):
         config.environment.docker.enabled = True
         config.environment.docker.base_image = "ataymano/test:0.9"
 
+        command_folders_args = []
+        for command_folder in command_folders:
+            command_folders_args.extend([
+                '--command_folders', command_folder
+            ])
+
+        args = [
+            "--cache_folder", cache_folder,
+            "--model_folder", self.model_folder,
+            "--output_folder", self.output
+        ]
+        args.extend(command_folders_args)
+        print(args)
+
+        inputs = [cache_folder]
+        inputs.extend(command_folders)
+        print("==inputs==")
+        print(inputs)
         super().__init__(
             name="Predict",
             source_directory=os.path.join(dir_path, 'scripts'),
             script_name="vw_predict.py",
-            arguments=[
-                "--input_folder", self.input,
-                "--output_folder", self.output,
-                '--command', self.command,
-                '--policy_name', policy_name
-            ],
+            arguments=args,
             compute_target=compute.get_or_create_aml_compute_target(
                 workspace,
                 'vw-predict',
                 vm_size='Standard_DS1_v2',
                 max_nodes=4
             ),
-            inputs=[self.input, self.command],
-            outputs=[self.output],
+            inputs=inputs,
+            outputs=[self.output, self.model_folder],
             runconfig=config,
             allow_reuse=True
         )
