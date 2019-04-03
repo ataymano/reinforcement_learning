@@ -29,7 +29,9 @@ class vw_sweep_step(PythonScriptStep):
             arguments=[
                 "--input_folder", self.input,
                 "--output", self.output,
-                "--procs", process_per_node
+                "--procs", process_per_node,
+                "--vw", "/usr/local/bin/vw",
+                "--models", "/home/"
             ],
             inputs=[self.input],
             outputs=[self.output],
