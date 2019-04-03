@@ -12,12 +12,14 @@ class vw_sweep_step(HyperDriveStep):
     def __init__(
         self,
         workspace,
+        context,
         input_folder,
         base_command,
         policy_name,
         param_grid,
         parallel_jobs,
         jobs_limit,
+        previous_policy='',
         allow_reuse=True
     ):
         self.input = input_folder
@@ -33,7 +35,7 @@ class vw_sweep_step(HyperDriveStep):
         )
 
         self.output = PipelineData(
-            "best_commands",
+            policy_name + "_best_commands",
             datastore=workspace.get_default_datastore()
         )
 
@@ -51,7 +53,7 @@ class vw_sweep_step(HyperDriveStep):
                 workspace,
                 'vw',
                 vm_size='Standard_DS1_v2',
-                max_nodes=2
+                max_nodes=10
             ),
             entry_script='vw_estimate.py',
             environment_definition=config.environment
@@ -73,7 +75,8 @@ class vw_sweep_step(HyperDriveStep):
                 "--input_folder", self.input,
                 "--model_folder", model_folder,
                 "--metrics_folder", self.metrics_output,
-                "--base_command", self.base_command
+                "--base_command", self.base_command,
+                '--previous_policy', previous_policy
             ],
             inputs=[self.input, self.base_command],
             outputs=[self.metrics_output, model_folder],

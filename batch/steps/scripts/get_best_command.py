@@ -33,7 +33,10 @@ for metrics_file in os.listdir(metrics_folder):
         metrics = json.load(json_file)
         print(metrics)
         if (float(metrics.get('average_loss')) < min_average_loss):
+            min_average_loss = float(metrics.get('average_loss'))
             best_command = metrics.get('command')
+            print('best_command')
+            print(best_command)
 
 best_command_path = os.path.join(
     best_commands_folder,
