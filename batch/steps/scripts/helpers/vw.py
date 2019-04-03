@@ -1,5 +1,4 @@
 import subprocess
-import multiprocessing
 import logging
 import os
 import datetime
@@ -13,9 +12,9 @@ def _cache(vw_path, input, output):
 def _cache_func(input):
     return _cache(input[0], input[1], input[2])
 
-def _cache_multi(vw_path, inputs, output_path_gen, pool):
+def _cache_multi(vw_path, inputs, output_path_gen, job_pool):
     inputs = list(map(lambda i: (vw_path, i, output_path_gen.get(i, 'cache')), inputs))
-    result = pool.map(_cache_func, inputs)
+    result = job_pool.map(_cache_func, inputs)
     return result
 
 def _train(vw_path, cache_file, model_file, opts = {}):
@@ -26,11 +25,11 @@ def _train(vw_path, cache_file, model_file, opts = {}):
 def _train_func(input):
     return _train(input[0], input[1], input[2], input[3])
 
-def _train_multi(vw_path, cache_files, model_path_gen, opts, pool):
+def _train_multi(vw_path, cache_files, model_path_gen, opts, job_pool):
     previous = [(None, None)] * len(opts) 
     for c in cache_files:
         inputs = list(map(lambda o: (vw_path, c, model_path_gen.get(c, str(_hash('', o)) + '.vw'), o), opts))
-        result = pool.map(_train_func, inputs)
+        result = job_pool.map(_train_func, inputs)
         opts = list(map(lambda r: r[0], result))
         for o in opts:
             o['-i'] = o['-f']
@@ -94,26 +93,20 @@ def build_command(vw_path, command='', opts={}):
         ])
     return command
 
-def cache(vw_path, input, output_path_gen, opts = {}, procs = 1):
+def cache(vw_path, input, output_path_gen, opts, pool):
     if not isinstance(input, list):
         input = [input]
-    p = multiprocessing.Pool(procs)
-    result = _cache_multi(vw_path, input, output_path_gen, p)
-    p.close()
-    p.join()
+    result = _cache_multi(vw_path, input, output_path_gen, pool)
     return list(map(lambda r: r[0]['--cache_file'], result))
 
-def train(vw_path, cache, model_path_gen, opts = {}, procs = 1):
+def train(vw_path, cache, model_path_gen, opts, job_pool):
     if not isinstance(opts, list):
         opts = [opts]
     
     if not isinstance(cache, list):
         cache = [cache]
 
-    p = multiprocessing.Pool(procs)
-    result = _train_multi(vw_path, cache, model_path_gen, opts, p)
-    p.close()
-    p.join()
+    result = _train_multi(vw_path, cache, model_path_gen, opts, job_pool)
     for r in result:
         r[0].pop('-f', None)
         r[0].pop('-i', None)

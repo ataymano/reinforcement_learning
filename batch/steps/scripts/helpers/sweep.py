@@ -9,8 +9,8 @@ def safe_to_float(str, default):
     except (ValueError, TypeError):
         return default
 
-def simple(vw_path, cache, model_path_gen, commands, procs):
-    candidates = vw.train(vw_path, cache, model_path_gen, commands, procs)
+def simple(vw_path, cache, model_path_gen, commands, job_pool):
+    candidates = vw.train(vw_path, cache, model_path_gen, commands, job_pool)
     bestLoss = sys.float_info.max
     bestCommand = None
     for c in candidates:
@@ -21,10 +21,10 @@ def simple(vw_path, cache, model_path_gen, commands, procs):
             bestCommand = c[0]
     return (bestCommand, bestLoss)
 
-def multi(vw_path, cache, model_path_gen, commands_lists, procs):
+def multi(vw_path, cache, model_path_gen, commands_lists, job_pool):
     result = ({}, None)
     for commands in commands_lists:
-        result = simple(vw_path, cache, model_path_gen, vw_opts.cartesian([result[0]], commands), procs)
+        result = simple(vw_path, cache, model_path_gen, vw_opts.cartesian([result[0]], commands), job_pool)
     return result
 
 if __name__ == '__main__':
