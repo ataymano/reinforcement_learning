@@ -4,7 +4,7 @@ from azureml.pipeline.core import Pipeline
 from azureml.pipeline.core.graph import PipelineParameter
 
 
-def create_pipeline(ws, ctx, process_per_node):
+def create_pipeline(ws, ctx):
     cacheStep = create_cache_step.create_cache_step(
         workspace=ws,
         context=ctx
@@ -23,7 +23,7 @@ def create_pipeline(ws, ctx, process_per_node):
    #     policy_name='NoMarginal'
    # )
 
-    extractPipeline = Pipeline(workspace=ws, steps=[sweepStep.step])
+    extractPipeline = Pipeline(workspace=ws, steps=[sweepStep])
     print ("extractPipeline is succesfully created.")
 
     extractPipeline.validate()
