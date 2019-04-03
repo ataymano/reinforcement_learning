@@ -1,4 +1,4 @@
-from steps.scripts.helpers.vw_opts import dimension, cartesian
+from helpers.vw_opts import dimension, cartesian
 
 def generate():
     return [cartesian(dimension('--power_t', [1e-5, 0.5, 4]),

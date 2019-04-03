@@ -1,4 +1,5 @@
 from azureml.core.run import Run
+import datetime
 
 
 def _f_range(lower_bound, upper_bound, step):
@@ -22,4 +23,4 @@ def f_range(s):
 
 def logger(key, value):
     Run.get_context().log(key, value)
-    print(key + ': ' + str(value))
+    print('[' + str(datetime.datetime.now()) + ']  ' +  key + ': ' + str(value))

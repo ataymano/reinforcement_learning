@@ -2,7 +2,7 @@ import subprocess
 import multiprocessing
 import logging
 import os
-
+import datetime
 
 def _cache(vw_path, input, output):
     opts = {}
@@ -57,7 +57,7 @@ def _hash(command='', opts={}):
     return hash(command)
 
 def run(command):
-    print('Running the command: ' + command)
+    print('[' + str(datetime.datetime.now()) + ']  ' +  'Running the command: ' + command)
     process = subprocess.Popen(
         command.split(),
         universal_newlines=True,

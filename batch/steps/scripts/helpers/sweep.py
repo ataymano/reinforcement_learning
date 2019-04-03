@@ -1,7 +1,7 @@
 import multiprocessing
 import logging
 import sys
-from steps.scripts.helpers import vw, vw_opts
+from helpers import vw, vw_opts, utils
 
 def safe_to_float(str, default):
     try:
@@ -14,7 +14,7 @@ def simple(vw_path, cache, model_path_gen, commands, procs):
     bestLoss = sys.float_info.max
     bestCommand = None
     for c in candidates:
-        print(vw_opts.serialize(c[0]) + ': ' + c[1])
+        utils.logger(vw_opts.serialize(c[0]), c[1])
         loss = safe_to_float(c[1], sys.float_info.max)
         if loss < bestLoss:
             bestLoss = loss
