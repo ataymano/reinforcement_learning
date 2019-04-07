@@ -15,11 +15,12 @@ def vw_sweep(vw_path, input_folder, output, procs, models_path):
     grid = grid_generator.generate()
   #  p = pool.multiproc_pool(procs)
     p = pool.seq_pool()
-    result = sweep.multi(vw_path, caches, model_path_gen, grid, p, base_command)
+    result = sweep.sweep(vw_path, caches, model_path_gen, grid, p, base_command)
    
     os.makedirs(os.path.dirname(output), exist_ok=True)
     with open(output, 'w') as fout:
-        fout.write(vw_opts.serialize(result[0]))
+        for r in result:
+            fout.write(vw_opts.serialize(r[0]))
 
 def main():
     print("Extracting data from application logs...")
