@@ -21,8 +21,8 @@ def simple(vw_path, cache, model_path_gen, commands, job_pool):
             bestCommand = c[0]
     return (bestCommand, bestLoss)
 
-def multi(vw_path, cache, model_path_gen, commands_lists, job_pool):
-    result = ({}, None)
+def multi(vw_path, cache, model_path_gen, commands_lists, job_pool, base_command = {}):
+    result = (base_command, None)
     for commands in commands_lists:
         result = simple(vw_path, cache, model_path_gen, vw_opts.cartesian([result[0]], commands), job_pool)
     return result

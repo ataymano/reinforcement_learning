@@ -7,9 +7,15 @@ def vw_sweep(vw_path, input_folder, output, procs, models_path):
     model_path_gen = path_generator.folder_path_generator(models_path)
     pattern=os.path.join(input_folder, '*.cache')
     caches = list(glob.glob(pattern))
+    base_command = {
+        '#method':'--cb_adf',
+        '#format':'--dsjson',
+        '#saveresume':'--save_resume',
+        '#savepercounters':'--preserve_performance_counters'}
     grid = grid_generator.generate()
-    p = pool.multiproc_pool(procs)
-    result = sweep.multi(vw_path, caches, model_path_gen, grid, p)
+  #  p = pool.multiproc_pool(procs)
+    p = pool.seq_pool()
+    result = sweep.multi(vw_path, caches, model_path_gen, grid, p, base_command)
    
     os.makedirs(os.path.dirname(output), exist_ok=True)
     with open(output, 'w') as fout:

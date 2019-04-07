@@ -7,7 +7,7 @@ def _cache(vw_path, input, output):
     opts = {}
     opts['-d'] = input
     opts['--cache_file'] = output
-    return (opts, run(build_command(vw_path, '', opts)))
+    return (opts, run(build_command(vw_path, opts)))
 
 def _cache_func(input):
     return _cache(input[0], input[1], input[2])
@@ -20,7 +20,7 @@ def _cache_multi(vw_path, inputs, output_path_gen, job_pool):
 def _train(vw_path, cache_file, model_file, opts = {}):
     opts['--cache_file'] = cache_file
     opts['-f'] = model_file
-    return (opts, run(build_command(vw_path, '', opts)))
+    return (opts, run(build_command(vw_path, opts)))
 
 def _train_func(input):
     return _train(input[0], input[1], input[2], input[3])
@@ -76,8 +76,17 @@ def run(command):
     output, error = process.communicate()
     return _parse_vw_output(error)
 
+def build_command(path, opts={}):
+    command = path
 
-def build_command(vw_path, command='', opts={}):
+    for key, val in opts.items():
+        if not key.startswith('#'):
+            command = ' '.join([command, key])
+        command = ' '.join([command, str(val)])
+    return command
+
+
+def build_command_legacy(vw_path, command='', opts={}):
     if command:
         command = ' '.join([
             vw_path,
