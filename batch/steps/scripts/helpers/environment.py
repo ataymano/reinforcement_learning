@@ -1,29 +1,10 @@
 from mpi4py import MPI
+from helpers import logger
 
-class local:
-    def map(self, elements):
-        return elements
-
-    def reduce(self, elements):
-        return elements
-
-    def is_master(self):
-        return True
-
-class mpi:
-    def map(self, elements):
-        result = []
-        i = MPI.COMM_WORLD.Get_rank()
-        step = MPI.COMM_WORLD.Get_size()
-        while i < len(elements):
-            result.append(elements[i])
-            i = i + step
-        return result
-
-    def reduce(self, elements):
-        return MPI.COMM_WORLD.allreduce(elements, MPI.SUM)
-
-    def is_master(self):
-        return MPI.COMM_WORLD.Get_rank() == 0
+class environment:
+    def __init__(self, runtime, job_pool):
+        self.runtime = runtime
+        self.job_pool = job_pool
+        self.logger = logger.logger(self.runtime)
 
 

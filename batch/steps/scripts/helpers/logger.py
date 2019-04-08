@@ -1,14 +1,18 @@
 from azureml.core.run import Run
 import datetime
 
-def log_scalar_global(key, value, env):
-    if env.is_master():
+class logger:
+    def __init__(self, runtime):
+        self.runtime = runtime
+
+    def log_scalar_global(self, key, value):
+        if self.runtime.is_master():
+            Run.get_context().log(key, value)
+        self.trace(key + ': ' + str(value))
+
+    def log_scalar_local(self, key, value):
         Run.get_context().log(key, value)
-    trace(key + ': ' + str(value))
+        self.trace(key + ': ' + str(value))
 
-def log_scalar_local(key, value):
-    Run.get_context().log(key, value)
-    trace(key + ': ' + str(value))
-
-def trace(message):
-    print('[' + str(datetime.datetime.now()) + ']  ' +  message)
+    def trace(self, message):
+        print('[' + str(datetime.datetime.now()) + ']  ' +  message)

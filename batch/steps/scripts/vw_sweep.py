@@ -1,7 +1,7 @@
 import argparse
 import os
 import glob
-from helpers import vw, logger, grid_generator, path_generator, vw_opts, sweep, pool, environment
+from helpers import vw, logger, grid_generator, path_generator, vw_opts, sweep, pool, environment, runtime
 
 def vw_sweep(vw_path, input_folder, output, procs, env, models_path):
     model_path_gen = path_generator.folder_path_generator(models_path)
@@ -13,15 +13,17 @@ def vw_sweep(vw_path, input_folder, output, procs, env, models_path):
         '#saveresume':'--save_resume',
         '#savepercounters':'--preserve_performance_counters'}
     grid = grid_generator.generate()
-    p = pool.multiproc_pool(procs) if procs > 1 else pool.seq_pool()
-    env = environment.mpi() if env == 'mpi' else environment.local()
+    env = environment.environment(
+        runtime = runtime.mpi() if env == 'mpi' else runtime.local(),
+        job_pool = pool.multiproc_pool(procs) if procs > 1 else pool.seq_pool()
+        )
 
-    logger.log_scalar_global('Input folder', input_folder, env)
-    logger.log_scalar_global('Output', output, env)
-    logger.trace('Sweeping...')
+    env.logger.log_scalar_global('Input folder', input_folder)
+    env.logger.log_scalar_global('Output', output)
+    env.logger.trace('Sweeping...')
 
-    result = sweep.sweep(vw_path, caches, model_path_gen, grid, env, p, base_command)
-    logger.trace('Done.')
+    result = sweep.sweep(vw_path, caches, model_path_gen, grid, env, base_command)
+    env.logger.trace('Done.')
 
     os.makedirs(os.path.dirname(output), exist_ok=True)
     with open(output, 'w') as fout:
