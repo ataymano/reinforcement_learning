@@ -105,7 +105,7 @@ def extract(input_folder, output_folder, start_date, end_date):
         if (previous_model_path):
             command_options['-i'] = previous_model_path
 
-        command = vw.build_command('/usr/local/bin/vw', '', command_options)
+        command = vw.build_command_legacy('/usr/local/bin/vw', '', command_options)
         print(command)
         vw.run(command)
 
