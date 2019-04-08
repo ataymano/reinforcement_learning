@@ -23,7 +23,7 @@ class vw_sweep_step_mpi:
         config.environment.python.user_managed_dependencies = True
 
         self.step = MpiStep(
-            name="Sweep",
+            name="SweepMpi",
             source_directory=os.path.join(dir_path, 'scripts'),
             script_name='vw_sweep.py',
             arguments=[

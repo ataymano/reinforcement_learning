@@ -7,6 +7,9 @@ class local:
     def reduce(self, elements):
         return elements
 
+    def is_master(self):
+        return True
+
 class mpi:
     def map(self, elements):
         result = []
@@ -19,5 +22,8 @@ class mpi:
 
     def reduce(self, elements):
         return MPI.COMM_WORLD.allreduce(elements, MPI.SUM)
+
+    def is_master(self):
+        return MPI.COMM_WORLD.Get_rank() == 0
 
 

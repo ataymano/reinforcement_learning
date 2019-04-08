@@ -1,7 +1,7 @@
 import argparse
 import os
 import glob
-from helpers import vw, utils, grid_generator, path_generator, vw_opts, sweep, pool, environment
+from helpers import vw, logger, grid_generator, path_generator, vw_opts, sweep, pool, environment
 
 def vw_sweep(vw_path, input_folder, output, procs, env, models_path):
     model_path_gen = path_generator.folder_path_generator(models_path)
@@ -15,8 +15,14 @@ def vw_sweep(vw_path, input_folder, output, procs, env, models_path):
     grid = grid_generator.generate()
     p = pool.multiproc_pool(procs) if procs > 1 else pool.seq_pool()
     env = environment.mpi() if env == 'mpi' else environment.local()
+
+    logger.log_scalar_global('Input folder', input_folder, env)
+    logger.log_scalar_global('Output', output, env)
+    logger.trace('Sweeping...')
+
     result = sweep.sweep(vw_path, caches, model_path_gen, grid, env, p, base_command)
-   
+    logger.trace('Done.')
+
     os.makedirs(os.path.dirname(output), exist_ok=True)
     with open(output, 'w') as fout:
         for r in result:
@@ -34,10 +40,7 @@ def main():
     parser.add_argument("--models", type=str, help="models folder")
     args = parser.parse_args()
 
-    utils.logger('Input folder', args.input_folder)
-    utils.logger('Output', args.output)
 
-    print('Sweeping...')
     vw_sweep(
         args.vw,
         args.input_folder,
@@ -46,8 +49,6 @@ def main():
         args.env,
         args.models
     )
-    print('Done.')
-
 
 if __name__ == '__main__':
     main()

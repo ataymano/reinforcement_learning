@@ -3,6 +3,8 @@ import logging
 import os
 import datetime
 
+from helpers import vw_opts, logger
+
 def _cache(vw_path, input, output):
     opts = {}
     opts['-d'] = input
@@ -65,23 +67,19 @@ def parse_average_loss(vw_output):
 
 
 def run(command):
-    print('[' + str(datetime.datetime.now()) + ']  ' +  'Running the command: ' + command)
+    logger.trace('Running: ' + command)
     process = subprocess.Popen(
         command.split(),
         universal_newlines=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
     )
-
     output, error = process.communicate()
+    logger.trace('Done: ' + command)
     return _parse_vw_output(error)
 
 def build_command(path, opts={}):
-    command = path
-    for key, val in opts.items():
-        command = ' '.join([command, key if not key.startswith('#') else '', str(val)])
-    return command
-
+    return ' '.join([path, vw_opts.to_commandline(opts)])
 
 def build_command_legacy(vw_path, command='', opts={}):
     if command:
