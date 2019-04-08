@@ -30,7 +30,7 @@ def _iteration(vw_path, cache, model_path_gen, commands, job_pool):
 def sweep(vw_path, cache, model_path_gen, commands_lists, job_pool, base_command = {}):
     result = [base_command]
     for commands in commands_lists:
-        result = _iteration(vw_path, cache, model_path_gen, vw_opts.cartesian(result, commands), job_pool)
+        result = _iteration(vw_path, cache, model_path_gen, vw_opts.product(result, commands), job_pool)
     return result
 
 if __name__ == '__main__':

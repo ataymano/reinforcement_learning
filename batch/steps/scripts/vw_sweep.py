@@ -20,7 +20,7 @@ def vw_sweep(vw_path, input_folder, output, procs, models_path):
     os.makedirs(os.path.dirname(output), exist_ok=True)
     with open(output, 'w') as fout:
         for r in result:
-            fout.write(vw_opts.serialize(r[0]))
+            fout.write(vw_opts.serialize(r))
 
 def main():
     print("Extracting data from application logs...")

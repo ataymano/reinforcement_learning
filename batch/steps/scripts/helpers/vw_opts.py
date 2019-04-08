@@ -16,7 +16,7 @@ def deserialize(s):
 def union(first, second):
     return dict(first, **second)
 
-def cartesian(*dimensions):
+def product(*dimensions):
     return functools.reduce(lambda d1, d2: 
                   list(map(lambda tuple: union(tuple[0], tuple[1]), itertools.product(d1, d2))),
                   dimensions)
