@@ -1,6 +1,7 @@
 import multiprocessing
 import logging
 import sys
+
 from helpers import vw, vw_opts, utils
 
 def _safe_to_float(str, default):
@@ -8,9 +9,6 @@ def _safe_to_float(str, default):
         return float(str)
     except (ValueError, TypeError):
         return default
-
-def _aggregate(candidates):
-    return candidates
 
 def _promote(candidates):
     bestLoss = sys.float_info.max
@@ -23,14 +21,15 @@ def _promote(candidates):
             bestCommand = c[0]
     return [bestCommand]
 
-def _iteration(vw_path, cache, model_path_gen, commands, job_pool):
+def _iteration(vw_path, cache, model_path_gen, commands, environment, job_pool):
     candidates = vw.train(vw_path, cache, model_path_gen, commands, job_pool)
-    return _promote(_aggregate(candidates))
+    return _promote(environment.reduce(candidates))
 
-def sweep(vw_path, cache, model_path_gen, commands_lists, job_pool, base_command = {}):
+def sweep(vw_path, cache, model_path_gen, commands_lists, environment, job_pool, base_command = {}):
     result = [base_command]
     for commands in commands_lists:
-        result = _iteration(vw_path, cache, model_path_gen, vw_opts.product(result, commands), job_pool)
+        commands = environment.map(vw_opts.product(result, commands))
+        result = _iteration(vw_path, cache, model_path_gen, commands, environment, job_pool)
     return result
 
 if __name__ == '__main__':

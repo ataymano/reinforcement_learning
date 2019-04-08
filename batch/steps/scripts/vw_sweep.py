@@ -1,7 +1,7 @@
 import argparse
 import os
 import glob
-from helpers import vw, utils, grid_generator, path_generator, vw_opts, sweep, pool
+from helpers import vw, utils, grid_generator, path_generator, vw_opts, sweep, pool, environment
 
 def vw_sweep(vw_path, input_folder, output, procs, models_path):
     model_path_gen = path_generator.folder_path_generator(models_path)
@@ -15,7 +15,8 @@ def vw_sweep(vw_path, input_folder, output, procs, models_path):
     grid = grid_generator.generate()
   #  p = pool.multiproc_pool(procs)
     p = pool.seq_pool()
-    result = sweep.sweep(vw_path, caches, model_path_gen, grid, p, base_command)
+    env = environment.local()
+    result = sweep.sweep(vw_path, caches, model_path_gen, grid, env, p, base_command)
    
     os.makedirs(os.path.dirname(output), exist_ok=True)
     with open(output, 'w') as fout:
