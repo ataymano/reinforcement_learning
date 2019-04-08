@@ -78,11 +78,8 @@ def run(command):
 
 def build_command(path, opts={}):
     command = path
-
     for key, val in opts.items():
-        if not key.startswith('#'):
-            command = ' '.join([command, key])
-        command = ' '.join([command, str(val)])
+        command = ' '.join([command, key if not key.startswith('#') else '', str(val)])
     return command
 
 
