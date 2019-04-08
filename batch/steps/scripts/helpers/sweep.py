@@ -23,11 +23,15 @@ def _promote(candidates):
 
 def _iteration(vw_path, cache, model_path_gen, commands, environment, job_pool):
     candidates = vw.train(vw_path, cache, model_path_gen, commands, job_pool)
-    return _promote(environment.reduce(candidates))
+    print('Local job is finished. Reducing...')
+    candidates = environment.reduce(candidates)
+    print('All candidates are reduced.')
+    return _promote(candidates)
 
 def sweep(vw_path, cache, model_path_gen, commands_lists, environment, job_pool, base_command = {}):
     result = [base_command]
-    for commands in commands_lists:
+    for idx, commands in enumerate(commands_lists):
+        print('Iteration ' + str(idx))
         commands = environment.map(vw_opts.product(result, commands))
         result = _iteration(vw_path, cache, model_path_gen, commands, environment, job_pool)
     return result
