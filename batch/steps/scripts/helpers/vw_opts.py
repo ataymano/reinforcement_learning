@@ -30,5 +30,8 @@ def product(*dimensions):
 def dimension(name, values):
     return list(map(lambda v : dict([(name, str(v))]), values))
 
+def grid_from_file(fname):
+    return list(map(lambda line: vw_opts.deserialize(line), open(fname, 'r')))
+
 if __name__ == '__main__':
     multiprocessing.freeze_support()
