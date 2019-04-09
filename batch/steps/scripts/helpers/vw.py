@@ -2,6 +2,7 @@ import subprocess
 import logging
 import os
 import datetime
+import time
 
 from helpers import vw_opts, logger
 
@@ -22,7 +23,11 @@ def _cache_multi(vw_path, inputs, output_path_gen, env):
 def _train(vw_path, cache_file, model_file, opts, logger):
     opts['--cache_file'] = cache_file
     opts['-f'] = model_file
-    return (opts, run(build_command(vw_path, opts), logger))
+    start = time.time()
+    result = (opts, run(build_command(vw_path, opts), logger))
+    end = time.time()
+    logger.log_scalar_local('[Perf] ' + os.path.basename(cache_file), float(end - start))
+    return result
 
 def _train_func(input):
     return _train(input[0], input[1], input[2], input[3], input[4])
@@ -68,6 +73,7 @@ def parse_average_loss(vw_output):
 
 def run(command, logger):
     logger.trace('Running: ' + command)
+    start = time.time()
     process = subprocess.Popen(
         command.split(),
         universal_newlines=True,
@@ -75,6 +81,7 @@ def run(command, logger):
         stderr=subprocess.PIPE
     )
     output, error = process.communicate()
+    end = time.time()
     logger.trace('Done: ' + command)
     return _parse_vw_output(error)
 
