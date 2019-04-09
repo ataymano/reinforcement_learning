@@ -23,7 +23,7 @@ class vw_sweep_step_mpi:
         config.environment.python.user_managed_dependencies = True
 
         self.step = MpiStep(
-            name="SweepMpi",
+            name="SweepMpi_"+str(node_count) + "_" + str(process_per_node),
             source_directory=os.path.join(dir_path, 'scripts'),
             script_name='vw_sweep.py',
             arguments=[
@@ -44,10 +44,9 @@ class vw_sweep_step_mpi:
             process_count_per_node = process_per_node,
             inputs=[self.input],
             outputs=[self.output],
-            allow_reuse = True,
+            allow_reuse = False,
             version = None,
             hash_paths = None,
             environment_definition = config.environment
-    #        allow_reuse=False
         )
         print("Vw sweep step is successfully created")

@@ -43,6 +43,7 @@ class vw_sweep_step(PythonScriptStep):
                 max_nodes=2
             ),
             source_directory=os.path.join(dir_path, 'scripts'),
-            runconfig=config
+            runconfig=config,
+            allow_reuse=False
         )
         print("Vw sweep step is successfully created")
