@@ -3,7 +3,7 @@ import os
 import datetime
 import json
 from helpers import vw
-from helpers import utils
+from helpers import logger, runtime
 import collections
 import itertools
 from enum import Enum
@@ -73,6 +73,10 @@ def get_file_name(date, type):
 
 
 def extract(input_folder, output_folder, start_date, end_date):
+    my_logger = logger.logger(runtime.local())
+    my_logger.log_scalar_global('Input folder', input_folder)
+    my_logger.log_scalar_global('Output folder', output_folder)
+
     log_files = []
     date_list = []
     for log in LogsExtractor.iterate_files(input_folder, start_date, end_date):
@@ -107,7 +111,7 @@ def extract(input_folder, output_folder, start_date, end_date):
 
         command = vw.build_command_legacy('/usr/local/bin/vw', '', command_options)
         print(command)
-        vw.run(command)
+        vw.run(command, my_logger)
 
     meta_data_file_path = os.path.join(
         output_folder,
@@ -246,9 +250,6 @@ def main():
     args = parser.parse_args()
 
     date_format = '%m/%d/%Y'
-
-    utils.logger('Input folder', args.input_folder)
-    utils.logger('Output folder', args.output_folder)
 
     os.makedirs(args.output_folder, exist_ok=True)
 

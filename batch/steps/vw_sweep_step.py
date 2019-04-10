@@ -23,7 +23,7 @@ class vw_sweep_step(PythonScriptStep):
         config.environment.python.user_managed_dependencies = True
 
         super().__init__(
-            name="Sweep" + "_" + str(process_per_node),
+            name="Sweep",
 
             script_name='vw_sweep.py',
             arguments=[
