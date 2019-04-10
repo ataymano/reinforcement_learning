@@ -19,12 +19,12 @@ def to_commandline(opts):
         command = ' '.join([command, key if not key.startswith('#') else '', str(val)])
     return command
 
-def union(first, second):
+def apply(first, second):
     return dict(first, **second)
 
 def product(*dimensions):
     return functools.reduce(lambda d1, d2: 
-                  list(map(lambda tuple: union(tuple[0], tuple[1]), itertools.product(d1, d2))),
+                  list(map(lambda tuple: apply(tuple[0], tuple[1]), itertools.product(d1, d2))),
                   dimensions)
 
 def dimension(name, values):
