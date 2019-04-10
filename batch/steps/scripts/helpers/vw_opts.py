@@ -33,5 +33,20 @@ def dimension(name, values):
 def grid_from_file(fname):
     return list(map(lambda line: vw_opts.deserialize(line), open(fname, 'r')))
 
+class labeled:
+    def __init__(self, name, opts):
+        self.name = name
+        self.opts = opts
+
+    def serialize(self):
+        tmp = {'name' : self.name,
+               'opts' : self.opts}
+        return json.dumps(tmp)
+
+    @staticmethod
+    def deserialize(line):
+        tmp = json.loads(line)
+        return labeled(tmp['name'], tmp['opts'])
+
 if __name__ == '__main__':
     multiprocessing.freeze_support()

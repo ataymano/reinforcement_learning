@@ -50,22 +50,22 @@ def _train_multi(cache_files, opts, env):
     return result
 
 def _predict(cache_file, labeled_opts, env):
-    opts['-p'] = env.pred_path_gen.get(cache_file, labeled_opts.name)
-    return _train(cache_file, labeled_opts.opts, env)
+    labeled_opts.opts['-p'] = env.pred_path_gen.get(cache_file, labeled_opts.name)
+    result = _train(cache_file, labeled_opts.opts, env)
+    return (vw_opts.labeled(labeled_opts.name, result[0]), result[1])
 
 def _predict_func(input):
     return _predict(input[0], input[1], input[2])
 
 def _predict_multi(cache_files, labeled_opts, env):
-    previous = [(None, None)] * len(opts) 
+    previous = [(None, None)] * len(labeled_opts) 
     for c in cache_files:
         inputs = list(map(lambda lo: (c, lo, env), labeled_opts))
         result = env.job_pool.map(_predict_func, inputs)
         opts = list(map(lambda r: r[0], result))
         for o in opts:
-            o['-i'] = o['-f']
+            o.opts['-i'] = o.opts['-f']
     return result
-
 
 def _parse_vw_output(txt):
     result = {}

@@ -5,7 +5,7 @@ from helpers import vw, logger, grid, path_generator, vw_opts, sweep, pool, envi
 
 def vw_sweep(vw_path, input_folder, output, procs, env, models_path):
     pattern=os.path.join(input_folder, '*.cache')
-    caches = list(glob.glob(pattern))
+    caches = sorted(list(glob.glob(pattern)))
     base_command = {
         '#method':'--cb_adf',
         '#format':'--dsjson',
@@ -27,14 +27,10 @@ def vw_sweep(vw_path, input_folder, output, procs, env, models_path):
     env.logger.trace('Done.')
 
     os.makedirs(os.path.dirname(output), exist_ok=True)
-    with open(output, 'w') as fout:
-        for r in result:
-            fout.write(r.serialize())
+    open(output, 'w').writelines(map(lambda r : r.serialize() + '\n', result))
 
 def main():
-    print("Extracting data from application logs...")
-
-    parser = argparse.ArgumentParser("create cache")
+    parser = argparse.ArgumentParser("Sweep")
     parser.add_argument("--input_folder", type=str, help="input folder")
     parser.add_argument("--output", type=str, help="output")
     parser.add_argument("--vw", type=str, help="vw path")

@@ -29,7 +29,7 @@ class pred_path_generator(move_to_folder_path_generator):
         super().__init__(folder, create)
 
     def get(self, cache, policy_name):
-        prediction_dir = os.path.join(self.folder, cache)
+        prediction_dir = os.path.join(self.folder, os.path.basename(cache))
         tmp = move_to_folder_path_generator(prediction_dir)
         return tmp.get(policy_name, 'pred')
 

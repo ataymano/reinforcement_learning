@@ -5,21 +5,6 @@ import json
 
 from helpers import vw, vw_opts, logger
 
-class labeled_opts:
-    def __init__(self, name, opts):
-        self.name = name
-        self.opts = opts
-
-    def serialize(self):
-        tmp = {'name' : self.name,
-               'opts' : self.opts}
-        return json.dumps(tmp)
-
-    @staticmethod
-    def deserialize(line):
-        tmp = json.loads(s)
-        return labeled_policy(tmp['name'], tmp['opts'])
-
 def _top(candidates, k):
     if k >= len(candidates):
         return candidates
@@ -30,7 +15,7 @@ def _promote(candidates, grid_config, env):
     return list(map(lambda item: item[0], _top(candidates, grid_config.promote)))
 
 def _output(candidates, grid_config, env):
-    return list(map(lambda item: labeled_opts(grid_config.name + '.' + str(item[0]), item[1][0]), enumerate(_top(candidates, grid_config.output))))
+    return list(map(lambda item: vw_opts.labeled(grid_config.name + '.' + str(item[0]), item[1][0]), enumerate(_top(candidates, grid_config.output))))
 
 def _iteration(cache, grid, env):
     candidates = vw.train(cache, grid.points, env)

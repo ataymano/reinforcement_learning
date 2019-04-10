@@ -2,76 +2,40 @@
 # Licensed under the MIT license.
 import argparse
 import os
-from helpers import utils
-from helpers import vw
+import argparse
+import os
+import glob
+from helpers import vw, logger, grid, path_generator, vw_opts, pool, environment, runtime
 
-parser = argparse.ArgumentParser("predict")
-parser.add_argument("--cache_folder", type=str, help="cache folder")
-parser.add_argument("--model_folder", type=str, help="model folder")
-parser.add_argument("--command_folders", action='append', type=str, help="commands folder")
-parser.add_argument("--output_folder", type=str, help="output folder")
-
-# args_dict = vars(parser.parse_args())   # this creates a dictionary with all input CLI
-# for x in args_dict:
-#     locals()[x] = args_dict[x]
-
-args = parser.parse_args()
-
-cache_folder = args.cache_folder
-command_folders = args.command_folders
-output_folder = args.output_folder
-model_folder = args.model_folder
-
-print("==command folders==")
-print(command_folders)
-os.makedirs(model_folder, exist_ok=True)
-
-utils.logger("Cache folder", cache_folder)
-utils.logger("Prediction folder", output_folder)
-
-cache_list = filter(lambda f: '.cache' in f, os.listdir(cache_folder))
-cache_list = sorted(cache_list)
-
-for command_folder in command_folders:
-    for command_file in os.listdir(command_folder):
-        command_file_path = os.path.join(
-            command_folder,
-            command_file
+def predict(vw_path, cache_folder, output_folder, commands_file, model_folder, procs):
+    pattern=os.path.join(cache_folder, '*.cache')
+    cache_list = sorted(list(glob.glob(pattern)))
+    commands = list(map(lambda l : vw_opts.labeled.deserialize(l), open(commands_file, 'r').readlines()))
+    env = environment.environment(
+        vw_path = vw_path,
+        runtime = runtime.local(),
+        job_pool = pool.multiproc_pool(procs) if procs > 1 else pool.seq_pool(),
+        model_path_gen = path_generator.model_path_generator(model_folder),
+        pred_path_gen = path_generator.pred_path_generator(output_folder)
         )
-        policy_name = command_file.split('_')[0]
+    env.logger.log_scalar_global('Cache folder', cache_folder)
+    env.logger.log_scalar_global('Output folder', output_folder)
+    env.logger.log_scalar_global('Commands', commands_file)
 
-        with open(command_file_path, 'r') as f_command:
-            c = f_command.readline()
-            c = c.replace('--cb_adf', '--cb_explore_adf --epsilon 0.2')
+    vw.predict(cache_list, commands, env)
 
-        previous_model_path = None
-        for cache_file in cache_list:
-            cache_path = os.path.join(cache_folder, cache_file)
-            cache_file_name, cache_path_extension = os.path.splitext(cache_file)
-            new_model_path = os.path.join(
-                model_folder,
-                cache_file_name + '.vw'
-            )
-            prediction_dir = os.path.join(output_folder, cache_file_name)
-            os.makedirs(prediction_dir, exist_ok=True)
+def main():
+    parser = argparse.ArgumentParser("predict")
+    parser.add_argument("--cache_folder", type=str, help="cache folder")
+    parser.add_argument("--model_folder", type=str, help="model folder")
+    parser.add_argument("--commands", type=str, help="commands")
+    parser.add_argument("--output_folder", type=str, help="output_folder")
+    parser.add_argument("--vw", type=str, help="vw path")
+    parser.add_argument("--procs", type=int, help="procs")
 
-            prediction_path = os.path.join(
-                prediction_dir,
-                '%s.pred' % (policy_name)
-            )
 
-            command_options = {
-                '--cache_file': cache_path,
-                '-f': new_model_path,
-                '-p': prediction_path
-            }
+    args = parser.parse_args()
+    predict(args.vw, args.cache_folder, args.output_folder, args.commands, args.model_folder, args.procs)
 
-            if previous_model_path:
-                command_options['-i'] = previous_model_path
-
-            command = vw.build_command(c, command_options)
-
-            previous_model_path = new_model_path
-            utils.logger('predict command', command)
-
-            vw.run(command)
+if __name__ == '__main__':
+    main()
