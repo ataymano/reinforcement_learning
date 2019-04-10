@@ -3,44 +3,69 @@ import logging
 import os
 import datetime
 import time
+import sys
 
 from helpers import vw_opts, logger
 
-def _cache(vw_path, input, output, logger):
+def _safe_to_float(str, default):
+    try:
+        return float(str)
+    except (ValueError, TypeError):
+        return default
+
+def _cache(input, env):
     opts = {}
     opts['-d'] = input
-    opts['--cache_file'] = output
-    return (opts, run(build_command(vw_path, opts), logger))
+    opts['--cache_file'] = env.cache_path_gen.get(input)
+    return (opts, run(build_command(env.vw_path, opts), env.logger))
 
 def _cache_func(input):
-    return _cache(input[0], input[1], input[2], input[3])
+    return _cache(input[0], input[1])
 
-def _cache_multi(vw_path, inputs, output_path_gen, env):
-    inputs = list(map(lambda i: (vw_path, i, output_path_gen.get(i, 'cache'), env.logger), inputs))
+def _cache_multi(inputs, env):
+    inputs = list(map(lambda i: (i, env), inputs))
     result = env.job_pool.map(_cache_func, inputs)
     return result
 
-def _train(vw_path, cache_file, model_file, opts, logger):
+def _train(cache_file, opts, env):
     opts['--cache_file'] = cache_file
-    opts['-f'] = model_file
+    opts['-f'] = env.model_path_gen.get(cache_file, opts)
     start = time.time()
-    result = (opts, run(build_command(vw_path, opts), logger))
+    result = (opts, run(build_command(env.vw_path, opts), env.logger))
     end = time.time()
-    logger.log_scalar_local('[Perf] ' + os.path.basename(cache_file), float(end - start))
+    env.logger.log_scalar_local('[Perf] ' + os.path.basename(cache_file), float(end - start))
     return result
 
 def _train_func(input):
-    return _train(input[0], input[1], input[2], input[3], input[4])
+    return _train(input[0], input[1], input[2])
 
-def _train_multi(vw_path, cache_files, model_path_gen, opts, env):
+def _train_multi(cache_files, opts, env):
     previous = [(None, None)] * len(opts) 
     for c in cache_files:
-        inputs = list(map(lambda o: (vw_path, c, model_path_gen.get(c, str(_hash('', o)) + '.vw'), o, env.logger), opts))
+        inputs = list(map(lambda o: (c, o, env), opts))
         result = env.job_pool.map(_train_func, inputs)
         opts = list(map(lambda r: r[0], result))
         for o in opts:
             o['-i'] = o['-f']
     return result
+
+def _predict(cache_file, labeled_opts, env):
+    opts['-p'] = env.pred_path_gen.get(cache_file, labeled_opts.name)
+    return _train(cache_file, labeled_opts.opts, env)
+
+def _predict_func(input):
+    return _predict(input[0], input[1], input[2])
+
+def _predict_multi(cache_files, labeled_opts, env):
+    previous = [(None, None)] * len(opts) 
+    for c in cache_files:
+        inputs = list(map(lambda lo: (c, lo, env), labeled_opts))
+        result = env.job_pool.map(_predict_func, inputs)
+        opts = list(map(lambda r: r[0], result))
+        for o in opts:
+            o['-i'] = o['-f']
+    return result
+
 
 def _parse_vw_output(txt):
     result = {}
@@ -51,25 +76,6 @@ def _parse_vw_output(txt):
             value = line[index+1:].strip()
             result[key] = value
     return result
-
-def _hash(command='', opts={}):
-    for key, val in opts.items():
-        command = ' '.join([
-            command,
-            key,
-            val
-        ])
-
-    return hash(command)
-
-def parse_average_loss(vw_output):
-    for line in vw_output.split('\n'):
-        if (line.startswith('average loss =')):
-            loss = line.split('=')[1].strip()
-            if (loss == 'n.a.'):
-                loss = sys.float_info.max
-            return float(loss)
-
 
 def run(command, logger):
     logger.trace('Running: ' + command)
@@ -113,25 +119,34 @@ def build_command_legacy(vw_path, command='', opts={}):
         ])
     return command
 
-def cache(vw_path, input, output_path_gen, opts, pool):
+def cache(input, env):
     if not isinstance(input, list):
         input = [input]
-    result = _cache_multi(vw_path, input, output_path_gen, pool)
+    result = _cache_multi(input, env)
     return list(map(lambda r: r[0]['--cache_file'], result))
 
-def train(vw_path, cache, model_path_gen, opts, env):
+def train(cache, opts, env):
     if not isinstance(opts, list):
         opts = [opts]
     
     if not isinstance(cache, list):
         cache = [cache]
 
-    result = _train_multi(vw_path, cache, model_path_gen, opts, env)
+    result = _train_multi(cache, opts, env)
     for r in result:
         r[0].pop('-f', None)
         r[0].pop('-i', None)
         r[0].pop('--cache_file', None)
-    return list(map(lambda r: (r[0], r[1]['average loss']), result))
+    return list(map(lambda r: (r[0], _safe_to_float(r[1]['average loss'], sys.float_info.max)), result))
+
+def predict(cache, labeled_opts, env):
+    if not isinstance(labeled_opts, list):
+        labeled_opts = [labeled_opts]
+    
+    if not isinstance(cache, list):
+        cache = [cache]
+
+    _predict_multi(cache, labeled_opts, env)
 
 if __name__ == '__main__':
     multiprocessing.freeze_support()

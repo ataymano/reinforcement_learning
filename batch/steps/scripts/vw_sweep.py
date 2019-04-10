@@ -4,7 +4,6 @@ import glob
 from helpers import vw, logger, grid, path_generator, vw_opts, sweep, pool, environment, runtime
 
 def vw_sweep(vw_path, input_folder, output, procs, env, models_path):
-    model_path_gen = path_generator.folder_path_generator(models_path)
     pattern=os.path.join(input_folder, '*.cache')
     caches = list(glob.glob(pattern))
     base_command = {
@@ -12,23 +11,25 @@ def vw_sweep(vw_path, input_folder, output, procs, env, models_path):
         '#format':'--dsjson',
         '#saveresume':'--save_resume',
         '#savepercounters':'--preserve_performance_counters'}
-    grid = grid_generator.generate()
+    multi_grid = grid.generate()
     env = environment.environment(
+        vw_path = vw_path,
         runtime = runtime.mpi() if env == 'mpi' else runtime.local(),
-        job_pool = pool.multiproc_pool(procs) if procs > 1 else pool.seq_pool()
+        job_pool = pool.multiproc_pool(procs) if procs > 1 else pool.seq_pool(),
+        model_path_gen = path_generator.model_path_generator(models_path),
         )
 
     env.logger.log_scalar_global('Input folder', input_folder)
     env.logger.log_scalar_global('Output', output)
     env.logger.trace('Sweeping...')
 
-    result = sweep.sweep(vw_path, caches, model_path_gen, grid, env, base_command)
+    result = sweep.sweep(caches, multi_grid, env, base_command)
     env.logger.trace('Done.')
 
     os.makedirs(os.path.dirname(output), exist_ok=True)
     with open(output, 'w') as fout:
         for r in result:
-            fout.write(vw_opts.serialize(r))
+            fout.write(r.serialize())
 
 def main():
     print("Extracting data from application logs...")
