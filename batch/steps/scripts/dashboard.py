@@ -436,7 +436,10 @@ if __name__ == '__main__':
     parser.add_argument('--predictions_folder', help="predict", required=True)
     parser.add_argument('--output_folder', help="dashboard", required=True)
     args = parser.parse_args()
-
+    print('Log folder:' + args.log_folder)
+    print('Metadata folder:' + args.metadata_folder)
+    print('Predictions folder:' + args.predictions_folder)
+    print('Output folder:' + args.output_folder)
     log_folder = args.log_folder
     metadata_folder = args.metadata_folder
     predictions_folder = args.predictions_folder

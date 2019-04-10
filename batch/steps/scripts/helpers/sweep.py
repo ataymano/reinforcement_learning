@@ -15,7 +15,7 @@ def _promote(candidates, grid_config, env):
     return list(map(lambda item: item[0], _top(candidates, grid_config.promote)))
 
 def _output(candidates, grid_config, env):
-    return list(map(lambda item: vw_opts.labeled(grid_config.name + '.' + str(item[0]), item[1][0]), enumerate(_top(candidates, grid_config.output))))
+    return list(map(lambda item: vw_opts.labeled(grid_config.name + str(item[0]), item[1][0]), enumerate(_top(candidates, grid_config.output))))
 
 def _iteration(cache, grid, env):
     candidates = vw.train(cache, grid.points, env)

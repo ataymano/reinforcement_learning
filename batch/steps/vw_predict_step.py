@@ -32,7 +32,7 @@ class vw_predict_step(PythonScriptStep):
             "--cache_folder", cache_folder,
             "--model_folder", '/home/',
             "--output_folder", self.output,
-            "--procs", 1,
+            "--procs", 2,
             "--vw", "/usr/local/bin/vw",
             "--commands", commands
         ]
