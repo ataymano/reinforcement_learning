@@ -14,14 +14,9 @@ class vw_predict_step(PythonScriptStep):
         cache_folder,
         commands
     ):
-
+        cache_folder = cache_folder.as_download()
         self.output = PipelineData(
             "Predictions",
-            datastore=workspace.get_default_datastore()
-        )
-
-        self.model_folder = PipelineData(
-            "models",
             datastore=workspace.get_default_datastore()
         )
 
@@ -31,10 +26,11 @@ class vw_predict_step(PythonScriptStep):
         config = RunConfiguration()
         config.environment.docker.enabled = True
         config.environment.docker.base_image = "ataymano/test:0.96"
+        config.environment.python.user_managed_dependencies = True
 
         args = [
             "--cache_folder", cache_folder,
-            "--model_folder", self.model_folder,
+            "--model_folder", '/home/',
             "--output_folder", self.output,
             "--procs", 1,
             "--vw", "/usr/local/bin/vw",
@@ -47,12 +43,12 @@ class vw_predict_step(PythonScriptStep):
             arguments=args,
             compute_target=compute.get_or_create_aml_compute_target(
                 workspace,
-                'extractorf8',
-                vm_size='Standard_F8s_v2',
-                max_nodes=1
+                'extractorf16',
+                vm_size='Standard_F16s_v2',
+                max_nodes=2
             ),
             inputs=[cache_folder, commands],
-            outputs=[self.output, self.model_folder],
+            outputs=[self.output],
             runconfig=config,
             allow_reuse=True
         )

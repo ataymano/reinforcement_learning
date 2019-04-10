@@ -468,7 +468,7 @@ if __name__ == '__main__':
         print(os.path.exists(log_path))
         predictions_dir = os.path.join(
             predictions_folder,
-            metadata.get('date_list')[i]
+            metadata.get('date_list')[i] + '.cache'
         )
 
         predictions = os.listdir(predictions_dir)
