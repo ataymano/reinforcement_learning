@@ -12,7 +12,7 @@ class vw_predict_step(PythonScriptStep):
         self,
         workspace,
         cache_folder,
-        command_folders
+        commands
     ):
 
         self.output = PipelineData(
@@ -30,26 +30,16 @@ class vw_predict_step(PythonScriptStep):
 
         config = RunConfiguration()
         config.environment.docker.enabled = True
-        config.environment.docker.base_image = "ataymano/test:0.9"
-
-        command_folders_args = []
-        for command_folder in command_folders:
-            command_folders_args.extend([
-                '--command_folders', command_folder
-            ])
+        config.environment.docker.base_image = "ataymano/test:0.96"
 
         args = [
             "--cache_folder", cache_folder,
             "--model_folder", self.model_folder,
-            "--output_folder", self.output
+            "--output_folder", self.output,
+            "--procs", 1,
+            "--vw", "/usr/local/bin/vw",
+            "--commands", commands
         ]
-        args.extend(command_folders_args)
-        print(args)
-
-        inputs = [cache_folder]
-        inputs.extend(command_folders)
-        print("==inputs==")
-        print(inputs)
         super().__init__(
             name="Predict",
             source_directory=os.path.join(dir_path, 'scripts'),
@@ -57,11 +47,11 @@ class vw_predict_step(PythonScriptStep):
             arguments=args,
             compute_target=compute.get_or_create_aml_compute_target(
                 workspace,
-                'vw-predict',
-                vm_size='Standard_DS1_v2',
-                max_nodes=4
+                'extractorf8',
+                vm_size='Standard_F8s_v2',
+                max_nodes=1
             ),
-            inputs=inputs,
+            inputs=[cache_folder, commands],
             outputs=[self.output, self.model_folder],
             runconfig=config,
             allow_reuse=True

@@ -10,7 +10,9 @@ from helpers import vw, logger, grid, path_generator, vw_opts, pool, environment
 def predict(vw_path, cache_folder, output_folder, commands_file, model_folder, procs):
     pattern=os.path.join(cache_folder, '*.cache')
     cache_list = sorted(list(glob.glob(pattern)))
-    commands = list(map(lambda l : vw_opts.labeled.deserialize(l), open(commands_file, 'r').readlines()))
+    predict_opts = {'#method': '--cb_explore_adf --epsilon 0.2'}
+    commands = list(map(lambda lo: vw_opts.labeled(lo.name, vw_opts.apply(lo.opts, predict_opts)),
+                       map(lambda l : vw_opts.labeled.deserialize(l), open(commands_file, 'r').readlines())))
     env = environment.environment(
         vw_path = vw_path,
         runtime = runtime.local(),

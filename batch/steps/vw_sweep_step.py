@@ -9,7 +9,7 @@ from azureml.pipeline.core import PipelineData
 from utils import compute
 
 class vw_sweep_step(PythonScriptStep):
-    def __init__(self, workspace, input_folder, process_per_node):
+    def __init__(self, workspace, input_folder, process_per_node, allow_reuse):
         self.input = input_folder.as_download()
         self.output = PipelineData("command", datastore=workspace.get_default_datastore())
 
@@ -44,6 +44,6 @@ class vw_sweep_step(PythonScriptStep):
             ),
             source_directory=os.path.join(dir_path, 'scripts'),
             runconfig=config,
-            allow_reuse=False
+            allow_reuse=allow_reuse
         )
         print("Vw sweep step is successfully created")

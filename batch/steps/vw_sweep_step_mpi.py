@@ -9,7 +9,7 @@ from azureml.pipeline.core import PipelineData
 from utils import compute
 
 class vw_sweep_step_mpi:
-    def __init__(self, workspace, input_folder, node_count, process_per_node):
+    def __init__(self, workspace, input_folder, node_count, process_per_node, allow_reuse):
         self.input = input_folder.as_download()
         self.output = PipelineData("command", datastore=workspace.get_default_datastore())
 
@@ -44,7 +44,7 @@ class vw_sweep_step_mpi:
             process_count_per_node = process_per_node,
             inputs=[self.input],
             outputs=[self.output],
-            allow_reuse = False,
+            allow_reuse = allow_reuse,
             version = None,
             hash_paths = None,
             environment_definition = config.environment
