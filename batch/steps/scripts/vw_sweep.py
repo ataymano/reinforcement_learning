@@ -1,11 +1,9 @@
 import argparse
 import os
 import glob
-from helpers import vw, logger, grid, path_generator, vw_opts, sweep, pool, environment, runtime
+from helpers import vw, logger, grid, path_generator, vw_opts, sweep, pool, environment, runtime, input_provider
 
 def vw_sweep(vw_path, input_folder, output, procs, env, models_path):
-    pattern=os.path.join(input_folder, '*.cache')
-    caches = sorted(list(glob.glob(pattern)))
     base_command = {
         '#method':'--cb_adf',
         '#format':'--dsjson',
@@ -17,13 +15,14 @@ def vw_sweep(vw_path, input_folder, output, procs, env, models_path):
         runtime = runtime.mpi() if env == 'mpi' else runtime.local(),
         job_pool = pool.multiproc_pool(procs) if procs > 1 else pool.seq_pool(),
         model_path_gen = path_generator.model_path_generator(models_path),
+        cache_provider = input_provider.cache_provider(input_folder)
         )
 
     env.logger.log_scalar_global('Input folder', input_folder)
     env.logger.log_scalar_global('Output', output)
     env.logger.trace('Sweeping...')
 
-    result = sweep.sweep(caches, multi_grid, env, base_command)
+    result = sweep.sweep(multi_grid, env, base_command)
     env.logger.trace('Done.')
 
     os.makedirs(os.path.dirname(output), exist_ok=True)

@@ -39,8 +39,9 @@ def _train(cache_file, opts, env):
 def _train_func(input):
     return _train(input[0], input[1], input[2])
 
-def _train_multi(cache_files, opts, env):
-    previous = [(None, None)] * len(opts) 
+def _train_multi(opts, env):
+    previous = [(None, None)] * len(opts)
+    cache_files = env.cache_provider.get()
     for c in cache_files:
         inputs = list(map(lambda o: (c, o, env), opts))
         result = env.job_pool.map(_train_func, inputs)
@@ -125,14 +126,11 @@ def cache(input, env):
     result = _cache_multi(input, env)
     return list(map(lambda r: r[0]['--cache_file'], result))
 
-def train(cache, opts, env):
+def train(opts, env):
     if not isinstance(opts, list):
         opts = [opts]
-    
-    if not isinstance(cache, list):
-        cache = [cache]
 
-    result = _train_multi(cache, opts, env)
+    result = _train_multi(opts, env)
     for r in result:
         r[0].pop('-f', None)
         r[0].pop('-i', None)
