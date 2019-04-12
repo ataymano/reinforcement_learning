@@ -20,9 +20,15 @@ class model_path_generator(move_to_folder_path_generator):
 class cache_path_generator(move_to_folder_path_generator):
     def __init__(self, folder, create = True):
         super().__init__(folder, create)
+    
+    @staticmethod
+    def _generate_name(input_path):
+        tmp1 = os.path.split(input_path)
+        tmp2 = os.path.split(tmp1[0])
+        return os.path.split(tmp2[0])[1] + tmp2[1] + tmp1[1]
 
-    def get(self, cache, opts):
-        return super().get(c, 'cache')
+    def get(self, input_path):
+        return super().get(cache_path_generator._generate_name(input_path), 'cache')
 
 class pred_path_generator(move_to_folder_path_generator):
     def __init__(self, folder, create = True):

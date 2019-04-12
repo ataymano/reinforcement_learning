@@ -13,17 +13,17 @@ def _safe_to_float(str, default):
     except (ValueError, TypeError):
         return default
 
-def _cache(input, env):
-    opts = {}
+def _cache(input, opts, env):
     opts['-d'] = input
     opts['--cache_file'] = env.cache_path_gen.get(input)
     return (opts, run(build_command(env.vw_path, opts), env.logger))
 
 def _cache_func(input):
-    return _cache(input[0], input[1])
+    return _cache(input[0], input[1], input[2])
 
-def _cache_multi(inputs, env):
-    inputs = list(map(lambda i: (i, env), inputs))
+def _cache_multi(opts, env):
+    input_files = env.txt_provider.get()
+    inputs = list(map(lambda i: (i, opts, env), input_files))
     result = env.job_pool.map(_cache_func, inputs)
     return result
 
@@ -120,10 +120,8 @@ def build_command_legacy(vw_path, command='', opts={}):
         ])
     return command
 
-def cache(input, env):
-    if not isinstance(input, list):
-        input = [input]
-    result = _cache_multi(input, env)
+def cache(opts, env):
+    result = _cache_multi(opts, env)
     return list(map(lambda r: r[0]['--cache_file'], result))
 
 def train(opts, env):
