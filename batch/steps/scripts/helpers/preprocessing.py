@@ -4,6 +4,11 @@ import itertools
 from enum import Enum
 from helpers import vw_opts
 
+class PropType(Enum):
+    NONE = 1
+    BASIC = 2
+    MARGINAL = 3
+
 def detect_namespaces(j_obj, ns_set, marginal_set):
     prop_type = PropType.NONE
     if (j_obj is None) or type(j_obj) is not dict:

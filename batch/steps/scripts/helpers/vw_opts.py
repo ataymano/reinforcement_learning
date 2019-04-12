@@ -30,9 +30,6 @@ def product(*dimensions):
 def dimension(name, values):
     return list(map(lambda v : dict([(name, str(v))]), values))
 
-def grid_from_file(fname):
-    return list(map(lambda line: vw_opts.deserialize(line), open(fname, 'r')))
-
 class labeled:
     def __init__(self, name, opts):
         self.name = name

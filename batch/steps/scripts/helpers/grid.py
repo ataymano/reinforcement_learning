@@ -1,3 +1,4 @@
+from helpers import vw_opts
 from helpers.vw_opts import dimension, product
 
 class configuration:
@@ -10,6 +11,13 @@ class grid:
     def __init__(self, points, config):
         self.points = points
         self.config = config
+
+def points_from_file(fname):
+    return list(map(lambda line: vw_opts.deserialize(line), open(fname, 'r')))
+
+def points_to_file(points, fname):
+    open(fname, 'w').writelines(map(lambda p : vw_opts.serialize(p) + '\n', points))
+
 
 def generate():
  #   return [product(dimension('--power_t', [1e-5, 0.5, 4]),
