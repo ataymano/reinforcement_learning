@@ -9,10 +9,6 @@ from enum import Enum
 
 
 def cache(input_folder, output_folder, vw_path, start_date, end_date):
-    my_logger = logger.logger(runtime.local())
-    my_logger.log_scalar_global('Input folder', input_folder)
-    my_logger.log_scalar_global('Output folder', output_folder)
-
     env = environment.environment(
         vw_path = vw_path,
         runtime = runtime.local(),
@@ -20,6 +16,9 @@ def cache(input_folder, output_folder, vw_path, start_date, end_date):
         txt_provider = input_provider.ps_logs_provider(input_folder, start_date, end_date),
         cache_path_gen = path_generator.cache_path_generator(output_folder))
         
+    env.logger.log_scalar_global('Input folder', input_folder)
+    env.logger.log_scalar_global('Output folder', output_folder)
+
     command = {
         '#method':'--cb_adf',
         '#format':'--dsjson',
