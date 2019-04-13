@@ -9,7 +9,7 @@ def _top(candidates, k):
     if k >= len(candidates):
         return candidates
 
-    return sorted(candidates, key = lambda item: item[1], reverse = True)[:k]
+    return sorted(candidates, key = lambda item: item[1])[:k]
 
 def _promote(candidates, grid_config, env):
     return list(map(lambda item: item[0], _top(candidates, grid_config.promote)))
