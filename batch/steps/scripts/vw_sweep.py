@@ -9,7 +9,11 @@ def vw_sweep(vw_path, input_folder, output, procs, env, models_path):
         '#format':'--dsjson',
         '#saveresume':'--save_resume',
         '#savepercounters':'--preserve_performance_counters'}
-    multi_grid = grid.generate()
+    interactions_path = os.path.join(input_folder, 'interactions.txt')
+    marginals_path = os.path.join(input_folder, 'marginals.txt')
+
+    multi_grid = grid.generate(interactions_grid = grid.points_from_file(interactions_path, limit = 2),
+                               marginals_grid = grid.points_from_file(marginals_path, limit = 2))
     env = environment.environment(
         vw_path = vw_path,
         runtime = runtime.mpi() if env == 'mpi' else runtime.local(),
