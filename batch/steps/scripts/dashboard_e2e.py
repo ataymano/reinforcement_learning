@@ -3,7 +3,7 @@ import argparse
 import os
 import datetime
 import json
-from helpers import vw, logger, runtime, environment, runtime, path_generator, input_provider, pool, preprocessing, grid, sweep, vw_opts
+from helpers import vw, logger, runtime, environment, runtime, path_generator, input_provider, pool, preprocessing, grid, sweep, vw_opts, dashboard
 import collections
 import itertools
 from enum import Enum
@@ -40,7 +40,7 @@ def dashboard_e2e(input_folder, output, vw_path, start, end, tmp_folder):
     predict_opts = {'#method': '--cb_explore_adf --epsilon 0.2'}
     commands = list(map(lambda lo: vw_opts.labeled(lo.name, vw_opts.apply(lo.opts, predict_opts)), best))
     vw.predict(commands, env)
-
+    dashboard.create(output, env)
 
 
 def main():
