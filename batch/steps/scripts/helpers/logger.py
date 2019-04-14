@@ -6,7 +6,7 @@ class logger:
         self.runtime = runtime
 
     def log_scalar_global(self, key, value):
-        if self.runtime.is_master():
+        if self.runtime and self.runtime.is_master():
             Run.get_context().log(key, value)
         self.trace(key + ': ' + str(value))
 

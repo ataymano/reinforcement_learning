@@ -5,11 +5,9 @@ import os
 import argparse
 import os
 import glob
-from helpers import vw, logger, grid, path_generator, vw_opts, pool, environment, runtime
+from helpers import vw, logger, grid, path_generator, vw_opts, pool, environment, runtime, input_provider
 
 def predict(vw_path, cache_folder, output_folder, commands_file, model_folder, procs):
-    pattern=os.path.join(cache_folder, '*.cache')
-    cache_list = sorted(list(glob.glob(pattern)))
     predict_opts = {'#method': '--cb_explore_adf --epsilon 0.2'}
     commands = list(map(lambda lo: vw_opts.labeled(lo.name, vw_opts.apply(lo.opts, predict_opts)),
                        map(lambda l : vw_opts.labeled.deserialize(l), open(commands_file, 'r').readlines())))
@@ -18,13 +16,14 @@ def predict(vw_path, cache_folder, output_folder, commands_file, model_folder, p
         runtime = runtime.local(),
         job_pool = pool.multiproc_pool(procs) if procs > 1 else pool.seq_pool(),
         model_path_gen = path_generator.model_path_generator(model_folder),
-        pred_path_gen = path_generator.pred_path_generator(output_folder)
+        pred_path_gen = path_generator.pred_path_generator(output_folder),
+        cache_provider = input_provider.cache_provider(cache_folder)
         )
     env.logger.log_scalar_global('Cache folder', cache_folder)
     env.logger.log_scalar_global('Output folder', output_folder)
     env.logger.log_scalar_global('Commands', commands_file)
 
-    vw.predict(cache_list, commands, env)
+    vw.predict(commands, env)
 
 def main():
     parser = argparse.ArgumentParser("predict")

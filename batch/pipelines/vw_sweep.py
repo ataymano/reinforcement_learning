@@ -20,7 +20,6 @@ def create_pipeline(ws, ctx, procs):
 
     dashboardStep = dashboard_step.dashboard_step(workspace = ws,
                                                   ctx = ctx,
-                                                  metadata_folder = cacheStep.output,
                                                   predictions_folder = predictStep.output)
     pipeline = Pipeline(workspace=ws, steps=[dashboardStep])
     print ("Vw Sweep pipeline is succesfully created.")

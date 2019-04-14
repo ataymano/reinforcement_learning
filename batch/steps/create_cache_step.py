@@ -42,6 +42,7 @@ class create_cache_step(PythonScriptStep):
             arguments=[
                 "--input_folder", self.input,
                 "--output_folder", self.output,
+                "--vw", "/usr/local/bin/vw",
                 "--start_date", start_date,
                 "--end_date", end_date
             ],

@@ -4,11 +4,12 @@ from azureml.pipeline.core.graph import OutputPortBinding
 from azureml.core.runconfig import CondaDependencies, RunConfiguration
 from azureml.data.data_reference import DataReference
 from azureml.pipeline.core import PipelineData
+from azureml.pipeline.core.graph import PipelineParameter
 from utils import compute
 
 
 class dashboard_step(PythonScriptStep):
-    def __init__(self, workspace, ctx, metadata_folder, predictions_folder):
+    def __init__(self, workspace, ctx, predictions_folder):
         self.input = DataReference(
             datastore=ctx.get_datastore(workspace),
             data_reference_name="Application_logs",
@@ -30,17 +31,19 @@ class dashboard_step(PythonScriptStep):
         cd.add_conda_package("numpy")
 
         run_config = RunConfiguration(conda_dependencies=cd)
-
+        start_date = PipelineParameter(name="start_date", default_value='')
+        end_date = PipelineParameter(name="end_date", default_value='')
         super().__init__(
             name="Dashboard",
             script_name='dashboard.py',
             arguments=[
-                "--log_folder", self.input,
-                "--metadata_folder", metadata_folder,
-                "--predictions_folder", predictions_folder,
-                "--output_folder", self.output
+                "--logs", self.input,
+                "--predictions", predictions_folder,
+                "--dashboard", self.output,
+                "--start_date", start_date,
+                "--end_date", end_date
             ],
-            inputs=[self.input, metadata_folder, predictions_folder],
+            inputs=[self.input, predictions_folder],
             outputs=[self.output],
             compute_target=compute.get_or_create_aml_compute_target(
                 workspace,

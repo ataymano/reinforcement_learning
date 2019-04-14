@@ -1,4 +1,3 @@
-from mpi4py import MPI
 from helpers import logger
 
 class environment:

@@ -58,8 +58,9 @@ def _predict(cache_file, labeled_opts, env):
 def _predict_func(input):
     return _predict(input[0], input[1], input[2])
 
-def _predict_multi(cache_files, labeled_opts, env):
+def _predict_multi(labeled_opts, env):
     previous = [(None, None)] * len(labeled_opts) 
+    cache_files = env.cache_provider.get()
     for c in cache_files:
         inputs = list(map(lambda lo: (c, lo, env), labeled_opts))
         result = env.job_pool.map(_predict_func, inputs)
@@ -122,7 +123,8 @@ def build_command_legacy(vw_path, command='', opts={}):
 
 def cache(opts, env):
     result = _cache_multi(opts, env)
-    return list(map(lambda r: r[0]['--cache_file'], result))
+    opts.pop('--cache_file', None)
+    opts.pop('-d', None)
 
 def train(opts, env):
     if not isinstance(opts, list):
@@ -135,14 +137,11 @@ def train(opts, env):
         r[0].pop('--cache_file', None)
     return list(map(lambda r: (r[0], _safe_to_float(r[1]['average loss'], sys.float_info.max)), result))
 
-def predict(cache, labeled_opts, env):
+def predict(labeled_opts, env):
     if not isinstance(labeled_opts, list):
         labeled_opts = [labeled_opts]
-    
-    if not isinstance(cache, list):
-        cache = [cache]
 
-    _predict_multi(cache, labeled_opts, env)
+    _predict_multi(labeled_opts, env)
 
 if __name__ == '__main__':
     multiprocessing.freeze_support()
