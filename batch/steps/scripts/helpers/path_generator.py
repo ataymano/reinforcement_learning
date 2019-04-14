@@ -38,7 +38,7 @@ class pred_path_generator(move_to_folder_path_generator):
         return os.path.join(self.folder, os.path.basename(cache))
 
     def get(self, cache, policy_name):
-        tmp = move_to_folder_path_generator(self.get_folder())
+        tmp = move_to_folder_path_generator(self.get_folder(cache))
         return tmp.get(policy_name, 'pred')
 
 def _hash(opts={}):
