@@ -21,19 +21,21 @@ def points_to_file(points, fname):
 
 
 def generate_test():
- #   return [product(dimension('--power_t', [1e-5, 0.5, 4]),
- #                     dimension('--l1', [1e-9, 0.1, 5]),
- #                     dimension('-l', [1e-5, 0.5, 4])),
- #           dimension('--cb_type', ['mtr', 'ips'])]
-     return [grid(dimension('--power_t', [1e-5, 0.5, 2, 4]),
-                  configuration(name = 'testgrid', output = 2))]
- #     return [product(dimension('--power_t', [1e-5, 0.5]))]
+    return [grid(product(dimension('--power_t', [1e-5, 0.5, 2, 4]),
+                      dimension('--l1', [1e-9])),
+                 configuration(name = 'testgrid'))]
+
 
 def generate(interactions_grid, marginals_grid):
-     return [grid(dimension('--power_t', [1e-5, 0.5, 2, 4]),
-                  configuration(name = 'testgrid', output = 2, promote = 2)),
+    hyper1_points = product(dimension('--power_t', [1e-5, 0.5, 2, 4]),
+                      dimension('--l1', [1e-9, 0.1, 5]),
+                      dimension('-l', [1e-5, 0.5, 4]))
+    return [grid(hyper1_points,
+                  configuration(name = 'hyper1', output = 1, promote = 1)),
              grid(product(interactions_grid, marginals_grid),
-                  configuration(name = 'final', output = 1))]
+                  configuration(name = 'interactions', output = 1)),
+             grid(hyper1_points,
+                  configuration(name = 'hyper2', output = 1, promote = 1))]
 
 if __name__ == '__main__':
     multiprocessing.freeze_support()
