@@ -1,4 +1,4 @@
-from azureml.core.run import Run
+#from azureml.core.run import Run
 import datetime
 
 class logger:
@@ -6,12 +6,12 @@ class logger:
         self.runtime = runtime
 
     def log_scalar_global(self, key, value):
-        if self.runtime and self.runtime.is_master():
-            Run.get_context().log(key, value)
+ #       if self.runtime and self.runtime.is_master():
+ #           Run.get_context().log(key, value)
         self.trace(key + ': ' + str(value))
 
     def log_scalar_local(self, key, value):
-        Run.get_context().log(key, value)
+  #      Run.get_context().log(key, value)
         self.trace(key + ': ' + str(value))
 
     def trace(self, message):

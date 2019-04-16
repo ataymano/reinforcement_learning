@@ -1,6 +1,7 @@
 import os
 import glob
 import datetime
+from azure.storage.blob import BlockBlobService
 
 class cache_provider:
     def __init__(self, folder):
@@ -32,6 +33,19 @@ class LogsExtractor:
         return
         yield
 
+    @staticmethod
+    def iterate_blobs(bbs, container, folder, start_date, end_date):
+        for i in range((end_date - start_date).days + 1):
+            current_date = start_date + datetime.timedelta(i)
+            log_relative_path = LogsExtractor._get_log_relative_path(
+                current_date
+            )
+            log_path = folder + '/' + log_relative_path
+            for blob in bbs.list_blobs(container, prefix = log_path):
+                yield blob
+        return
+        yield
+
 class ps_logs_provider:
     def __init__(self, folder, start, end):
         self.folder = folder
@@ -40,3 +54,23 @@ class ps_logs_provider:
 
     def get(self):
         return list(LogsExtractor.iterate_files(self.folder, self.start, self.end))
+
+class azure_logs_provider(ps_logs_provider):
+    @staticmethod
+    def _copy(container, connection_string, folder, start, end, local_folder):
+        bbs = BlockBlobService(connection_string = connection_string)
+        for blob in LogsExtractor.iterate_blobs(bbs, container, folder, start, end):
+            tmp1 = os.path.split(blob.name)
+            tmp2 = os.path.split(tmp1[0])
+            tmp3 = os.path.split(tmp2[0])
+            relative_path = os.path.join('data', os.path.join(tmp3[1], os.path.join(tmp2[1], tmp1[1])))
+            full_path = os.path.join(local_folder, relative_path)
+            os.makedirs(os.path.dirname(full_path), exist_ok = True)
+            bbs.get_blob_to_path(container, blob.name, full_path, max_connections = 4)
+
+    def __init__(self, container, connection_string, folder, start, end, local_folder):
+        azure_logs_provider._copy(container, connection_string, folder, start, end, local_folder)
+        super().__init__(local_folder, start, end)
+    def get(self):
+        return super().get()
+        
