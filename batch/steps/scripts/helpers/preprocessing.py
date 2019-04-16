@@ -94,9 +94,13 @@ def iterate_subsets(s):
         yield from itertools.combinations(s, i)
 
 def get_marginals_grid(name, marginals):
-    return vw_opts.dimension(name, list(map(lambda element : '--marginal ' + ''.join(element), iterate_subsets(marginals))))
+    marginal_args = ['']
+    marginal_args = marginal_args + list(map(lambda element : '--marginal ' + ''.join(element), iterate_subsets(marginals)))
+    return vw_opts.dimension(name, marginal_args)
 
 def get_interactions_grid(name, shared, actions):
     interactions = {''.join(x) for x in itertools.product(shared, actions)}
-    return vw_opts.dimension(name, list(map(lambda element : '-q ' + ' -q '.join(element), iterate_subsets(interactions))))
+    interaction_args = ['']
+    interaction_args = interaction_args + list(map(lambda element : '-q ' + ' -q '.join(element), iterate_subsets(interactions)))
+    return vw_opts.dimension(name, interaction_args)
 
