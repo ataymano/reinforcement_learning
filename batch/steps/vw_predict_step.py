@@ -12,7 +12,8 @@ class vw_predict_step(PythonScriptStep):
         self,
         workspace,
         cache_folder,
-        commands
+        commands,
+        procs
     ):
         cache_folder = cache_folder.as_download()
         self.output = PipelineData(
@@ -32,7 +33,7 @@ class vw_predict_step(PythonScriptStep):
             "--cache_folder", cache_folder,
             "--model_folder", '/home/',
             "--output_folder", self.output,
-            "--procs", 2,
+            "--procs", procs,
             "--vw", "/usr/local/bin/vw",
             "--commands", commands
         ]
