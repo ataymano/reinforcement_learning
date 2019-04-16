@@ -96,31 +96,6 @@ def run(command, logger):
 def build_command(path, opts={}):
     return ' '.join([path, vw_opts.to_commandline(opts)])
 
-def build_command_legacy(vw_path, command='', opts={}):
-    if command:
-        command = ' '.join([
-            vw_path,
-            command,
-            '--save_resume',
-            '--preserve_performance_counters'
-        ])
-    else:
-        command = ' '.join([
-            vw_path,
-            '--cb_adf',
-            '--dsjson',
-            '--save_resume',
-            '--preserve_performance_counters'
-        ])
-
-    for key, val in opts.items():
-        command = ' '.join([
-            command,
-            key,
-            str(val)
-        ])
-    return command
-
 def cache(opts, env):
     result = _cache_multi(opts, env)
     opts.pop('--cache_file', None)
