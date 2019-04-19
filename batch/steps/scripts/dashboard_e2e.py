@@ -2,6 +2,7 @@
 import argparse
 import os
 import datetime
+
 import json
 from helpers import vw, logger, runtime, environment, runtime, path_generator, input_provider, pool, preprocessing, grid, sweep, vw_opts, dashboard
 import collections
@@ -31,7 +32,7 @@ def dashboard_e2e(app_container, connection_string, app_folder, output, vw_path,
         '#savepercounters':'--preserve_performance_counters'}
     vw.cache(command, env)
     
-    namespaces = preprocessing.extract_namespaces(open(env.txt_provider.get()[0], 'r'))
+    namespaces = preprocessing.extract_namespaces(open(env.txt_provider.get()[0], 'r', encoding='utf-8'))
 
     marginals_grid = preprocessing.get_marginals_grid('#marginals', namespaces[2])[:2]
     interactions_grid = preprocessing.get_interactions_grid('#interactions', namespaces[0], namespaces[1])[:2]
