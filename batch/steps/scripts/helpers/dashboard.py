@@ -2,13 +2,9 @@ import pandas
 import json
 import collections
 import os
-import gzip
 import sys
 import numpy as np
-import argparse
 import time
-import re
-import datetime
 
 from helpers import input_provider, path_generator
 

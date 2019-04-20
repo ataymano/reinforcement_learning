@@ -1,7 +1,5 @@
 import subprocess
-import logging
 import os
-import datetime
 import time
 import sys
 

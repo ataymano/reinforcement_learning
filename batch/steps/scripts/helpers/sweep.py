@@ -1,7 +1,4 @@
 import multiprocessing
-import logging
-import sys
-import json
 
 from helpers import vw, vw_opts, logger
 
