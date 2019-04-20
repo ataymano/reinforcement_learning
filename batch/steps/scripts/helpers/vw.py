@@ -31,7 +31,7 @@ def _train(cache_file, opts, env):
     start = time.time()
     result = (opts, run(build_command(env.vw_path, opts), env.logger))
     end = time.time()
-    env.logger.debug('[Perf] ' + os.path.basename(cache_file), float(end - start))
+    env.logger.debug('[Perf] ' + os.path.basename(cache_file) + ': ' + str(end - start))
     return result
 
 def _train_func(input):
