@@ -3,11 +3,7 @@ import argparse
 import os
 import datetime
 
-import json
 from helpers import vw, logger, runtime, environment, runtime, path_generator, input_provider, pool, preprocessing, grid, sweep, vw_opts, dashboard
-import collections
-import itertools
-from enum import Enum
 
 def dashboard_e2e(app_container, connection_string, app_folder, output, vw_path, start, end, tmp_folder, env, procs):
     cache_folder = os.path.join(tmp_folder, 'cache')
@@ -37,7 +33,7 @@ def dashboard_e2e(app_container, connection_string, app_folder, output, vw_path,
     marginals_grid = preprocessing.get_marginals_grid('#marginals', namespaces[2])[:2]
     interactions_grid = preprocessing.get_interactions_grid('#interactions', namespaces[0], namespaces[1])[:2]
 
-    multi_grid = grid.generate(interactions_grid, marginals_grid)
+    multi_grid = grid.generate_test(interactions_grid, marginals_grid)
     best = sweep.sweep(multi_grid, env, command)
 
     predict_opts = {'#method': '--cb_explore_adf --epsilon 0.2'}

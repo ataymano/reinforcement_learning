@@ -10,10 +10,13 @@ class local:
     def is_master(self):
         return True
 
+    def get_node_id(self):
+        return 0
+
 class mpi:
     def map(self, elements):
         result = []
-        i = MPI.COMM_WORLD.Get_rank()
+        i = self.get_node_id()
         step = MPI.COMM_WORLD.Get_size()
         while i < len(elements):
             result.append(elements[i])
@@ -25,3 +28,6 @@ class mpi:
 
     def is_master(self):
         return MPI.COMM_WORLD.Get_rank() == 0
+
+    def get_node_id(self):
+        return MPI.COMM_WORLD.Get_rank()

@@ -1,6 +1,6 @@
 import multiprocessing
 
-from helpers import vw, vw_opts, logger
+from helpers import vw, vw_opts
 
 def _top(candidates, k):
     if k >= len(candidates):
@@ -16,18 +16,18 @@ def _output(candidates, grid_config, env):
 
 def _iteration(grid, env):
     candidates = vw.train(grid.points, env)
-    env.logger.trace('Local job is finished. Reducing...')
+    env.logger.info('Local job is finished. Reducing...')
     candidates = env.runtime.reduce(candidates)
     for c in candidates:
-        env.logger.log_scalar_global(vw_opts.to_commandline(c[0]), c[1])
-    env.logger.trace('All candidates are reduced.')
+        env.logger.info(str(vw_opts.to_commandline(c[0])) + ': ' + str(c[1]))
+    env.logger.info('All candidates are reduced.')
     return _promote(candidates, grid.config, env), _output(candidates, grid.config, env)
 
 def sweep(multi_grid, env, base_command = {}):
     promoted = [base_command]
     result = []
-    for idx, grid in enumerate(multi_grid):
-        env.logger.trace('Iteration ' + str(idx))
+    for grid in multi_grid:
+        env.logger.info('Iteration ' + grid.config.name)
         grid.points = env.runtime.map(vw_opts.product(promoted, grid.points))
         promoted, output = _iteration(grid, env)
         result = result + output

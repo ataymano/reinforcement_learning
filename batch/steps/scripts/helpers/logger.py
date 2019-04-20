@@ -1,18 +1,13 @@
-#from azureml.core.run import Run
-import datetime
+import logging
+import sys
 
-class logger:
-    def __init__(self, runtime):
-        self.runtime = runtime
 
-    def log_scalar_global(self, key, value):
- #       if self.runtime and self.runtime.is_master():
- #           Run.get_context().log(key, value)
-        self.trace(key + ': ' + str(value))
-
-    def log_scalar_local(self, key, value):
-  #      Run.get_context().log(key, value)
-        self.trace(key + ': ' + str(value))
-
-    def trace(self, message):
-        print('[' + str(datetime.datetime.now()) + ']  ' +  message)
+def console_logger(runtime, level='INFO'):
+    logger = logging.getLogger('dashboard_logger')
+    stream_handler = logging.StreamHandler(sys.stdout)
+    formatter = logging.Formatter('[%(node_id)s][%(asctime)s]: %(message)s')
+    stream_handler.setFormatter(formatter)
+    logger.setLevel(logging.getLevelName(level))
+    logger.addHandler(stream_handler)
+    extra = {'node_id': str(runtime.get_node_id())}
+    return logging.LoggerAdapter(logger, extra)

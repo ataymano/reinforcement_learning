@@ -1,6 +1,7 @@
 import json
 import itertools
 import functools
+import re
 
 def serialize(opts):
     if not isinstance(opts, dict):
@@ -17,7 +18,7 @@ def to_commandline(opts):
     command = ''
     for key, val in opts.items():
         command = ' '.join([command, key if not key.startswith('#') else '', str(val)])
-    return command
+    return re.sub(' +', ' ', command)
 
 def apply(first, second):
     return dict(first, **second)

@@ -3,7 +3,7 @@ import os
 import time
 import sys
 
-from helpers import vw_opts, logger
+from helpers import vw_opts
 
 def _safe_to_float(str, default):
     try:
@@ -31,14 +31,13 @@ def _train(cache_file, opts, env):
     start = time.time()
     result = (opts, run(build_command(env.vw_path, opts), env.logger))
     end = time.time()
-    env.logger.log_scalar_local('[Perf] ' + os.path.basename(cache_file), float(end - start))
+    env.logger.debug('[Perf] ' + os.path.basename(cache_file), float(end - start))
     return result
 
 def _train_func(input):
     return _train(input[0], input[1], input[2])
 
 def _train_multi(opts, env):
-    previous = [(None, None)] * len(opts)
     cache_files = env.cache_provider.get()
     for c in cache_files:
         inputs = list(map(lambda o: (c, o, env), opts))
@@ -57,7 +56,6 @@ def _predict_func(input):
     return _predict(input[0], input[1], input[2])
 
 def _predict_multi(labeled_opts, env):
-    previous = [(None, None)] * len(labeled_opts) 
     cache_files = env.cache_provider.get()
     for c in cache_files:
         inputs = list(map(lambda lo: (c, lo, env), labeled_opts))
@@ -78,8 +76,7 @@ def _parse_vw_output(txt):
     return result
 
 def run(command, logger):
-    logger.trace('Running: ' + command)
-    start = time.time()
+    logger.debug('Running: ' + command)
     process = subprocess.Popen(
         command.split(),
         universal_newlines=True,
@@ -87,15 +84,14 @@ def run(command, logger):
         stderr=subprocess.PIPE
     )
     output, error = process.communicate()
-    end = time.time()
-    logger.trace('Done: ' + command)
+    logger.debug('Done: ' + command)
     return _parse_vw_output(error)
 
-def build_command(path, opts={}):
+def build_command(path, opts):
     return ' '.join([path, vw_opts.to_commandline(opts)])
 
 def cache(opts, env):
-    result = _cache_multi(opts, env)
+    _cache_multi(opts, env)
     opts.pop('--cache_file', None)
     opts.pop('-d', None)
 
