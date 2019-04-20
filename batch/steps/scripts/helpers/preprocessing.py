@@ -2,7 +2,7 @@ import json
 import collections
 import itertools
 from enum import Enum
-from helpers import vw_opts
+from helpers import command
 
 class PropType(Enum):
     NONE = 1
@@ -96,11 +96,11 @@ def iterate_subsets(s):
 def get_marginals_grid(name, marginals):
     marginal_args = ['']
     marginal_args = marginal_args + list(map(lambda element : '--marginal ' + ''.join(element), iterate_subsets(marginals)))
-    return vw_opts.dimension(name, marginal_args)
+    return command.dimension(name, marginal_args)
 
 def get_interactions_grid(name, shared, actions):
     interactions = {''.join(x) for x in itertools.product(shared, actions)}
     interaction_args = ['']
     interaction_args = interaction_args + list(map(lambda element : '-q ' + ' -q '.join(element), iterate_subsets(interactions)))
-    return vw_opts.dimension(name, interaction_args)
+    return command.dimension(name, interaction_args)
 

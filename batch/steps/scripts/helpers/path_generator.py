@@ -1,5 +1,5 @@
 import os
-from helpers import vw_opts
+from helpers import command
 
 class move_to_folder_path_generator:
     def __init__(self, folder, create = True):
@@ -42,7 +42,7 @@ class pred_path_generator(move_to_folder_path_generator):
         return tmp.get(policy_name, 'pred')
 
 def _hash(opts={}):
-    return hash(vw_opts.to_commandline(opts))
+    return hash(command.to_commandline(opts))
 
 if __name__ == '__main__':
     multiprocessing.freeze_support()

@@ -3,7 +3,7 @@ import os
 import time
 import sys
 
-from helpers import vw_opts
+from helpers import command
 
 def _safe_to_float(str, default):
     try:
@@ -50,7 +50,7 @@ def _train_multi(opts, env):
 def _predict(cache_file, labeled_opts, env):
     labeled_opts.opts['-p'] = env.pred_path_gen.get(cache_file, labeled_opts.name)
     result = _train(cache_file, labeled_opts.opts, env)
-    return (vw_opts.labeled(labeled_opts.name, result[0]), result[1])
+    return (command.labeled(labeled_opts.name, result[0]), result[1])
 
 def _predict_func(input):
     return _predict(input[0], input[1], input[2])
@@ -88,7 +88,7 @@ def run(command, logger):
     return _parse_vw_output(error)
 
 def build_command(path, opts):
-    return ' '.join([path, vw_opts.to_commandline(opts)])
+    return ' '.join([path, command.to_commandline(opts)])
 
 def cache(opts, env):
     _cache_multi(opts, env)

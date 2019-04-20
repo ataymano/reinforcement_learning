@@ -1,5 +1,5 @@
-from helpers import vw_opts
-from helpers.vw_opts import dimension, product
+from helpers import command
+from helpers.command import dimension, product
 
 class configuration:
     def __init__(self, name, promote = 1, output = 1):
@@ -13,11 +13,11 @@ class grid:
         self.config = config
 
 def points_from_file(fname, limit = -1):
-    result = list(map(lambda line: vw_opts.deserialize(line), open(fname, 'r')))
+    result = list(map(lambda line: command.deserialize(line), open(fname, 'r')))
     return result if limit == -1 or len(result) < limit else result[:limit]
 
 def points_to_file(points, fname):
-    open(fname, 'w').writelines(map(lambda p : vw_opts.serialize(p) + '\n', points))
+    open(fname, 'w').writelines(map(lambda p : command.serialize(p) + '\n', points))
 
 
 def generate_test(interactions_grid, marginals_grid):

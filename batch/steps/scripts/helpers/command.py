@@ -3,6 +3,7 @@ import itertools
 import functools
 import re
 
+
 def serialize(opts):
     if not isinstance(opts, dict):
         raise Error('opts are not dict')
