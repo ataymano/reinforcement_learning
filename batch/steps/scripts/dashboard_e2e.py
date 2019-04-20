@@ -3,7 +3,7 @@ import argparse
 import os
 import datetime
 
-from helpers import vw, logger, runtime, environment, runtime, path_generator, input_provider, pool, preprocessing, grid, sweep, vw_opts, dashboard
+from helpers import vw, logger, runtime, environment, runtime, path_generator, input_provider, pool, preprocessing, grid, sweep, command, dashboard
 
 def dashboard_e2e(app_container, connection_string, app_folder, output, vw_path, start, end, tmp_folder, env, procs):
     cache_folder = os.path.join(tmp_folder, 'cache')
@@ -21,12 +21,12 @@ def dashboard_e2e(app_container, connection_string, app_folder, output, vw_path,
         model_path_gen = path_generator.model_path_generator(model_folder),
         cache_provider = input_provider.cache_provider(cache_folder))
 
-    command = {
+    base_command = {
         '#method':'--cb_adf',
         '#format':'--dsjson',
         '#saveresume':'--save_resume',
         '#savepercounters':'--preserve_performance_counters'}
-    vw.cache(command, env)
+    vw.cache(base_command, env)
     
     namespaces = preprocessing.extract_namespaces(open(env.txt_provider.get()[0], 'r', encoding='utf-8'))
 
@@ -34,10 +34,10 @@ def dashboard_e2e(app_container, connection_string, app_folder, output, vw_path,
     interactions_grid = preprocessing.get_interactions_grid('#interactions', namespaces[0], namespaces[1])[:2]
 
     multi_grid = grid.generate_test(interactions_grid, marginals_grid)
-    best = sweep.sweep(multi_grid, env, command)
+    best = sweep.sweep(multi_grid, env, base_command)
 
     predict_opts = {'#method': '--cb_explore_adf --epsilon 0.2'}
-    commands = list(map(lambda lo: vw_opts.labeled(lo.name, vw_opts.apply(lo.opts, predict_opts)), best))
+    commands = list(map(lambda lo: command.labeled(lo.name, command.apply(lo.opts, predict_opts)), best))
     vw.predict(commands, env)
     dashboard.create(output, env)
 
