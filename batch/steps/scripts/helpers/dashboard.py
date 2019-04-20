@@ -266,7 +266,6 @@ def output_dashboard_data(d, commands, dashboard_file):
                     temp["w"] = ag[1]
                     temp["t"] = type
                     d.append(temp)
-                    print(d)
                 f.write(json.dumps({"ts":index.strftime("%Y-%m-%dT%H:%M:%SZ"),"d":d})+'\n')
 
         # total aggregates
