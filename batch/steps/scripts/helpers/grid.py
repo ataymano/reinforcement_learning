@@ -20,10 +20,11 @@ def points_to_file(points, fname):
     open(fname, 'w').writelines(map(lambda p : vw_opts.serialize(p) + '\n', points))
 
 
-def generate_test():
-    return [grid(product(dimension('--power_t', [1e-5, 0.5, 2, 4]),
-                      dimension('--l1', [1e-9])),
-                 configuration(name = 'testgrid'))]
+def generate_test(interactions_grid, marginals_grid):
+    return [grid(dimension('--power_t', [1e-5, 0.5]),
+                 configuration(name = 'testgrid')),
+            grid(product(interactions_grid, marginals_grid),
+                 configuration(name='interactions', output=1))]
 
 
 def generate(interactions_grid, marginals_grid):
