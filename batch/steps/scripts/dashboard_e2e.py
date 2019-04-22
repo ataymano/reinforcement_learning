@@ -46,15 +46,16 @@ def dashboard_e2e(app_container, connection_string, app_folder, vw_path, start, 
     best = sweep.sweep(multi_grid, env, base_command)
 
     predict_opts = {'#method': '--cb_explore_adf --epsilon 0.2'}
-    commands = list(map(lambda lo: command.labeled(lo.name, command.apply(lo.opts, predict_opts)), best))
+    commands = dict(map(lambda lo: (lo[0], command.apply(lo[1], predict_opts)), best.items()))
     vw.predict(commands, env)
 
     local_dashboard_path = os.path.join(tmp_folder, 'dashboard.json')
-    dashboard.create(local_dashboard_path, env)
-    bbs = BlockBlobService(connection_string=output_connection_string)
-    lg.info(output_container + ':' + output_path  + ': Uploading from ' + local_dashboard_path)
-    bbs.create_blob_from_path(output_container, output_path, local_dashboard_path, max_connections=4)
-    lg.info(output_container + ':' + output_path  + ': Succeesfully uploaded')
+    dashboard.create(commands, local_dashboard_path, env)
+    if env.runtime.is_master() and output_connection_string:
+        bbs = BlockBlobService(connection_string=output_connection_string)
+        lg.info(output_container + ':' + output_path  + ': Uploading from ' + local_dashboard_path)
+        bbs.create_blob_from_path(output_container, output_path, local_dashboard_path, max_connections=4)
+        lg.info(output_container + ':' + output_path  + ': Succeesfully uploaded')
 
 
 def main():

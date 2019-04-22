@@ -6,7 +6,7 @@ import sys
 import numpy as np
 import time
 
-from helpers import input_provider, path_generator
+from helpers import command
 
 
 #########################################################################  CREATE DSJSON FILES STATS #########################################################################
@@ -272,7 +272,7 @@ def output_dashboard_data(d, commands, dashboard_file):
             temp["w"] = "tot"
             temp["t"] = type
             if type in commands.keys():
-                temp["command"] = commands[type]
+                temp["command"] = command.to_commandline(commands[type])
             d.append(temp)
         f.write(json.dumps({"ts":"Total","d":d})+'\n')
 
@@ -427,8 +427,7 @@ def create_stats(log_fp, d, predictions_files=None):
     print('Total Elapsed Time: {:.1f} sec.'.format(time.time()-t0))
 
 
-def create(path, env):
-    commands = {}
+def create(commands, path, env):
     d = {}
     for log_path in env.txt_provider.get():
         predictions_dir = env.pred_path_gen.get_folder(env.cache_path_gen.get(log_path))

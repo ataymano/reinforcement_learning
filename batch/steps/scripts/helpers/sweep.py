@@ -20,9 +20,9 @@ def _promote(candidates, grid_config, env):
 
 def _output(candidates, grid_config, env):
     step_name = '[' + grid_config.name + '] '
-    result = list(map(lambda item: command.labeled(grid_config.name + str(item[0]), item[1][0]), enumerate(_top(candidates, grid_config.output))))
-    for c in result:
-        env.logger.info(step_name +  'Output: [' + c.name + '] ' + command.to_commandline(c.opts))
+    result = dict(map(lambda item: (grid_config.name + str(item[0]), item[1][0]), enumerate(_top(candidates, grid_config.output))))
+    for k, v in result.items():
+        env.logger.info(step_name +  'Output: [' + k + '] ' + command.to_commandline(v))
     return result
 
 
@@ -39,13 +39,13 @@ def _iteration(grid, env):
 
 def sweep(multi_grid, env, base_command = {}):
     promoted = [base_command]
-    result = []
+    result = {}
     for grid in multi_grid:
         step_name = '[' + grid.config.name + '] '
         env.logger.info(step_name + 'Started...')
         grid.points = env.runtime.map(command.product(promoted, grid.points))
         promoted, output = _iteration(grid, env)
-        result = result + output
+        result = dict(result, **output)
     return result
 
 if __name__ == '__main__':

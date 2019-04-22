@@ -24,6 +24,13 @@ def to_commandline(opts):
     return re.sub(' +', ' ', command)
 
 
+def generalize(c):
+    c.pop('-f', None)
+    c.pop('-i', None)
+    c.pop('--cache_file', None)
+    c.pop('-p', None)
+    c.pop('-d', None)
+
 def apply(first, second):
     return dict(first, **second)
 
@@ -36,22 +43,6 @@ def product(*dimensions):
 
 def dimension(name, values):
     return list(map(lambda v : dict([(name, str(v))]), values))
-
-
-class labeled:
-    def __init__(self, name, opts):
-        self.name = name
-        self.opts = opts
-
-    def serialize(self):
-        tmp = {'name' : self.name,
-               'opts' : self.opts}
-        return json.dumps(tmp)
-
-    @staticmethod
-    def deserialize(line):
-        tmp = json.loads(line)
-        return labeled(tmp['name'], tmp['opts'])
 
 
 if __name__ == '__main__':

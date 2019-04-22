@@ -1,9 +1,8 @@
 import subprocess
-import os
-import time
 import sys
 
 from helpers import command
+
 
 def _safe_to_float(str, default):
     try:
@@ -11,13 +10,16 @@ def _safe_to_float(str, default):
     except (ValueError, TypeError):
         return default
 
+
 def _cache(input, opts, env):
     opts['-d'] = input
     opts['--cache_file'] = env.cache_path_gen.get(input)
     return (opts, run(build_command(env.vw_path, opts), env.logger))
 
+
 def _cache_func(input):
     return _cache(input[0], input[1], input[2])
+
 
 def _cache_multi(opts, env):
     input_files = env.txt_provider.get()
@@ -25,14 +27,17 @@ def _cache_multi(opts, env):
     result = env.job_pool.map(_cache_func, inputs)
     return result
 
+
 def _train(cache_file, opts, env):
     opts['--cache_file'] = cache_file
     opts['-f'] = env.model_path_gen.get(cache_file, opts)
     result = (opts, run(build_command(env.vw_path, opts), env.logger))
     return result
 
+
 def _train_func(input):
     return _train(input[0], input[1], input[2])
+
 
 def _train_multi(opts, env):
     cache_files = env.cache_provider.get()
@@ -44,23 +49,24 @@ def _train_multi(opts, env):
             o['-i'] = o['-f']
     return result
 
-def _predict(cache_file, labeled_opts, env):
-    labeled_opts.opts['-p'] = env.pred_path_gen.get(cache_file, labeled_opts.name)
-    result = _train(cache_file, labeled_opts.opts, env)
-    return (command.labeled(labeled_opts.name, result[0]), result[1])
+
+def _predict(cache_file, command_name, command, env):
+    command['-p'] = env.pred_path_gen.get(cache_file, command_name)
+    _train(cache_file, command, env)
+    return command_name, command
 
 def _predict_func(input):
-    return _predict(input[0], input[1], input[2])
+    return _predict(input[0], input[1], input[2], input[3])
+
 
 def _predict_multi(labeled_opts, env):
     cache_files = env.cache_provider.get()
     for c in cache_files:
-        inputs = list(map(lambda lo: (c, lo, env), labeled_opts))
-        result = env.job_pool.map(_predict_func, inputs)
-        opts = list(map(lambda r: r[0], result))
-        for o in opts:
-            o.opts['-i'] = o.opts['-f']
-    return result
+        inputs = list(map(lambda lo: (c, lo[0], lo[1], env), labeled_opts.items()))
+        labeled_opts = dict(env.job_pool.map(_predict_func, inputs))
+        for k, v in labeled_opts.items():
+            labeled_opts[k]['-i'] = v['-f']
+
 
 def _parse_vw_output(txt):
     result = {}
@@ -71,6 +77,7 @@ def _parse_vw_output(txt):
             value = line[index+1:].strip()
             result[key] = value
     return result
+
 
 def run(command, logger):
     logger.debug('Running: ' + command)
@@ -84,13 +91,15 @@ def run(command, logger):
     logger.debug('Done: ' + command)
     return _parse_vw_output(error)
 
+
 def build_command(path, opts):
     return ' '.join([path, command.to_commandline(opts)])
 
+
 def cache(opts, env):
     _cache_multi(opts, env)
-    opts.pop('--cache_file', None)
-    opts.pop('-d', None)
+    command.generalize(opts)
+
 
 def train(opts, env):
     if not isinstance(opts, list):
@@ -98,16 +107,17 @@ def train(opts, env):
 
     result = _train_multi(opts, env)
     for r in result:
-        r[0].pop('-f', None)
-        r[0].pop('-i', None)
-        r[0].pop('--cache_file', None)
+        command.generalize(r[0])
     return list(map(lambda r: (r[0], _safe_to_float(r[1]['average loss'], sys.float_info.max)), result))
 
-def predict(labeled_opts, env):
-    if not isinstance(labeled_opts, list):
-        labeled_opts = [labeled_opts]
+def predict(labeled_commands, env):
+    if not isinstance(labeled_commands, dict):
+        labeled_commands = {'Default', labeled_commands}
 
-    _predict_multi(labeled_opts, env)
+    _predict_multi(labeled_commands, env)
+    for kv in labeled_commands.items():
+        command.generalize(kv[1])
+
 
 if __name__ == '__main__':
     multiprocessing.freeze_support()
