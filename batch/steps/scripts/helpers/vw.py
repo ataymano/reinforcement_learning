@@ -28,10 +28,7 @@ def _cache_multi(opts, env):
 def _train(cache_file, opts, env):
     opts['--cache_file'] = cache_file
     opts['-f'] = env.model_path_gen.get(cache_file, opts)
-    start = time.time()
     result = (opts, run(build_command(env.vw_path, opts), env.logger))
-    end = time.time()
-    env.logger.debug('[Perf] ' + os.path.basename(cache_file) + ': ' + str(end - start))
     return result
 
 def _train_func(input):

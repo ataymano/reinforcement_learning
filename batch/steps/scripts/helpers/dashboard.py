@@ -431,15 +431,12 @@ def create(path, env):
     commands = {}
     d = {}
     for log_path in env.txt_provider.get():
-        print(os.path.exists(log_path))
         predictions_dir = env.pred_path_gen.get_folder(env.cache_path_gen.get(log_path))
 
         predictions = os.listdir(predictions_dir)
         prediction_path_list = []
         for prediction_file in predictions:
             prediction_path = os.path.join(predictions_dir, prediction_file)
-            print(prediction_path)
-            print(os.path.exists(prediction_path))
             prediction_path_list.append(prediction_path)
 
         d = create_stats(log_path, d, prediction_path_list)
