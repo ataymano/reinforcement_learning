@@ -1,5 +1,6 @@
 import logging
 import sys
+import time
 
 
 #def console_logger(node_id, level='INFO'):
@@ -20,17 +21,21 @@ class console_logger:
         self.level = logging.getLevelName(level)
 
     def debug(self, message):
-        if self.level <= logging.DEBUG: print(message)
+        if self.level <= logging.DEBUG: self._trace(message)
 
     def info(self, message):
-        if self.level <= logging.INFO: print(message)
+        if self.level <= logging.INFO: self._trace(message)
 
     def warning(self, message):
-        if self.level <= logging.WARNING: print(message)
+        if self.level <= logging.WARNING: self._trace(message)
 
     def error(self, message):
-        if self.level <= logging.ERROR: print(message)
+        if self.level <= logging.ERROR: self._trace(message)
 
     def critical(self, message):
-        if self.level <= logging.CRITICAL: print(message)
+        if self.level <= logging.CRITICAL: self._trace(message)
+
+    def _trace(self, message):
+        prefix = '[' + str(self.node_id) + '][' + time.strftime("%d-%m-%Y %H:%M:%S", time.localtime(time.time())) + ']  '
+        print(prefix + message)
 
