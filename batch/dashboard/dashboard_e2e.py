@@ -35,8 +35,8 @@ def dashboard_e2e(app_container, connection_string, app_folder, vw_path, start, 
     
     namespaces = preprocessing.extract_namespaces(open(env.txt_provider.get()[0], 'r', encoding='utf-8'))
 
-    marginals_grid = preprocessing.get_marginals_grid('#marginals', namespaces[2])[:2]
-    interactions_grid = preprocessing.get_interactions_grid('#interactions', namespaces[0], namespaces[1])[:2]
+    marginals_grid = preprocessing.get_marginals_grid('#marginals', namespaces[2])
+    interactions_grid = preprocessing.get_interactions_grid('#interactions', namespaces[0], namespaces[1])
 
     multi_grid = grid.generate_test(interactions_grid, marginals_grid)
     best = sweep.sweep(multi_grid, env, base_command)

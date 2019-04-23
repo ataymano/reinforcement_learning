@@ -23,7 +23,7 @@ def points_to_file(points, fname):
 def generate_test(interactions_grid, marginals_grid):
     return [grid(dimension('--power_t', [1e-5, 0.5]),
                  configuration(name = 'FirstStep')),
-            grid(product(interactions_grid, marginals_grid),
+            grid(product(interactions_grid[:10], marginals_grid[:10]),
                  configuration(name='SecondStep', output=1))]
 
 
