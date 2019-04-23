@@ -1,4 +1,8 @@
-from mpi4py import MPI
+try:
+    from mpi4py import MPI
+except Exception as e:
+    print(e)
+    print('MPI mode is not supported')
 
 class local:
     def map(self, elements):

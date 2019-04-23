@@ -27,14 +27,10 @@ def dashboard_e2e(app_container, connection_string, app_folder, vw_path, start, 
         pred_path_gen=path_generator.pred_path_generator(pred_folder),
         model_path_gen=path_generator.model_path_generator(model_folder),
         cache_provider=input_provider.cache_provider(cache_folder),
-        logger = lg
+        logger=lg
     )
 
-    base_command = {
-        '#method':'--cb_adf',
-        '#format':'--dsjson',
-        '#saveresume':'--save_resume',
-        '#savepercounters':'--preserve_performance_counters'}
+    base_command = {'#base': '--cb_adf --dsjson --save_resume --preserve_performance_counters'}
     vw.cache(base_command, env)
     
     namespaces = preprocessing.extract_namespaces(open(env.txt_provider.get()[0], 'r', encoding='utf-8'))
@@ -45,7 +41,7 @@ def dashboard_e2e(app_container, connection_string, app_folder, vw_path, start, 
     multi_grid = grid.generate_test(interactions_grid, marginals_grid)
     best = sweep.sweep(multi_grid, env, base_command)
 
-    predict_opts = {'#method': '--cb_explore_adf --epsilon 0.2'}
+    predict_opts = {'#base': '--cb_explore_adf --epsilon 0.2 --dsjson --save_resume --preserve_performance_counters'}
     commands = dict(map(lambda lo: (lo[0], command.apply(lo[1], predict_opts)), best.items()))
     vw.predict(commands, env)
 
