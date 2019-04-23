@@ -1,4 +1,5 @@
 import os
+import copy
 from helpers import command
 
 class move_to_folder_path_generator:
@@ -7,6 +8,7 @@ class move_to_folder_path_generator:
         if create:
             os.makedirs(folder, exist_ok=True)
 
+
     def get(self, input, suffix):
         return os.path.join(self.folder, os.path.basename(input)) + '.' + suffix
 
@@ -14,8 +16,13 @@ class model_path_generator(move_to_folder_path_generator):
     def __init__(self, folder, create = True):
         super().__init__(folder, create)
 
-    def get(self, cache, opts):
-        return super().get(cache, str(_hash(opts)) + '.vw')
+
+    def get_folder(self, command):
+        return os.path.join(self.folder, _hash(command))
+
+    def get(self, cache, command):
+        tmp = move_to_folder_path_generator(self.get_folder(command))
+        return tmp.get(cache, 'vw')
 
 class cache_path_generator(move_to_folder_path_generator):
     def __init__(self, folder, create = True):
@@ -41,8 +48,10 @@ class pred_path_generator(move_to_folder_path_generator):
         tmp = move_to_folder_path_generator(self.get_folder(cache))
         return tmp.get(policy_name, 'pred')
 
-def _hash(opts={}):
-    return hash(command.to_commandline(opts))
+def _hash(c):
+    tmp = copy.deepcopy(c)
+    command.generalize(tmp)
+    return command.to_commandline(tmp).replace(' ', '')
 
 if __name__ == '__main__':
     multiprocessing.freeze_support()
