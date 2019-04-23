@@ -64,7 +64,7 @@ def main():
     parser.add_argument("--app_container", type=str, help="app_container")
     parser.add_argument("--connection_string", type=str, help="connection_string")
     parser.add_argument("--procs", type=int, help="procs")
-    parser.add_argument("--env", type=str, help="environment (local / mpi)")
+    parser.add_argument("--env", type=str, help="environment (local / mpi)", default = "local")
     parser.add_argument("--log_level", type=str, help="log level (CRITICAL / ERROR / WARNING / INFO / DEBUG)",
                         default = 'INFO')
     parser.add_argument("--output_connection_string", type=str, help="output connection_string")
