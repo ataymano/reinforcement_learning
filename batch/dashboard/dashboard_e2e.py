@@ -38,7 +38,7 @@ def dashboard_e2e(app_container, connection_string, app_folder, vw_path, start, 
     marginals_grid = preprocessing.get_marginals_grid('#marginals', namespaces[2])
     interactions_grid = preprocessing.get_interactions_grid('#interactions', namespaces[0], namespaces[1])
 
-    multi_grid = grid.generate_test(interactions_grid, marginals_grid)
+    multi_grid = grid.generate(interactions_grid, marginals_grid)
     best = sweep.sweep(multi_grid, env, base_command)
 
     predict_opts = {'#base': '--cb_explore_adf --epsilon 0.2 --dsjson --save_resume --preserve_performance_counters'}
