@@ -1,7 +1,7 @@
 import argparse
 import os
 import glob
-from helpers import vw, logger, grid, path_generator, vw_opts, sweep, pool, environment, runtime, input_provider
+from helpers import vw, logger, grid, path_generator, command, sweep, pool, environment, runtime, input_provider
 
 def vw_sweep(vw_path, input_folder, output, procs, env, models_path):
     base_command = {

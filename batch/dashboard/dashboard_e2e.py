@@ -8,7 +8,7 @@ from helpers import vw, logger, environment, runtime, path_generator, input_prov
 
 
 def dashboard_e2e(app_container, connection_string, app_folder, vw_path, start, end, tmp_folder, env, procs, log_level,
-                  output_connection_string, output_container, output_path):
+                  output_connection_string, output_container, output_path, is_lazy):
     cache_folder = os.path.join(tmp_folder, 'cache')
     model_folder = os.path.join(tmp_folder, 'model')
     pred_folder = os.path.join(tmp_folder, 'pred')
@@ -22,12 +22,13 @@ def dashboard_e2e(app_container, connection_string, app_folder, vw_path, start, 
         runtime=rt,
         job_pool=pool.multiproc_pool(procs) if procs > 1 else pool.seq_pool(),
         txt_provider=input_provider.azure_logs_provider(app_container, connection_string, app_folder, start, end,
-                                                        logs_folder, lg),
+                                                        logs_folder, lg, is_lazy),
         cache_path_gen=path_generator.cache_path_generator(cache_folder),
         pred_path_gen=path_generator.pred_path_generator(pred_folder),
         model_path_gen=path_generator.model_path_generator(model_folder),
         cache_provider=input_provider.cache_provider(cache_folder),
-        logger=lg
+        logger=lg,
+        is_lazy = is_lazy
     )
 
     base_command = {'#base': '--cb_adf --dsjson --save_resume --preserve_performance_counters'}
@@ -70,6 +71,7 @@ def main():
     parser.add_argument("--output_connection_string", type=str, help="output connection_string")
     parser.add_argument("--output_container", type=str, help="output_container")
     parser.add_argument("--output_path", type=str, help="dashboard file's path inside output container")
+    parser.add_argument("--lazy", type=bool, help="lazy mode (do not do anything if result file is found)", default=False)
 
     args = parser.parse_args()
 
@@ -82,7 +84,7 @@ def main():
 
     dashboard_e2e(args.app_container, args.connection_string, args.app_folder, args.vw, start, end,
                   args.tmp_folder, args.env, args.procs, args.log_level,
-                  args.output_connection_string, args.output_container, args.output_path)
+                  args.output_connection_string, args.output_container, args.output_path, args.lazy)
 
 
 if __name__ == '__main__':
