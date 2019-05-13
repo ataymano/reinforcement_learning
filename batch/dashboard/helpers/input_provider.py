@@ -57,7 +57,7 @@ class ps_logs_provider:
 
 class azure_logs_provider(ps_logs_provider):
     @staticmethod
-    def _copy(container, connection_string, folder, start, end, local_folder, logger):
+    def _copy(container, connection_string, folder, start, end, local_folder, logger, is_lazy):
         bbs = BlockBlobService(connection_string = connection_string)
         for blob in LogsExtractor.iterate_blobs(bbs, container, folder, start, end):
             tmp1 = os.path.split(blob.name)
@@ -66,12 +66,16 @@ class azure_logs_provider(ps_logs_provider):
             relative_path = os.path.join('data', os.path.join(tmp3[1], os.path.join(tmp2[1], tmp1[1])))
             full_path = os.path.join(local_folder, relative_path)
             os.makedirs(os.path.dirname(full_path), exist_ok = True)
-            logger.info(blob.name + ': Downloading to ' + full_path)
-            bbs.get_blob_to_path(container, blob.name, full_path, max_connections = 4)
-            logger.info(blob.name + ': Done.')
+            if not is_lazy or not os.path.isfile(full_path):
+                logger.info(blob.name + ': Downloading to ' + full_path)
+                bbs.get_blob_to_path(container, blob.name, full_path, max_connections = 4)
+                logger.info(blob.name + ': Done.')
+            else:
+                logger.info('Found ' + full_path)
 
-    def __init__(self, container, connection_string, folder, start, end, local_folder, logger):
-        azure_logs_provider._copy(container, connection_string, folder, start, end, local_folder, logger)
+
+    def __init__(self, container, connection_string, folder, start, end, local_folder, logger, is_lazy):
+        azure_logs_provider._copy(container, connection_string, folder, start, end, local_folder, logger, is_lazy)
         super().__init__(local_folder, start, end)
     def get(self):
         return super().get()
