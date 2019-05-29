@@ -14,7 +14,7 @@ def train_on_days(start, end, connection_string, container, folder, tmp_folder, 
     tenant_storage_client.deploy(trainer.get_model())
 
 
-def train(start, end, connection_string, container, folder, tmp_folder, vw_path, vw_args):
+def train(start, end, connection_string, container, folder, tmp_folder, vw_args):
     model_path = os.path.join(tmp_folder, 'current')
     tenant_storage_client = client.TenantStorageClient(connection_string, container, folder, tmp_folder)
     trainer = vw_trainer.vw_trainer(vw_args)
@@ -44,9 +44,10 @@ def main():
 
     start = datetime.datetime.strptime(args.start_date, date_format)
     end = datetime.datetime.strptime(args.end_date, date_format)
-
-    train(start, end, args.connection_string, args.container, args.folder, args.tmp_folder, args.vw, '--cb_adf --dsjson')
-
+    if args.vw:
+        train_on_days(start, end, args.connection_string, args.container, args.folder, args.tmp_folder, args.vw, '--cb_adf --dsjson')
+    else:
+        train(start, end, args.connection_string, args.container, args.folder, args.tmp_folder, '--cb_adf --dsjson')
 
 if __name__ == '__main__':
     main()

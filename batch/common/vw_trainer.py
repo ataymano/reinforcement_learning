@@ -1,5 +1,8 @@
 from vowpalwabbit import pyvw
 
+def is_ascii(s):
+    return all(ord(c) < 128 for c in s)
+
 class vw_trainer:
     def __init__(self, args):
         self.impl = pyvw.vw(args)

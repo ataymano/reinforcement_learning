@@ -47,11 +47,15 @@ class TenantStorageClient:
         yield
 
     def range_batches(self, start_date, end_date, batch_size):
+        index = 0
+        result = [None] * batch_size
         for path in self.range_days(start_date, end_date):
-            with open(path.get()) as f:
-                for line in f:
-                    if line.startswith('{"_label_cost'):
-                        yield line
+            for line in open(path.get(), 'r', encoding='utf-8'):
+                if line.startswith('{"_label_cost'):
+                    result[index] = line
+                    index = (index + 1) % batch_size
+                    if index == 0:
+                        yield result
 
         return
         yield
