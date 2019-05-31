@@ -4,7 +4,7 @@ from msrest.authentication import CognitiveServicesCredentials
 from helpers import SlidingAverage
 
 client = PersonalizerClient(endpoint="https://westus2.api.cognitive.microsoft.com/",
-    credentials=CognitiveServicesCredentials("f1976562a422405094c7dda1a99cc1e9"))
+    credentials=CognitiveServicesCredentials(""))   # Put your credentials here
 
 user=[{'age': 20}]
 actions=[
