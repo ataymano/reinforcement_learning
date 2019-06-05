@@ -3,8 +3,10 @@ import azure.cognitiveservices.personalizer.models as models
 from msrest.authentication import CognitiveServicesCredentials
 from helpers import SlidingAverage
 
+from datetime import datetime
+
 client = PersonalizerClient(endpoint="https://westus2.api.cognitive.microsoft.com/",
-    credentials=CognitiveServicesCredentials(""))   # Put your credentials here
+    credentials=CognitiveServicesCredentials("793eed0bedff47beb87919daed625ff4"))   # Put your credentials here
 
 user=[{'age': 20}]
 actions=[
@@ -25,10 +27,12 @@ response=client.rank(request)
 for action in response.ranking:
     print(action.id + ': ' + str(action.probability))
 
+duration_s = 200
+ctr = SlidingAverage(window_size=50)
+
 print("User loves politics")
-ctr = SlidingAverage(window_size=10)
-n = 100
-for i in range(1, n):
+start = datetime.now()
+while (datetime.now() - start).total_seconds() < duration_s:
     response=client.rank(request)
     reward = 1.0 if response.reward_action_id=="politics" else 0.0
     client.events.reward(event_id=response.event_id, value=reward)
@@ -38,10 +42,12 @@ for i in range(1, n):
     for action in response.ranking:
         print(action.id + ': ' + str(action.probability))
 
-
+print("------------------------------------------")
 print("User changes his preferences to sports")
-ctr = SlidingAverage(window_size=10)
-for i in range(1, 5 * n):
+print("------------------------------------------")
+
+start = datetime.now()
+while (datetime.now() - start).total_seconds() < 2 * duration_s:
     response=client.rank(request)
     reward = 1.0 if response.reward_action_id=="sports" else 0.0
     client.events.reward(event_id=response.event_id, value=reward)
