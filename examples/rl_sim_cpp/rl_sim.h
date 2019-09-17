@@ -111,23 +111,26 @@ public:
 
     int cb_loop();
     int ccb_loop();
+	int cb_vs_ccb_loop();
 
     /**
      * @brief Get the action features as a json string
      *
      * @return std::string
      */
-    std::string get_action_features();
+    std::string get_action_features(const std::vector<bool>& included);
 
     static std::string get_slot_features(const std::vector<std::string>& ids);
 
+	reinforcement_learning::live_model* create_live_model(const std::string& config_path, reinforcement_learning::api_status* status);
+
   private:
     boost::program_options::variables_map _options;
-    std::unique_ptr<reinforcement_learning::live_model> _rl;
+    std::unique_ptr<reinforcement_learning::live_model> _rl_cb;
+	std::unique_ptr<reinforcement_learning::live_model> _rl_ccb;
     std::vector<person> _people;
     std::vector<std::string> _topics;
     const uint8_t NUM_SLOTS = 3;
     bool _run_loop = true;
-    const bool ccb_mode = false;
 };
 
