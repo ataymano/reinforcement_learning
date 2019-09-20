@@ -118,7 +118,7 @@ public:
      *
      * @return std::string
      */
-    std::string get_action_features(const std::vector<bool>& included);
+    std::string get_action_features(const std::vector<bool>& included, std::vector<size_t>& original_ids);
 
     static std::string get_slot_features(const std::vector<std::string>& ids);
 

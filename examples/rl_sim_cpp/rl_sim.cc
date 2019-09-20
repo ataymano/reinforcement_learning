@@ -32,10 +32,11 @@ int rl_sim::cb_loop() {
   r::ranking_response response;
   simulation_stats stats;
   std::vector<bool> included_topics(_topics.size(), true);
+  std::vector<size_t> original_ids(_topics.size());
   while ( _run_loop ) {
     auto& p = pick_a_random_person();
     const auto context_features = p.get_features();
-    const auto action_features = get_action_features(included_topics);
+    const auto action_features = get_action_features(included_topics, original_ids);
     const auto context_json = create_context_json(context_features,action_features);
     const auto req_id = create_event_id();
     r::api_status status;
@@ -77,11 +78,11 @@ int rl_sim::ccb_loop() {
   r::decision_response decision;
   simulation_stats stats;
   std::vector<bool> included_topics(_topics.size(), true);
-
+  std::vector<size_t> original_ids(_topics.size());
   while ( _run_loop ) {
     auto& p = pick_a_random_person();
     const auto context_features = p.get_features();
-    const auto action_features = get_action_features(included_topics);
+    const auto action_features = get_action_features(included_topics, original_ids);
 
     std::vector<std::string> ids;
     for(int i = 0; i < NUM_SLOTS; i++)
@@ -134,12 +135,12 @@ int rl_sim::cb_vs_ccb_loop() {
 	r::decision_response decision;
 	r::ranking_response response;
 	simulation_stats cb_stats, ccb_stats;
-
+	std::vector<size_t> original_ids_ccb(_topics.size());
 	while (_run_loop) {
 		std::vector<bool> included_topics(_topics.size(), true);
 		auto& p = pick_a_random_person();
 		const auto context_features = p.get_features();
-		const auto action_features = get_action_features(included_topics);
+		auto action_features = get_action_features(included_topics, original_ids_ccb);
 
 		//ccb part
 		std::vector<std::string> ids;
@@ -191,10 +192,12 @@ int rl_sim::cb_vs_ccb_loop() {
 
 		//cb part
 		included_topics.assign(_topics.size(), true);
+		std::vector<size_t> original_ids(_topics.size());
+		for (size_t i = 0; i < _topics.size(); ++i) original_ids[i] = i;
 		for (int i = 0; i < NUM_SLOTS; i++)
 		{
 			const auto cb_context_json = create_context_json(context_features, action_features);
-			if (_rl_cb->choose_rank(ids[i].c_str(), context_json.c_str(), response, &status) != err::success) {
+			if (_rl_cb->choose_rank(ids[i].c_str(), cb_context_json.c_str(), response, &status) != err::success) {
 				std::cout << status.get_error_msg() << std::endl;
 				continue;
 			}
@@ -205,8 +208,8 @@ int rl_sim::cb_vs_ccb_loop() {
 				std::cout << status.get_error_msg() << std::endl;
 				continue;
 			}
+			chosen_action = original_ids[chosen_action];
 			included_topics[chosen_action] = false;
-			const auto action_features = get_action_features(included_topics);
 			// What outcome did this action get?
 			const auto outcome = p.get_outcome(_topics[chosen_action]);
 
@@ -220,6 +223,8 @@ int rl_sim::cb_vs_ccb_loop() {
 			std::cout << std::endl << "CB" << std::endl;
 			std::cout << " " << cb_stats.count() << ", ctxt, " << p.id() << ", action, " << chosen_action << ", outcome, " << outcome
 				<< ", dist, " << get_dist_str(response) << ", " << cb_stats.get_stats(p.id(), chosen_action) << std::endl;
+			original_ids.resize(_topics.size() - i - 1);
+			action_features = get_action_features(included_topics, original_ids);
 		}
 		std::cout << "Not chosen:" << std::endl;
 		for (size_t i = 0; i < _topics.size(); ++i) {
@@ -230,7 +235,7 @@ int rl_sim::cb_vs_ccb_loop() {
 
 		std::cout << std::endl << std::endl;
 
-		std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+	//	std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 	}
 
 	return 0;
@@ -361,7 +366,7 @@ bool rl_sim::init() {
   return true;
 }
 
-std::string rl_sim::get_action_features(const std::vector<bool>& included) {
+std::string rl_sim::get_action_features(const std::vector<bool>& included, std::vector<size_t>& original_ids) {
   std::ostringstream oss;
   const auto topics_count = std::count(included.begin(), included.end(), true);
   size_t counter = 0;
@@ -370,6 +375,7 @@ std::string rl_sim::get_action_features(const std::vector<bool>& included) {
   oss << R"("_multi": [ )";
   for ( auto idx = 0; idx < _topics.size(); ++idx) {
 	  if (included[idx]) {
+		  original_ids[counter] = idx;
 		  if (counter + 1 < topics_count)
 			oss << R"({ "TAction":{"topic":")" << _topics[idx] << R"("} }, )";
 		  else
