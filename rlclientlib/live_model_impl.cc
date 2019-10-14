@@ -44,7 +44,7 @@ namespace reinforcement_learning {
     RETURN_IF_FAIL(init_trace(status));
     RETURN_IF_FAIL(init_model(status));
     RETURN_IF_FAIL(init_model_mgmt(status));
-    RETURN_IF_FAIL(init_loggers(status));
+    RETURN_IF_FAIL(init_logger(status));
     _initial_epsilon = _configuration.get_float(name::INITIAL_EPSILON, 0.2f);
     const char* app_id = _configuration.get(name::APP_ID, "");
     _seed_shift = uniform_hash(app_id, strlen(app_id), 0);
@@ -67,13 +67,7 @@ namespace reinforcement_learning {
       RETURN_IF_FAIL(explore_exploit(event_id, context, response, status));
     }
     response.set_event_id(event_id);
-    RETURN_IF_FAIL(_ranking_logger->log(event_id, context, flags, response, status));
-
-    // Check watchdog for any background errors. Do this at the end of function so that the work is still done.
-    if (_watchdog.has_background_error_been_reported()) {
-      RETURN_ERROR_LS(_trace_logger.get(), status, unhandled_background_error_occurred);
-    }
-
+    RETURN_IF_FAIL(_logger->report_decision(event_id, context, flags, response, status));
     return error_code::success;
   }
 
@@ -87,19 +81,19 @@ namespace reinforcement_learning {
     // Clear previous errors if any
     api_status::try_clear(status);
     // Send the outcome event to the backend
-    return _outcome_logger->report_action_taken(event_id, status);
+    return _logger->report_action_taken(event_id, status);
   }
 
   int live_model_impl::report_outcome(const char* event_id, const char* outcome, api_status* status) {
     // Check arguments
     RETURN_IF_FAIL(check_null_or_empty(event_id, outcome, status));
-    return report_outcome_internal(event_id, outcome, status);
+    return _logger->report_outcome(event_id, outcome, status);
   }
 
   int live_model_impl::report_outcome(const char* event_id, float outcome, api_status* status) {
     // Check arguments
     RETURN_IF_FAIL(check_null_or_empty(event_id, status));
-    return report_outcome_internal(event_id, outcome, status);
+    return _logger->report_outcome(event_id, outcome, status);
   }
 
   int live_model_impl::refresh_model(api_status* status) {
@@ -133,7 +127,7 @@ namespace reinforcement_learning {
     : _configuration(config),
       _error_cb(fn, err_context),
       _data_cb(_handle_model_update, this),
-      _watchdog(&_error_cb),
+      _watchdog(new utility::watchdog(&_error_cb)),
       _trace_factory(trace_factory),
       _t_factory{t_factory},
       _m_factory{m_factory},
@@ -146,7 +140,7 @@ namespace reinforcement_learning {
     }
 
     if (_configuration.get_bool(name::MODEL_BACKGROUND_REFRESH, value::DEFAULT_MODEL_BACKGROUND_REFRESH)) {
-      _bg_model_proc.reset(new utility::periodic_background_proc<model_management::model_downloader>(config.get_int(name::MODEL_REFRESH_INTERVAL_MS, 60 * 1000), _watchdog, "Model downloader", &_error_cb));
+      _bg_model_proc.reset(new utility::periodic_background_proc<model_management::model_downloader>(config.get_int(name::MODEL_REFRESH_INTERVAL_MS, 60 * 1000), *_watchdog, "Model downloader", &_error_cb));
     }
   }
 
@@ -156,7 +150,7 @@ namespace reinforcement_learning {
     RETURN_IF_FAIL(_trace_factory->create(&plogger, trace_impl,_configuration, nullptr, status));
     _trace_logger.reset(plogger);
     TRACE_INFO(_trace_logger, "API Tracing initialized");
-    _watchdog.set_trace_log(_trace_logger.get());
+    _watchdog->set_trace_log(_trace_logger.get());
     return error_code::success;
   }
 
@@ -165,53 +159,6 @@ namespace reinforcement_learning {
     m::i_model* pmodel;
     RETURN_IF_FAIL(_m_factory->create(&pmodel, model_impl, _configuration, _trace_logger.get(), status));
     _model.reset(pmodel);
-    return error_code::success;
-  }
-
-  int live_model_impl::init_loggers(api_status* status) {
-    // Get the name of raw data (as opposed to message) sender for interactions.
-    const auto ranking_sender_impl = _configuration.get(name::INTERACTION_SENDER_IMPLEMENTATION, value::INTERACTION_EH_SENDER);
-    i_sender* ranking_data_sender;
-
-    // Use the name to create an instance of raw data sender for interactions
-    RETURN_IF_FAIL(_sender_factory->create(&ranking_data_sender, ranking_sender_impl, _configuration, &_error_cb, _trace_logger.get(), status));
-    RETURN_IF_FAIL(ranking_data_sender->init(status));
-
-    // Create a message sender that will prepend the message with a preamble and send the raw data using the 
-    // factory created raw data sender
-    l::i_message_sender* ranking_msg_sender = new l::preamble_message_sender(ranking_data_sender);
-    RETURN_IF_FAIL(ranking_msg_sender->init(status));
-
-    // Get time provider factory and implementation
-    const auto time_provider_impl = _configuration.get(name::TIME_PROVIDER_IMPLEMENTATION, value::NULL_TIME_PROVIDER);
-    i_time_provider* interaction_time_provider;
-    RETURN_IF_FAIL(_time_provider_factory->create(&interaction_time_provider, time_provider_impl, _configuration, _trace_logger.get(), status));
-
-    // Create a logger for interactions that will use msg sender to send interaction messages
-    _ranking_logger.reset(new logger::interaction_logger(_configuration, ranking_msg_sender, _watchdog, interaction_time_provider, &_error_cb));
-    RETURN_IF_FAIL(_ranking_logger->init(status));
-
-    // Get the name of raw data (as opposed to message) sender for observations.
-    const auto outcome_sender_impl = _configuration.get(name::OBSERVATION_SENDER_IMPLEMENTATION, value::OBSERVATION_EH_SENDER);
-    i_sender* outcome_sender;
-
-    // Use the name to create an instance of raw data sender for observations
-    RETURN_IF_FAIL(_sender_factory->create(&outcome_sender, outcome_sender_impl, _configuration, &_error_cb, _trace_logger.get(), status));
-    RETURN_IF_FAIL(outcome_sender->init(status));
-
-    // Create a message sender that will prepend the message with a preamble and send the raw data using the 
-    // factory created raw data sender
-    l::i_message_sender* outcome_msg_sender = new l::preamble_message_sender(outcome_sender);
-    RETURN_IF_FAIL(outcome_msg_sender->init(status));
-
-    // Get time provider implementation
-    i_time_provider* observation_time_provider;
-    RETURN_IF_FAIL(_time_provider_factory->create(&observation_time_provider, time_provider_impl, _configuration, _trace_logger.get(), status));
-
-    // Create a logger for interactions that will use msg sender to send interaction messages
-    _outcome_logger.reset(new logger::observation_logger(_configuration, outcome_msg_sender, _watchdog, observation_time_provider,&_error_cb));
-    RETURN_IF_FAIL(_outcome_logger->init(status));
-
     return error_code::success;
   }
 
@@ -304,6 +251,11 @@ namespace reinforcement_learning {
     RETURN_IF_FAIL(_model->choose_rank(seed, context, action_ids, action_pdf, model_version, status));
 
     return sample_and_populate_response(seed, action_ids, action_pdf, std::move(model_version), response, _trace_logger.get(), status);
+  }
+
+  int live_model_impl::init_logger(api_status* status) {
+    _logger.reset(new cb::logger_impl(_configuration, ))
+    return _logger->init(status);
   }
 
   int live_model_impl::init_model_mgmt(api_status* status) {
