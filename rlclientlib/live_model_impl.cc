@@ -286,7 +286,50 @@ namespace reinforcement_learning {
     // Create a logger for interactions that will use msg sender to send interaction messages
     _decision_logger.reset(new logger::ccb_logger(_configuration, decision_msg_sender, _watchdog, decision_time_provider, &_error_cb));
     RETURN_IF_FAIL(_decision_logger->init(status));
+    {
+      // Get the name of raw data (as opposed to message) sender for interactions.
+      const auto ranking_sender_impl = _configuration.get(name::INTERACTION_SENDER_IMPLEMENTATION, value::INTERACTION_EH_SENDER);
+      i_sender* ranking_data_sender;
 
+      // Use the name to create an instance of raw data sender for interactions
+      RETURN_IF_FAIL(_sender_factory->create(&ranking_data_sender, ranking_sender_impl, _configuration, &_error_cb, _trace_logger.get(), status));
+      RETURN_IF_FAIL(ranking_data_sender->init(status));
+
+      // Create a message sender that will prepend the message with a preamble and send the raw data using the
+      // factory created raw data sender
+      l::i_message_sender* ranking_msg_sender = new l::preamble_message_sender(ranking_data_sender);
+      RETURN_IF_FAIL(ranking_msg_sender->init(status));
+
+      // Get time provider factory and implementation
+      const auto time_provider_impl = _configuration.get(name::TIME_PROVIDER_IMPLEMENTATION, value::NULL_TIME_PROVIDER);
+      i_time_provider* interaction_time_provider;
+      RETURN_IF_FAIL(_time_provider_factory->create(&interaction_time_provider, time_provider_impl, _configuration, _trace_logger.get(), status));
+
+      // Create a logger for interactions that will use msg sender to send interaction messages
+      _generic_ranking_logger.reset(new logger::generic_logger(_configuration, ranking_msg_sender, _watchdog, interaction_time_provider, &_error_cb));
+      RETURN_IF_FAIL(_ranking_logger->init(status));
+
+      // Get the name of raw data (as opposed to message) sender for observations.
+      const auto outcome_sender_impl = _configuration.get(name::OBSERVATION_SENDER_IMPLEMENTATION, value::OBSERVATION_EH_SENDER);
+      i_sender* outcome_sender;
+
+      // Use the name to create an instance of raw data sender for observations
+      RETURN_IF_FAIL(_sender_factory->create(&outcome_sender, outcome_sender_impl, _configuration, &_error_cb, _trace_logger.get(), status));
+      RETURN_IF_FAIL(outcome_sender->init(status));
+
+      // Create a message sender that will prepend the message with a preamble and send the raw data using the
+      // factory created raw data sender
+      l::i_message_sender* outcome_msg_sender = new l::preamble_message_sender(outcome_sender);
+      RETURN_IF_FAIL(outcome_msg_sender->init(status));
+
+      // Get time provider implementation
+      i_time_provider* observation_time_provider;
+      RETURN_IF_FAIL(_time_provider_factory->create(&observation_time_provider, time_provider_impl, _configuration, _trace_logger.get(), status));
+
+      // Create a logger for interactions that will use msg sender to send interaction messages
+      _generic_outcome_logger.reset(new logger::generic_logger(_configuration, outcome_msg_sender, _watchdog, observation_time_provider, &_error_cb));
+      RETURN_IF_FAIL(_outcome_logger->init(status));
+    }
     return error_code::success;
   }
 
@@ -396,6 +439,18 @@ namespace reinforcement_learning {
 	  }
 
     return refresh_model(status);
+  }
+
+  int live_model_impl::log_interaction(const char* episode_id, const char* event_id, const char* payload, api_status* status) {
+    this->_generic_ranking_logger->log_interaction(episode_id, event_id, payload, status);
+  }
+
+  int live_model_impl::log_observation(const char* episode_id, const char* event_id, const char* payload, api_status* status) {
+    this->_generic_outcome_logger->log_observation(episode_id, event_id, payload, status);
+  }
+
+  int live_model_impl::close_session(const char* episode_id, api_status* status) {
+    this->_generic_outcome_logger->close_session(episode_id, status);
   }
 
   //helper: check if at least one of the arguments is null or empty

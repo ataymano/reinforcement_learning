@@ -2,6 +2,7 @@
 #include <vector>
 #include <flatbuffers/flatbuffers.h>
 #include "logger/flatbuffer_allocator.h"
+#include "generated/Event_generated.h"
 #include "generated/OutcomeEvent_generated.h"
 #include "generated/RankingEvent_generated.h"
 #include "generated/DecisionRankingEvent_generated.h"
@@ -89,6 +90,45 @@ namespace reinforcement_learning { namespace logger {
       return error_code::success;
     }
   };
+
+  template <>
+  struct fb_event_serializer<generic_event> {
+    using fb_event_t = Event;
+    using offset_vector_t = typename std::vector<flatbuffers::Offset<fb_event_t>>;
+    using batch_builder_t = EventBatchBuilder;
+
+    static size_t size_estimate(const generic_event& evt) {
+      return evt.get_event_id().size() + evt.get_episode_id().size()
+        + evt.get_payload().size()
+        + evt.get_model_id().size() + sizeof(evt.get_pass_prob()) + sizeof(evt.get_client_time_gmt());
+
+    }
+
+    static int serialize(generic_event& evt, flatbuffers::FlatBufferBuilder& builder,
+      flatbuffers::Offset<fb_event_t>& ret_val, api_status* status) {
+      auto key = CreateKey(builder,
+        builder.CreateString(evt.get_episode_id()),
+        builder.CreateString(evt.get_event_id()));
+
+      const auto& ts = evt.get_client_time_gmt();
+      TimeStamp client_ts(ts.year, ts.month, ts.day, ts.hour,
+        ts.minute, ts.second, ts.sub_second);
+
+      auto meta = CreateMeta(builder,
+        evt.is_interaction() ? Type::Type_Interaction : Type::Type_Observation,
+        &client_ts,
+        builder.CreateString(""),
+        builder.CreateString(""),
+        evt.get_pass_prob());
+
+      auto value = CreateValue(builder,
+        builder.CreateVector(evt.get_payload()));
+
+      ret_val = CreateEvent(builder, key, meta, value);
+      return error_code::success;
+    }
+  };
+
 
   template <>
   struct fb_event_serializer<outcome_event> {

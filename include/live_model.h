@@ -200,6 +200,11 @@ namespace reinforcement_learning {
      */
     int report_outcome(const char* event_id, float outcome, api_status* status= nullptr);
 
+
+    int log_interaction(const char* episode_id, const char* event_id, const char* paylooad, api_status* status);
+    int log_observation(const char* episode_id, const char* event_id, const char* paylooad, api_status* status);
+    int close_session(const char* episode_id, api_status* status);
+
     /*
      * @brief Refreshes the model if it has background refresh disabled.
      * @param status  Optional field with detailed string description if there is an error

@@ -33,6 +33,40 @@ namespace reinforcement_learning {
     timestamp _client_time_gmt;
   };
 
+  class generic_event : public event {
+  private:
+    using self_t = generic_event;
+  public:
+    self_t() {}
+    self_t(const self_t& other) = default;
+    self_t(self_t&& other) = default;
+    self_t& operator=(const self_t& other) = default;
+    self_t& operator=(self_t&& other) = default;
+    ~generic_event() = default;
+
+    const std::vector<unsigned char>& get_payload() const;
+    const std::string& get_model_id() const;
+    const std::string& get_event_id() const;
+    const std::string& get_episode_id() const;
+    bool is_interaction() const;
+
+  public:
+    static self_t interaction(const char* episode_id, const char* event_id, const char* payload,
+      const timestamp& ts, float pass_prob = 1);
+    static self_t observation(const char* episode_id, const char* event_id, const char* payload,
+      const timestamp& ts, float pass_prob = 1);
+    static self_t close_session(const char* episode_id, const timestamp& ts, float pass_prob = 1);
+
+  private:
+    self_t(const char* episode_id, const char* event_id, float pass_prob, const char* payload,
+      const timestamp& ts, bool is_interaction);
+    
+    std::string _episode_id;
+    std::vector<unsigned char> _payload;
+    std::string _model_id;
+    bool _is_interaction;
+  };
+
   class ranking_response;
 
   //serializable ranking event

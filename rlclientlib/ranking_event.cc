@@ -102,4 +102,36 @@ namespace reinforcement_learning {
   const std::string& outcome_event::get_outcome() const { return _outcome; }
   float outcome_event::get_numeric_outcome() const { return _float_outcome; }
   bool outcome_event::get_action_taken() const { return _action_taken; }
+
+  generic_event::generic_event(const char* episode_id, const char* event_id, float pass_prob, const char* payload,
+    const timestamp& ts, bool is_interaction)
+    : event(event_id == nullptr ? "" : event_id, ts, pass_prob)
+    , _episode_id(episode_id)
+    , _model_id("")
+    , _is_interaction(is_interaction)
+  {
+    string payload_str(payload == nullptr ? "" : payload);
+    copy(payload_str.begin(), payload_str.end(), std::back_inserter(_payload));
+  }
+
+  const std::vector<unsigned char>& generic_event::get_payload() const { return _payload; }
+  const std::string& generic_event::get_model_id() const { return _model_id; }
+  const std::string& generic_event::get_event_id() const { return get_seed_id(); }
+  const std::string& generic_event::get_episode_id() const { return _episode_id; }
+
+  generic_event generic_event::interaction(const char* episode_id, const char* event_id, const char* payload,
+    const timestamp& ts, float pass_prob) {
+    return generic_event(episode_id, event_id, pass_prob, payload, ts, true);
+  }
+  generic_event generic_event::observation(const char* episode_id, const char* event_id, const char* payload,
+    const timestamp& ts, float pass_prob) {
+    return generic_event(episode_id, event_id, pass_prob, payload, ts, false);
+  }
+  generic_event generic_event::close_session(const char* episode_id, const timestamp& ts, float pass_prob) {
+    return generic_event(episode_id, nullptr, pass_prob, nullptr, ts, false);
+  }
+
+  bool generic_event::is_interaction() const {
+    return _is_interaction;
+  }
 }

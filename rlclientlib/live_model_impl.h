@@ -34,6 +34,9 @@ namespace reinforcement_learning
     int report_outcome(const char* event_id, const char* outcome_data, api_status* status);
     int report_outcome(const char* event_id, float reward, api_status* status);
 
+    int log_interaction(const char* episode_id, const char* event_id, const char* paylooad, api_status* status);
+    int log_observation(const char* episode_id, const char* event_id, const char* paylooad, api_status* status);
+    int close_session(const char* episode_id, api_status* status);
 
     int refresh_model(api_status* status);
 
@@ -84,9 +87,15 @@ namespace reinforcement_learning
     std::unique_ptr<model_management::i_model> _model{nullptr};
     std::unique_ptr<logger::interaction_logger> _ranking_logger{nullptr};
     std::unique_ptr<logger::observation_logger> _outcome_logger{nullptr};
+
+    std::unique_ptr<logger::generic_logger> _generic_ranking_logger{ nullptr };
+    std::unique_ptr<logger::generic_logger> _generic_outcome_logger{ nullptr };
+
     std::unique_ptr<logger::ccb_logger> _decision_logger{};
     std::unique_ptr<model_management::model_downloader> _model_download{nullptr};
     std::unique_ptr<i_trace> _trace_logger{nullptr};
+
+
 
     std::unique_ptr<utility::periodic_background_proc<model_management::model_downloader>> _bg_model_proc;
     uint64_t _seed_shift;

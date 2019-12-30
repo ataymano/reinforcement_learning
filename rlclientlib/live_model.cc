@@ -113,4 +113,19 @@ namespace reinforcement_learning
     INIT_CHECK();
     return _pimpl->refresh_model(status);
   }
+
+  int live_model::log_interaction(const char* episode_id, const char* event_id, const char* payload, api_status* status) {
+    INIT_CHECK();
+    return _pimpl->log_interaction(episode_id, event_id, payload, status);
+  }
+
+  int live_model::log_observation(const char* episode_id, const char* event_id, const char* payload, api_status* status) {
+    INIT_CHECK();
+    return _pimpl->log_observation(episode_id, event_id, payload, status);
+  }
+
+  int live_model::close_session(const char* episode_id, api_status* status) {
+    INIT_CHECK();
+    return _pimpl->close_session(episode_id, status);
+  }
 }

@@ -18,5 +18,21 @@ namespace reinforcement_learning { namespace logger {
   int observation_logger::report_action_taken(const char* event_id, api_status* status) {
     const auto now = _time_provider != nullptr ? _time_provider->gmt_now() : timestamp();
     return append(outcome_event::report_action_taken(event_id, now), status);
-}
+  }
+
+  int generic_logger::log_interaction(const char* episode_id, const char* event_id, const char* payload, api_status* status) {
+    const auto now = _time_provider != nullptr ? _time_provider->gmt_now() : timestamp();
+    return append(generic_event::interaction(episode_id, event_id, payload, now), status);
+  }
+
+  int generic_logger::log_observation(const char* episode_id, const char* event_id, const char* payload, api_status* status) {
+    const auto now = _time_provider != nullptr ? _time_provider->gmt_now() : timestamp();
+    return append(generic_event::observation(episode_id, event_id, payload, now), status);
+  }
+
+  int generic_logger::close_session(const char* episode_id, api_status* status) {
+    const auto now = _time_provider != nullptr ? _time_provider->gmt_now() : timestamp();
+    return append(generic_event::close_session(episode_id,  now), status);
+  }
+
 }}

@@ -1,0 +1,35 @@
+include "Metadata.fbs";
+
+namespace reinforcement_learning.messages.flatbuff;
+
+enum Type : byte { Interaction, Observation }
+
+table Key {
+    episode_id:string;
+    event_id:string;
+}
+
+table Meta {
+  type:Type;
+	client_time_utc:TimeStamp;      
+	app_id:string;
+  model_id:string;                // model id
+  pass_probability:float;         // Probability of event surviving throttling operation    
+}
+
+table Value {
+    payload:[ubyte];
+}
+
+table Event {
+  key:Key;
+  meta:Meta;
+  value:Value;
+}
+
+// Collection of ranking events
+table EventBatch {
+    events:[Event];
+}
+
+root_type EventBatch;
