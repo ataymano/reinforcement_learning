@@ -1,6 +1,7 @@
 *.o
 *.a
 *.out
+*.pyc
 
 .DS_Store
 
@@ -26,3 +27,5 @@ build
 /.vscode
 /bindings/cs/rl.net/InternalsVisibleToTest.cs
 /bindings/cs/rl.net.cli/InternalsVisibleToTest.cs
+
+*/.vscode/*
