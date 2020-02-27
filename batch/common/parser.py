@@ -1,8 +1,6 @@
-import numpy as np
-
-class Base64Loader:
+class Base64Tensor:
     @staticmethod
-    def _load_tensor(line):
+    def parse(line):
         import numpy as np
         import base64
         import struct
@@ -14,15 +12,13 @@ class Base64Loader:
         return np.array(struct.unpack('784f', base64.b64decode(value))).reshape(shape)
 
     @staticmethod
-    def load(line):
+    def parse_dict(context):
+        return dict(map(lambda kv: (kv[0], Base64Tensor.parse(kv[1])), \
+            context.items()))
+
+class CbDsjsonParser:
+    @staticmethod
+    def parse(line):
         import json
-        pos = line.find('|')
-        label = int(line[0:pos])
-
-        obj = json.loads(line[pos+1:])
-        features = {}
-        for k, v in obj.items():
-            features[k] = Base64Loader._load_tensor(v)
-        return {'label': label, 'features': features}
-
-
+        obj = json.loads(line)
+        return {'features': Base64Tensor.parse_dict(obj['c']), 'label': obj['_labelIndex']}

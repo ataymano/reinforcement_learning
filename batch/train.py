@@ -2,7 +2,7 @@ import argparse
 import os
 import datetime
 from shutil import copyfile
-from common import context
+from common import context, client
 from adapters import pytorch
 import argparse
 import torch
@@ -54,55 +54,22 @@ def train(model, device, train_loader, optimizer, epoch):
 
 def main():
     # Training settings
-    c = context.Context(account_name = 'ataymanodev', account_key = 'WxDBTcax+bxLNc6ECKWLKU0ZTj5ZKUV67ei5eiyi2dR2NlONZrh8jby9YpONf8sHH8kJGA9ZAz6FDR9CQOyd2g==', container='small', folder = 'folder')
+    c = context.Context(account_name = 'persstgppewestus2', \
+        account_key = 'JhSj6OfM5hkoboXeyQTn6xeHBy6J+kpwJW8cCVMP4CvyZfxD66BFtE4KTl8+EPIVmFzpM6CLn0fgYuR1HuqnqA==', \
+        container='d7eedad9c2264d4a822dda754455fa66', \
+        folder = '20200225213524')
 
-    start = datetime.datetime(2018, 10, 16)
+    start = datetime.datetime(2020, 2, 27)
 
-    end = datetime.datetime(2018, 10, 21)
+    end = datetime.datetime(2018, 2, 28)
 
-    ds = pytorch.Logs(c, start, end, pytorch.ToTensor())
+#    iterator = client.TenantStorageIterator(c, start, end)
+    iterator = open('/Users/ataymano/data/byom/27_0.json', 'r')
+
+    ds = pytorch.Logs(iterator, pytorch.ToCbTensor())
     train_loader = torch.utils.data.DataLoader(ds, batch_size = 2, num_workers=0)
-  #  parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
-  #  parser.add_argument('--batch-size', type=int, default=64, metavar='N',
-  #                      help='input batch size for training (default: 64)')
-  #  parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
-  #                      help='input batch size for testing (default: 1000)')
-  #  parser.add_argument('--epochs', type=int, default=14, metavar='N',
-  #                      help='number of epochs to train (default: 14)')
-  #  parser.add_argument('--lr', type=float, default=1.0, metavar='LR',
-  #                      help='learning rate (default: 1.0)')
-  #  parser.add_argument('--gamma', type=float, default=0.7, metavar='M',
-  #                      help='Learning rate step gamma (default: 0.7)')
-  #  parser.add_argument('--no-cuda', action='store_true', default=False,
-  #                      help='disables CUDA training')
-  #  parser.add_argument('--seed', type=int, default=1, metavar='S',
-  #                      help='random seed (default: 1)')
-  #  parser.add_argument('--log-interval', type=int, default=10, metavar='N',
-  #                      help='how many batches to wait before logging training status')
-
-  #  parser.add_argument('--save-model', action='store_true', default=False,
-  #                      help='For Saving the current Model')
-  #  args = parser.parse_args()
-  #  use_cuda = not args.no_cuda and torch.cuda.is_available()
-
     torch.manual_seed(1)
-
     device = torch.device("cpu")
-
- #   kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
- #   train_loader = torch.utils.data.DataLoader(
- #       datasets.MNIST('../data', train=True, download=True,
- #                      transform=transforms.Compose([
- #                          transforms.ToTensor(),
- #                          transforms.Normalize((0.1307,), (0.3081,))
- #                      ])),
- #       batch_size=args.batch_size, shuffle=True, **kwargs)
- #   test_loader = torch.utils.data.DataLoader(
- #       datasets.MNIST('../data', train=False, transform=transforms.Compose([
- #                          transforms.ToTensor(),
- #                          transforms.Normalize((0.1307,), (0.3081,))
-  #                     ])),
-  #      batch_size=args.test_batch_size, shuffle=True, **kwargs)
 
     model = Net().to(device)
     optimizer = optim.Adadelta(model.parameters(), lr=1.0)
@@ -111,9 +78,6 @@ def main():
     for epoch in range(1, 3):
         train(model, device, train_loader, optimizer, epoch)
         scheduler.step()
-
-#    if args.save_model:
-#        torch.save(model.state_dict(), "mnist_cnn.pt")
 
 if __name__ == '__main__':
         main()
