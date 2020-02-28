@@ -54,10 +54,10 @@ def train(model, device, train_loader, optimizer, epoch):
 
 def main():
     # Training settings
-    c = context.Context(account_name = 'persstgppewestus2', \
-        account_key = 'JhSj6OfM5hkoboXeyQTn6xeHBy6J+kpwJW8cCVMP4CvyZfxD66BFtE4KTl8+EPIVmFzpM6CLn0fgYuR1HuqnqA==', \
-        container='d7eedad9c2264d4a822dda754455fa66', \
-        folder = '20200225213524')
+    c = context.Context(account_name = '', \
+        account_key = '', \
+        container='', \
+        folder = '')
 
     start = datetime.datetime(2020, 2, 27)
 
