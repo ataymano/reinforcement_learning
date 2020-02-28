@@ -1,5 +1,5 @@
 from torch.utils.data.dataset import IterableDataset
-from torch import tensor
+from torch import tensor, randn, onnx
 
 class Logs(IterableDataset):
     def __init__(self, iterator, transform = None):
@@ -25,3 +25,9 @@ class ToCbTensor(object):
             break
 
         return features, parsed['label']
+
+class Model:
+    @staticmethod
+    def export(model, device, path):
+        dummy_input = randn(1, 1, 28, 28, device=device)
+        onnx.export(model, dummy_input, path)

@@ -79,5 +79,7 @@ def main():
         train(model, device, train_loader, optimizer, epoch)
         scheduler.step()
 
+    pytorch.Model.export(model, device, '/Users/ataymano/data/byom/current')
+
 if __name__ == '__main__':
-        main()
+    main()
