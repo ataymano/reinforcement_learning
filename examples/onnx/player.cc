@@ -19,7 +19,7 @@ using namespace std;
 void require_success(const r::api_status& status)
 {
     if (status.get_error_code() != r::error_code::success) {
-        throw new runtime_error(status.get_error_msg());
+        throw runtime_error(status.get_error_msg());
     }
 }
 
@@ -46,36 +46,38 @@ vector<example> LoadMnist(const string& path) {
     while (tensors >> labeled_tensor) {
         const auto sep = labeled_tensor.find_first_of("|");
         size_t label = stoi(labeled_tensor.substr(0, sep));
-        const string context = R"({"Input3":)" + labeled_tensor.substr(sep + 1) + "}";
+        const string context = R"({"input.1":)" + labeled_tensor.substr(sep + 1) + "}";
         result.emplace_back(label, context);
     }
     return result;
 }
 
-r::live_model create_pretrained_model(const std::string& model_path) {
-    const char* JSON_CFG = R"(
-    {
-        "appid": "onnxtest",
-        "model.implementation": "ONNXRUNTIME",
-        "onnx.parse_feature_string": true,
-        "onnx.output_name": "17",
-        "IsExplorationEnabled": true,
-        "model.source": "FILE_MODEL_DATA",
-        "model_file_loader.file_must_exist": true,
-        "EventHubInteractionConnectionString": "Endpoint=sb://localhost:8080/;SharedAccessKeyName=RMSAKey;SharedAccessKey=<ASharedAccessKey>=;EntityPath=interaction",
-        "EventHubObservationConnectionString": "Endpoint=sb://localhost:8080/;SharedAccessKeyName=RMSAKey;SharedAccessKey=<ASharedAccessKey>=;EntityPath=observation",
-        "InitialExplorationEpsilon": 1.0,
-        "model.backgroundrefresh": false
-    }
-    )";
+//! Load contents of file into a string
+int load_file(const std::string& file_name, std::string& config_str) {
+  std::ifstream fs;
+  fs.open(file_name);
+  if ( !fs.good() )
+    return reinforcement_learning::error_code::invalid_argument;
+  std::stringstream buffer;
+  buffer << fs.rdbuf();
+  config_str = buffer.str();
+  return reinforcement_learning::error_code::success;
+}
 
+//! Load config from json file
+int load_config_from_json(const std::string& file_name, u::configuration& config) {
+  std::string config_str;
+  const auto scode = load_file(file_name, config_str);
+  if ( scode != 0 ) return scode;
+  return cfg::create_from_json(config_str, config);
+}
+
+r::live_model create_live_model(const string& config_path) {
     r::api_status status;
     u::configuration config;
-    u::config::create_from_json(JSON_CFG, config, nullptr, &status);
-    require_success(status);
-    // TODO: This should be a CMake-configure set value
-    config.set("model_file_loader.file_name", model_path.c_str());
-    
+    if( load_config_from_json(config_path, config) != err::success ) {
+        throw  runtime_error("Unable to Load file: " + config_path);
+    }
     r::live_model model(config, logging_error_fn, nullptr, &r::trace_logger_factory, &r::data_transport_factory, &r::model_factory, &r::sender_factory);
     require_success(status);
     model.init(&status);
@@ -84,43 +86,13 @@ r::live_model create_pretrained_model(const std::string& model_path) {
 }
 
 
-r::live_model create_live_eh_model() {
-    const char* JSON_CFG = R"(
-    {
-        "appid": "onnxtest",
-        "model.implementation": "ONNXRUNTIME",
-        "onnx.parse_feature_string": true,
-        "onnx.output_name": "Plus214_Output_0",
-        "IsExplorationEnabled": true,
-        "EventHubInteractionConnectionString": "Endpoint=sb://ingestft6zgq5xpytri.servicebus.windows.net/;SharedAccessKeyName=FrontEndAccessKey;SharedAccessKey=h6s7X7UJ4XQIccv333qLzCispRXAGL3bUnvy7rxptHs=;EntityPath=interaction",
-        "EventHubObservationConnectionString": "Endpoint=sb://ingestft6zgq5xpytri.servicebus.windows.net/;SharedAccessKeyName=FrontEndAccessKey;SharedAccessKey=h6s7X7UJ4XQIccv333qLzCispRXAGL3bUnvy7rxptHs=;EntityPath=observation",
-        "InitialExplorationEpsilon": 1.0,
-        "model.backgroundrefresh": false
-    }
-    )";
-    r::api_status status;
-    u::configuration config;
-    u::config::create_from_json(JSON_CFG, config, nullptr, &status);
-    require_success(status);
-    // TODO: This should be a CMake-configure set value
-    config.set(r::name::MODEL_BLOB_URI, "https://ataymanodev.blob.core.windows.net/byom/current?st=2020-02-28T18%3A01%3A46Z&se=2022-02-28T18%3A01%3A00Z&sp=rl&sv=2018-03-28&sr=b&sig=tElAn9d66oJCnRyQNjAXgLItAKiiPznDzRYumT0s1F0%3D");
-    
-    r::live_model model(config, logging_error_fn, nullptr, &r::trace_logger_factory, &r::data_transport_factory, &r::model_factory, &r::sender_factory);
-    require_success(status);
-    model.init(&status);
-    require_success(status);
-    return model;
-}
-
-
-int main() {
+int main(int argc, char** argv) {
     const string tensors_path = "/mnist/mnist_test_data.txt";
-    const string configs_path = "";
+    const string config_path(argv[1]);
     r::onnx::register_onnx_factory();
     const auto examples = LoadMnist(tensors_path);
-    auto model = create_pretrained_model("/mnist/current.onnx");
- //   auto model = create_pretrained_model("/mnist/mnist_model.onnx");
- //   auto model = create_live_eh_model();
+    auto model = create_live_model(config_path);
+    
     int i = 0;
     r::api_status status;
 
