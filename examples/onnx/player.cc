@@ -92,7 +92,7 @@ int main(int argc, char** argv) {
     r::onnx::register_onnx_factory();
     const auto examples = LoadMnist(tensors_path);
     auto model = create_live_model(config_path);
-    
+    this_thread::sleep_for(std::chrono::milliseconds(10000));
     int i = 0;
     r::api_status status;
 
