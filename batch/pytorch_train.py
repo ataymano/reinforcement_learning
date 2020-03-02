@@ -55,7 +55,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch-size', type=int, default=64, metavar='N',
                         help='input batch size for training (default: 64)')
-    parser.add_argument('--output-file', type=str, default='current')
+    parser.add_argument('--output-dir', type=str, default='outputs')
     parser.add_argument('--account-name', type=str)
     parser.add_argument('--account-key', type=str)
     parser.add_argument('--container', type=str)
@@ -63,6 +63,9 @@ def main():
     parser.add_argument('--start-date', type=str)
     parser.add_argument('--end_date', type=str)
     args = parser.parse_args()
+
+    output_dir = args.output_dir
+    os.makedirs(output_dir, exist_ok=True)
 
     c = context.Context(account_name = args.account_name, \
         account_key = args.account_key, \
@@ -87,7 +90,8 @@ def main():
     train(model, device, train_loader, optimizer)
     scheduler.step()
 
-    pytorch.Model.export(model, device, args.output_file)
+    model_path = os.path.join(output_dir, 'current.onnx')
+    pytorch.Model.export(model, device, model_path)
 
 if __name__ == '__main__':
     main()
