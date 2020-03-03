@@ -42,52 +42,34 @@ class TenantStorageIterator:
             str(date.day).zfill(2)
         )
 
-class _IndexedAzureBlobFile(collections.abc.Sequence):
-    def __init__(self, block_blob_service, container, path):
+class _IndexedAzureBlobFile:
+    @staticmethod
+    def get(block_blob_service, container, path):
         from common import indexed_file
+        import pandas as pd
         local_copy = os.path.join(tempfile.mkdtemp(), "file.json")
         block_blob_service.get_blob_to_path(container, path, local_copy, max_connections=4)
-        self.impl = indexed_file.IndexedFile(local_copy)
-
-    def __getitem__(self, index):
-        return self.impl[index]
-
-    def __len__(self):
-        return len(self.impl)
+        return pd.DataFrame(data={'lines': open(local_copy, 'r').readlines()})
 
 
-class TenantStorageDataset(collections.abc.Sequence):
-    def __init__(self, context, start, end):
-        self.context = context
+class TenantStorageDataset:
+    @staticmethod
+    def get(context, start, end):
+        import pandas as pd
         bbs = BlockBlobService(
             account_name=context.account_name,
             account_key=context.account_key
         )
         paths = list(
             filter(lambda path : bbs.exists(context.container, path), 
-            map(lambda d : self.__date_2_path__(start + datetime.timedelta(d)), \
+            map(lambda d : TenantStorageDataset.__date_2_path__(context.folder, start + datetime.timedelta(d)), \
             range((end - start).days + 1))))
-        i = 0
-        self.impl = {}
+        return pd.concat(map(lambda p: _IndexedAzureBlobFile.get(bbs, context.container, p), paths))
 
-        for p in paths:
-            self.impl[i] = _IndexedAzureBlobFile(bbs, context.container, p)
-            i = i + len(self.impl[i])
-        self._length = i
-
-
-    def __getitem__(self, i):
-        import bisect
-        keys = list(self.impl.keys())
-        key = keys[bisect.bisect(list(self.impl.keys()), i) - 1]
-        return self.impl[key][i - key]
-
-    def __len__(self):
-        return self._length
-
-    def __date_2_path__(self, date):
+    @staticmethod
+    def __date_2_path__(folder, date):
         return '%s/data/%s/%s/%s_0.json' % (
-            self.context.folder,
+            folder,
             str(date.year),
             str(date.month).zfill(2),
             str(date.day).zfill(2)
