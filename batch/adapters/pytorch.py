@@ -1,7 +1,7 @@
-from torch.utils.data.dataset import IterableDataset
-from torch import tensor, randn, onnx
+from torch.utils.data.dataset import IterableDataset, Dataset
+from torch import tensor, randn, onnx, is_tensor
 
-class Logs(IterableDataset):
+class IterableLogs(IterableDataset):
     def __init__(self, iterator, transform = None):
         self.it = iterator
         self.transform = transform
@@ -9,6 +9,18 @@ class Logs(IterableDataset):
     def __iter__(self):
         for l in self.it:
             yield self.transform(l) if self.transform else l
+
+class Logs(Dataset):
+    def __init__(self, df, transform = None):
+        self.df = df
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.df)
+
+    def __getitem__(self, idx):
+        line = self.df.iloc[idx]['lines']
+        return self.transform(line) if self.transform else line
 
 class ToCbTensor(object):
     def __init__(self):
