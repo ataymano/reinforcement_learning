@@ -78,7 +78,7 @@ def main():
     iterator = client.TenantStorageIterator(c, start, end)
 #    iterator = open('/Users/ataymano/data/byom/27_0.json', 'r')
 
-    ds = pytorch.Logs(iterator, pytorch.ToCbTensor())
+    ds = pytorch.IterableLogs(iterator, pytorch.ToCbTensor())
     train_loader = torch.utils.data.DataLoader(ds, batch_size = args.batch_size, num_workers=0)
     torch.manual_seed(1)
     device = torch.device("cpu")
