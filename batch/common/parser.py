@@ -21,4 +21,4 @@ class CbDsjsonParser:
     def parse(line):
         import json
         obj = json.loads(line)
-        return {'features': Base64Tensor.parse_dict(obj['c']), 'label': obj['_labelIndex']}
+        return {'features': Base64Tensor.parse_dict(obj['c']), 'label': obj['_labelIndex'], 'cost': obj['_label_cost']}
