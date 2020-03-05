@@ -18,15 +18,18 @@ class IterableLogs(IterableDataset):
 
 class Logs(Dataset):
     def __init__(self, df, transform = None):
-        self.df = df
-        self.transform = transform
+        self.df = df['lines']
+        self.df = self.df[self.df.str.startswith('{"RewardValue') == False]
+        if transform:
+            transformed = self.df.apply(lambda l: transform(l))
+            self.df = transformed[transformed.isnull() == False]
+        self.df = self.df.values
 
     def __len__(self):
         return len(self.df)
 
     def __getitem__(self, idx):
-        line = self.df.iloc[idx]['lines']
-        return self.transform(line) if self.transform else line
+        return self.df[idx]
 
 class ToCbTensor(object):
     def __init__(self, problem_type = types.Problem.MultiClass):
