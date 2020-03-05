@@ -9,7 +9,7 @@ class Base64Tensor:
         #many hacks
         shape = struct.unpack('4Q', base64.b64decode(prefix))
         shape = shape[1:]
-        return np.array(struct.unpack('784f', base64.b64decode(value))).reshape(shape)
+        return np.array(struct.unpack('%df' % np.prod(shape), base64.b64decode(value))).reshape(shape)
 
     @staticmethod
     def parse_dict(context):
