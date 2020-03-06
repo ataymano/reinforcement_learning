@@ -46,7 +46,7 @@ vector<example> LoadMnist(const string& path) {
     while (tensors >> labeled_tensor) {
         const auto sep = labeled_tensor.find_first_of("|");
         size_t label = stoi(labeled_tensor.substr(0, sep));
-        const string context = R"({"input.1":)" + labeled_tensor.substr(sep + 1) + "}";
+        const string context = R"({"Input3":)" + labeled_tensor.substr(sep + 1) + "}";
         result.emplace_back(label, context);
     }
     return result;
