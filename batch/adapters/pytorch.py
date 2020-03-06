@@ -54,4 +54,6 @@ class Model:
     @staticmethod
     def export(model, device, path):
         dummy_input = randn(1, 1, 28, 28, device=device)
-        onnx.export(model, dummy_input, path)
+        onnx.export(model, dummy_input, path, \
+                input_names = ['Input3'], \
+                output_names = ['Plus214_Output_0'])
