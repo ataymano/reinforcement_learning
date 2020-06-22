@@ -1,0 +1,26 @@
+// EventHubInteraction Schema used by FlatBuffer
+include "Metadata.fbs";
+
+namespace reinforcement_learning.messages.flatbuff;
+
+table Event1 {
+    Field1:int;
+}
+
+table Event2 {
+    Field2:string;
+}
+
+union EventUnion { Event1, Event2 }
+
+table Event {
+    pass_probability:float;
+    Event:[EventUnion];
+}
+
+// Collection of Ranking events
+table EventBatch {
+    events:[Event];
+}
+
+root_type EventBatch;
