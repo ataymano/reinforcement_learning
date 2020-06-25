@@ -26,6 +26,7 @@
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
 
   <ItemGroup>
@@ -39,6 +40,10 @@
     <Compile Update="InternalsVisibleToTest.cs">
     </Compile>
   </ItemGroup>
+
+  <PropertyGroup>
+    <TextTransformPath>$(DevEnvDir)\TextTransform.exe</TextTransformPath>
+  </PropertyGroup>
 
   <ItemGroup>
     <None Update="InternalsVisibleToTest.tt">
