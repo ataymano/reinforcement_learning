@@ -11,11 +11,19 @@ table Event2 {
     Field2:string;
 }
 
-union EventUnion { Event1, Event2 }
+table RankingEvent2 {
+    event_id:string;          // event IDs
+    deferred_action:bool = false;
+    action_ids:[uint64];      // action IDs
+    context:[ubyte];          // context
+    probabilities:[float];    // probabilities
+    model_id:string;          // model ID
+	meta:Metadata;
+}
 
 table Event {
     pass_probability:float;
-    Event:[EventUnion];
+    Payload:[byte];
 }
 
 // Collection of Ranking events

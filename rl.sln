@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27703.2035
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30204.135
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rlclientlib", "rlclientlib\rlclientlib.vcxproj", "{C40E3263-B6FF-46D5-92F7-D67E6F9FCEDD}"
 EndProject
@@ -42,6 +42,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "joiner", "test_tools\joiner
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "stdin2rllib", "test_tools\stdin2rllib\stdin2rllib.vcxproj", "{5135826B-116F-4E18-938E-F9B8D8C37F5A}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "serialization_test", "test_tools\serialization_test\serialization_test.vcxproj", "{390F512C-A65E-4DAD-A858-C68B3FD5344E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -183,6 +185,16 @@ Global
 		{5135826B-116F-4E18-938E-F9B8D8C37F5A}.Release|x64.ActiveCfg = Release|x64
 		{5135826B-116F-4E18-938E-F9B8D8C37F5A}.Release|x64.Build.0 = Release|x64
 		{5135826B-116F-4E18-938E-F9B8D8C37F5A}.Release|x86.ActiveCfg = Release|x64
+		{390F512C-A65E-4DAD-A858-C68B3FD5344E}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{390F512C-A65E-4DAD-A858-C68B3FD5344E}.Debug|x64.ActiveCfg = Debug|x64
+		{390F512C-A65E-4DAD-A858-C68B3FD5344E}.Debug|x64.Build.0 = Debug|x64
+		{390F512C-A65E-4DAD-A858-C68B3FD5344E}.Debug|x86.ActiveCfg = Debug|Win32
+		{390F512C-A65E-4DAD-A858-C68B3FD5344E}.Debug|x86.Build.0 = Debug|Win32
+		{390F512C-A65E-4DAD-A858-C68B3FD5344E}.Release|Any CPU.ActiveCfg = Release|Win32
+		{390F512C-A65E-4DAD-A858-C68B3FD5344E}.Release|x64.ActiveCfg = Release|x64
+		{390F512C-A65E-4DAD-A858-C68B3FD5344E}.Release|x64.Build.0 = Release|x64
+		{390F512C-A65E-4DAD-A858-C68B3FD5344E}.Release|x86.ActiveCfg = Release|Win32
+		{390F512C-A65E-4DAD-A858-C68B3FD5344E}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -202,6 +214,7 @@ Global
 		{B1A9F681-56A9-4640-9699-EA3B32EE423A} = {5231BC88-ADFA-49A0-B559-7EF11FFC050E}
 		{E6EFAF56-301D-492F-B7D1-10179895A0A3} = {5231BC88-ADFA-49A0-B559-7EF11FFC050E}
 		{5135826B-116F-4E18-938E-F9B8D8C37F5A} = {5231BC88-ADFA-49A0-B559-7EF11FFC050E}
+		{390F512C-A65E-4DAD-A858-C68B3FD5344E} = {5231BC88-ADFA-49A0-B559-7EF11FFC050E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A17116EE-7712-4404-BA22-6FE55793158E}

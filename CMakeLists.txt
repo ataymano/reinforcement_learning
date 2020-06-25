@@ -30,6 +30,7 @@ add_subdirectory(rlclientlib)
 add_subdirectory(examples)
 add_subdirectory(test_tools/joiner)
 add_subdirectory(test_tools/sender_test)
+add_subdirectory(test_tools/serialization_test)
 
 # enable_testing should be run after ext_libs so that the vw unit tests arent turned on.
 enable_testing()
