@@ -1,0 +1,37 @@
+include "Metadata.fbs";
+include "OutcomeEvent.fbs";
+
+namespace reinforcement_learning.messages.flatbuff;
+
+table RankingEvent2 {
+    deferred_action:bool = false;
+    action_ids:[uint64];      // action IDs
+    context:[ubyte];          // context
+    probabilities:[float];    // probabilities
+    model_id:string;          // model ID
+}
+
+table StringEvent2 {
+    value:string;
+}
+
+table NumericEvent2 {
+    value:float;
+}
+
+table ActionTakenEvent2 {
+	value:bool = false;
+}
+
+union OutcomeEvent2 { StringEvent2, NumericEvent2, ActionTakenEvent2 }
+
+table CbEvent {
+    event_id:string;
+	pass_probability:float;			// Probability of event surviving throttling operation
+    meta:Metadata;
+    interaction:RankingEvent2;
+    outcome:OutcomeEvent2;
+}
+
+root_type CbEvent;
+

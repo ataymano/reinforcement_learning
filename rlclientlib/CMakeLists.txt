@@ -3,6 +3,12 @@ find_package(FlatBuffers REQUIRED)
 
 set(RL_FLAT_BUFFER_FILES
   "${CMAKE_CURRENT_SOURCE_DIR}/schema/Metadata.fbs"
+  "${CMAKE_CURRENT_SOURCE_DIR}/schema/TestEvent1.fbs"
+  "${CMAKE_CURRENT_SOURCE_DIR}/schema/TestEvent2.fbs"  
+  "${CMAKE_CURRENT_SOURCE_DIR}/schema/CbEvent.fbs"  
+  "${CMAKE_CURRENT_SOURCE_DIR}/schema/CbOutcome.fbs"  
+  "${CMAKE_CURRENT_SOURCE_DIR}/schema/Event.fbs"
+  "${CMAKE_CURRENT_SOURCE_DIR}/schema/Event2.fbs"  
   "${CMAKE_CURRENT_SOURCE_DIR}/schema/OutcomeEvent.fbs"
   "${CMAKE_CURRENT_SOURCE_DIR}/schema/RankingEvent.fbs"
   "${CMAKE_CURRENT_SOURCE_DIR}/schema/DecisionRankingEvent.fbs" )

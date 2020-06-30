@@ -1,0 +1,8 @@
+namespace reinforcement_learning.messages.flatbuff;
+
+table TestEvent1 {
+    Field1:int;
+    Field2:int;
+}
+
+root_type TestEvent1;

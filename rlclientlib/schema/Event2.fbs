@@ -1,18 +1,22 @@
 // EventHubInteraction Schema used by FlatBuffer
 include "Metadata.fbs";
 include "OutcomeEvent.fbs";
+include "TestEvent1.fbs";
+include "TestEvent2.fbs";
 
 namespace reinforcement_learning.messages.flatbuff;
 
-table Event {
+union PayloadU {TestEvent1, TestEvent2}
+
+table EventU {
     pass_probability:float;
     key:string;
-    payload:[byte];
+    Payload:PayloadU;
 }
 
 // Collection of Ranking events
-table EventBatch {
-    events:[Event];
+table EventBatchU {
+    events:[EventU];
 }
 
-root_type EventBatch;
+root_type EventBatchU;
