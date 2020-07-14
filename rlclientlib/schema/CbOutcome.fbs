@@ -1,5 +1,0 @@
-include "OutcomeEvent.fbs";
-
-namespace reinforcement_learning.messages.flatbuff;
-
-root_type OutcomeEventHolder;
