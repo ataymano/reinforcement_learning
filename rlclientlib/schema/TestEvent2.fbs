@@ -1,7 +1,0 @@
-namespace reinforcement_learning.messages.flatbuff;
-
-table TestEvent2 {
-    Field2:string;
-}
-
-root_type TestEvent2;
