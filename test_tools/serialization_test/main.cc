@@ -77,10 +77,22 @@ payload_t GetMemoryTestNewCbEventBuffer(int context_size_kb, bool withOutcome) {
   TimeStamp client_ts(2020, 1, 2, 3, 4, 5, 6);
   const auto meta_offset = CreateMetadata(fbb, &client_ts);
 
-  const flatbuffers::Offset<flatbuffers::Vector<uint64_t>> action_offset = withContext ? fbb.CreateVector(std::vector<uint64_t> {1, 2, 3, 4, 5}) : 0;
-  const flatbuffers::Offset<flatbuffers::Vector<float>> probabilities_offset = withContext ? fbb.CreateVector(std::vector<float> {0.2, 0.2, 0.2, 0.2, 0.2}) : 0;
-  const flatbuffers::Offset<flatbuffers::Vector<uint8_t>> context_offset = withContext ? fbb.CreateVector(generate_byte_array(context_size_kb)) : 0;
-  const flatbuffers::Offset<flatbuffers::String> model_id_offset = withContext ? fbb.CreateString("model-id") : 0;
+  flatbuffers::Offset<CbInteractionNew> interaction_offset = 0;
+
+  if (withContext) {
+    const flatbuffers::Offset<flatbuffers::Vector<uint64_t>> action_offset = fbb.CreateVector(std::vector<uint64_t> {1, 2, 3, 4, 5});
+    const flatbuffers::Offset<flatbuffers::Vector<float>> probabilities_offset = fbb.CreateVector(std::vector<float> {0.2, 0.2, 0.2, 0.2, 0.2});
+    const flatbuffers::Offset<flatbuffers::Vector<uint8_t>> context_offset = fbb.CreateVector(generate_byte_array(context_size_kb));
+    const flatbuffers::Offset<flatbuffers::String> model_id_offset = fbb.CreateString("model-id");
+
+    interaction_offset = CreateCbInteractionNew(fbb,
+      true,
+      action_offset,
+      context_offset,
+      probabilities_offset,
+      model_id_offset
+    );
+  }
 
   const OutcomeEvent outcome_type = withOutcome ? OutcomeEvent_NumericEvent : OutcomeEvent_NONE;
   const auto number_event = withOutcome ? CreateNumericEvent(fbb, 8).Union() : 0;
@@ -88,14 +100,9 @@ payload_t GetMemoryTestNewCbEventBuffer(int context_size_kb, bool withOutcome) {
 
   auto retval = CreateMemoryTestEventNew(fbb,
     event_id,
-    true,
-    action_offset,
-    context_offset,
-    probabilities_offset,
-    model_id_offset,
     0.5,
     meta_offset,
-    LearningModeType_Online,
+    interaction_offset,
     outcome_type,
     number_event);
 
