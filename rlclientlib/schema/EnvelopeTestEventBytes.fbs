@@ -1,0 +1,19 @@
+include "RankingEvent.fbs";
+include "OutcomeEvent.fbs";
+include "EnvelopeTestEventUnion.fbs";
+
+namespace reinforcement_learning.messages.flatbuff;
+
+table EnvelopeBytes {
+    event_id:string;                 // event IDs
+    pass_probability:float;          // Probability of event surviving throttling operation
+    meta:Metadata;
+    payloadType:int;
+    payload:[byte];
+}
+
+table EnvelopeBytesBatch {
+    events:[EnvelopeBytes];
+}
+
+root_type EnvelopeBytesBatch;

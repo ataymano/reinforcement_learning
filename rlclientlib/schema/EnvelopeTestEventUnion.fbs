@@ -1,0 +1,32 @@
+include "RankingEvent.fbs";
+include "OutcomeEvent.fbs";
+
+namespace reinforcement_learning.messages.flatbuff;
+
+table EnvelopeTestCbInteraction {
+    deferred_action:bool = false;
+    action_ids:[uint64];             // action IDs
+    context:[ubyte];                 // context
+    probabilities:[float];           // probabilities
+    model_id:string;                 // model ID
+    learning_mode:LearningModeType;  // decision mode used to determine rank behavior
+}
+
+table EnvelopeTestOtherInteraction {
+    SomethingElse:string;
+}
+
+union Interaction { EnvelopeTestCbInteraction, EnvelopeTestOtherInteraction }
+
+table EnvelopeUnion {
+    event_id:string;                 // event IDs
+    pass_probability:float;          // Probability of event surviving throttling operation
+    meta:Metadata;
+    interaction:Interaction;
+}
+
+table EnvelopeUnionBatch {
+    events:[EnvelopeUnion];
+}
+
+root_type EnvelopeUnionBatch;
