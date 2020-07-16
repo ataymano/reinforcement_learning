@@ -9,7 +9,7 @@ table EnvelopeBytes {
     pass_probability:float;          // Probability of event surviving throttling operation
     meta:Metadata;
     payloadType:int;
-    payload:[byte];
+    payload:[ubyte];
 }
 
 table EnvelopeBytesBatch {
